@@ -24,9 +24,16 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+      - name: "Set up Julia"
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.julia-version }}
+      - uses: julia-actions/julia-buildpkg@master
+      - name: Pkg.add("Distributions")
+        run: julia -e 'using Pkg; Pkg.add("Distributions")'
 
       # Runs a single command using the runners shell
       - name: Basic unit tests
         run: |
-          julia import Pkg; Pkg.add("Distributions")
+          julia -e import Pkg; Pkg.add("Distributions")
           julia -e BayesNet_test.jl
