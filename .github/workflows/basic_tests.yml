@@ -27,5 +27,6 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Basic unit tests
-        run: julia BayesNet_test.jl
-
+        run: |
+          julia -e import Pkg; Pkg.add(["Distributions", "Random", "DataFrames", "LinearAlgebra", "StatsBase", "Test")
+          julia -e BayesNet_test.jl
