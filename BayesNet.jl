@@ -45,7 +45,6 @@ Initialize all variables using prior distributions. Note, any value passed in a 
 - `τ²`: set to the square of 1 sample from Uniform(0,1) (non-informative prior)
 - `γ` : set to 1 draw from MultivariateNormal(uᵀΛu_upper, τ²*s), where uᵀΛu_upper is a vector of the terms in the upper triangle of uᵀΛu (does not include the diagonal)
 
-See parameters marked 'output parameter'
 """
 function init_vars(X, η, ζ, ι, R, aΔ, bΔ)
     # η must be greater than 1, if it's not set it to its default value of 1.01
@@ -77,6 +76,83 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ)
     return (θ, s, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ)
 end
 
+"""
+    update_μ(y, X, γ, τ², n)
+
+Sample the next μ value from the normal distribution with mean 1ᵀ(y - Xγ)/n and variance τ²/n
+
+# Arguments
+- `y` : response values 
+- `X` : unweighted symmetric adjacency matrix to be used as a predictor
+- `γ` : vector of regression parameters 
+- `τ²`: overall variance parameter
+- `n` : number of samples (length of y)
+
+# Returns
+new value of μ
+"""
+function update_μ(y, X, γ, τ², n)
+    μₘ = (ones(1,n) * (y - X*γ)) / n
+    σₘ² = τ²/n
+    μ = rand(Normal(μₘ,σₘ²))
+end
+
+"""
+    update_γ(X, D, W, μ, τ²)
+
+Sample the next γ value from the normal distribution, decomposed as described in Guha & Rodriguez 2018
+
+# Arguments
+- `X` : unweighted symmetric adjacency matrix to be used as a predictor
+- `D` : diagonal matrix of s values
+- `W` : vector of uΛu values (upper triangle of uΛu), measures the effect of the relationship between nodes on the response
+- `μ` : overall mean value for the relationship
+- `τ²`: overall variance parameter 
+"""
+function update_γ(X, D, W, μ, τ²)
+    n = size(D,1)
+    Δᵧ₁ = rand(MultivariateNormal(zeros(n,1), τ²*D))
+    Δᵧ₂ = rand(MultivariateNormal(zeros(n,1), I(n)))
+    Δᵧ₃ = (X/sqrt(τ²))*Δᵧ₁ + Δᵧ₂
+    γw = Δᵧ₁ + (τ²*D)*(transpose(X)/sqrt(τ²))*inv(X*D*transpose(X) + I(n)) * (((y - μ*ones(n,1) - X*W)/sqrt(τ²)) - Δᵧ₃)
+    γ = γw + W
+end
+
+function update_τ²()
+    
+end
+
+function update_s()
+    
+end
+
+function update_θ()
+    
+end
+
+function update_u()
+    
+end
+
+function update_ξ()
+    
+end
+
+function update_Δ()
+    
+end
+
+function update_M()
+    
+end
+
+function update_λ()
+    
+end
+
+function update_π()
+
+end
 
 function main()
     #data = DataFrame!(CSV.File())
