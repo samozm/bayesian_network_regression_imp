@@ -1,4 +1,4 @@
-using Random, Distributions, DataFrames, LinearAlgebra, StatsBase, RCall
+using Random, Distributions, DataFrames, LinearAlgebra, StatsBase, RCall, InvertedIndices
 R"library(GIGrvg)"
 
 #region custom sampling
@@ -89,6 +89,33 @@ vector of upper triangluar section of `matrix`
 function upper_triangle(matrix)
     [matrix[i,j] for i = 1:size(matrix,1), j = 2:size(matrix,2) if i < j]
 end
+
+"""
+    create_upper_tri(vec,V)
+
+create an upper triangluar matrix from a vector of the form [12, ... 1V,23,...(V-1)V] 
+to the form [0 12 13  ... 1V]
+            [0 0  23  ... 2V]
+            [.............]
+            [0 0  0...(V-1)V]
+# Arguments
+- `vec`: vector containing values to put into the upper triangluar matrix
+- `V`  : dimension of output matrix
+
+# Returns
+upper triangluar matrix containing values of `vec` 
+"""
+function create_upper_tri(vec,V)
+    mat = zeros(V,V)
+    vec2 = deepcopy(vec)
+    for k = 1:V
+        for l = k+1:V
+            mat[k,l] = popfirst!(vec2)
+        end
+    end
+    return mat
+end
+
 #endregion
 
 """
@@ -108,7 +135,7 @@ end
     # Returns
     - `X` : matrix of re-ordered predictors. one row per sample, V*(V-1) columns 
     - `θ` : set to 1 draw from Gamma(ζ,ι)
-    - `D` : set to a diagonal matrix of V(V-1) draws from the Exponential(θ/2) distribution
+    - `S` : set to a matrix of V×V draws from the Exponential(θ/2) distribution
     - `πᵥ`: set to a R × 3 matrix of draws from the Dirichlet distribution, where the second and third columns are draws from Dirichlet(1) and the first are draws from Dirichlet(r^η)
     - `Λ` : R × R diagonal matrix of λ values, which are sampled from [0,1,-1] with probabilities assigned from the rth row of πᵥ
     - `Δ` : set to 1 draw from Beta(aΔ, bΔ) (or 1 if aΔ or bΔ are 0).
@@ -135,12 +162,13 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ)
     
     θ = rand(Gamma(ζ, ι))
 
-    D = diagm(map(k -> rand(Exponential(θ/2)), 1:q))
+    S = map(k -> rand(Exponential(θ/2)), 1:q)
+    D = diagm(S)
     πᵥ = transpose(hcat(map(r -> rand(Dirichlet([r^η,1,1])),1:R)...))
     λ = map(r -> sample([0,1,-1], weights(πᵥ[r,:]),1)[1], 1:R)
     Λ = diagm(λ)
     if (aΔ == 0 || bΔ == 0)
-        Δ = 1
+        Δ = 0.5
     else 
         Δ = rand(Beta(aΔ, bΔ))
     end
@@ -250,24 +278,79 @@ function update_D(γ, u, Λ, τ², V)
     D = diagm(map(k -> sample_rgig(a[k],θ), 1:q))
 end
 
-function update_θ()
-    
+"""
+    update_θ(ζ, ι, V, D)
+
+Sample the next θ value from the Gamma distribution with a = ζ + V(V-1)/2 and b = ι + ∑(s[k,l]/2)
+
+# Arguments
+- `ζ` : hyperparameter, used to construct `a` parameter
+- `ι` : hyperparameter, used to construct `b` parameter
+- `V` : dimension of original symmetric adjacency matrices
+- `D` : diagonal matrix of s values
+
+# Returns
+new value of θ
+"""
+function update_θ(ζ, ι, V, D)
+    a = ζ + (V*(V-1))/2
+    b = ι + sum(D)/2
+    θ = rand(Gamma(a,b))
 end
 
-function update_u()
-    
+
+function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
+    q = V*(V-1)
+    w_top = zeros(V)
+    u_new = zeros(size(u)...)
+    new_ξ
+    for k in 1:V
+        U = u[:,Not(k)]*Λ
+        s = create_upper_tri(diag(D),V)
+        H = diagm(vcat(filter!(i->i!=0,s[:,k]),filter!(i->i!=0,s[k,:])))
+        Γ = create_upper_tri(γ, V)
+        γk= vcat(filter!(i->i!=0,Γ[:,k]),filter!(i->i!=0,Γ[k,:]))
+        Σ = inv(((transpose(U)*inv(H)*U)/τ²) + inv(M))
+        m = (Σ*transpose(U)*inv(H)*γk)/τ²
+        mvn_a = MultivariateNormal(zeros(size(H,1)),τ²*H)
+        mvn_b_Σ = round.(τ²*H + U*M*transpose(U), digits=10)
+        mvn_b = MultivariateNormal(zeros(size(H,1)),mvn_b_Σ)
+        w_top = (1-Δ) * pdf(mvn_a,γk)
+        w_bot = w_top + Δ*pdf(mvn_b,γk)
+        w = w_top / w_bot
+        mvn_f = MultivariateNormal(m,round.(Σ,digits=10))
+        
+        ξ[k] = update_ξ(w)
+        # the paper says take the pdf of mvn_f at u_k, but that doesn't really make sense since we need R values not 1
+        # in their implementation they sample from mvn_f
+        u_new[:,k] = (1-ξ).*rand(mvn_f)
+    end
+    return u_new,ξ
 end
 
-function update_ξ()
-    
+function update_ξ(w)
+    rand(Bernoulli(1 - w))
 end
 
-function update_Δ()
-    
+function update_Δ(aΔ, bΔ, ξ, V)
+    a = aΔ + sum(ξ)
+    b = bΔ + V - sum(ξ)
+    return rand(Beta(a,b))
 end
 
-function update_M()
-    
+function update_M(u, Λ,V)
+    uΛu = 0
+    num_nonzero = 0
+    for i in 1:V
+        uΛu = uΛu + transpose(u[:,i])*Λ*u[:,i]
+        if u[:,i] != zeros(size(u,1))
+            num_nonzero = num_nonzero + 1
+        end
+    end
+    Ψ = I(V) .+ uΛu
+    df = V + num_nonzero
+    M = rand(InverseWishart(df,round.(Ψ, digits=10)))
+    return M
 end
 
 function update_λ()

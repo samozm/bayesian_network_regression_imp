@@ -44,6 +44,11 @@ n = size(Z,1)
 
 @testset "InitTests" begin
     X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V_new = init_vars(Z, η, ζ, ι, R, aΔ, bΔ)
+    #show(stdout, "text/plain",γ)
+    #println("\n-\n")
+    #show(stdout, "text/plain",γ[1])
+    #println("\n-\n")
+    show(stdout, "text/plain", update_M(u, Λ, V))
     @test (size(X,1),size(X[1],1)) == (n,q)
     @test size(D) == (q,q)
     @test size(πᵥ) == (R,3)
