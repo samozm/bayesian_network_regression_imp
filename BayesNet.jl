@@ -1,4 +1,4 @@
-using Random, Distributions, DataFrames, LinearAlgebra, StatsBase, GenInvGaussian, RCall
+using Random, Distributions, DataFrames, LinearAlgebra, StatsBase, RCall
 
 #region custom sampling
 """
