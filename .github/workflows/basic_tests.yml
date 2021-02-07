@@ -42,7 +42,7 @@ jobs:
           version: 1.5.3
       - uses: julia-actions/julia-buildpkg@master
       - name: Add Packages
-        run: julia -e 'using Pkg; Pkg.add(["Distributions", "Random", "DataFrames", "LinearAlgebra", "StatsBase", "RCall", "Test"])'
+        run: julia -e 'using Pkg; Pkg.add(["Distributions", "Random", "DataFrames", "LinearAlgebra", "StatsBase", "RCall", "InvertedIndices", "Test"])'
 
       # Runs a julia file containing unit tests
       - name: Run basic unit tests
