@@ -1,4 +1,5 @@
 using Random, Distributions, DataFrames, LinearAlgebra, StatsBase, RCall
+R"library(GIGrvg)"
 
 #region custom sampling
 """
