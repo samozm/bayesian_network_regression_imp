@@ -323,6 +323,8 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         ξ[k] = update_ξ(w)
         # the paper says take the pdf of mvn_f at u_k, but that doesn't really make sense since we need R values not 1
         # in their implementation they sample from mvn_f
+        # also, the paper says the first term is (1-w) but their code uses 1-ξ. again i think this makes more sense
+        # that this term would essentially be an indicator rather than a weight
         u_new[:,k] = (1-ξ).*rand(mvn_f)
     end
     return u_new,ξ
