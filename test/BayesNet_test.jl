@@ -1,6 +1,6 @@
 using Test
 
-include("BayesNet.jl")
+include("../src/BayesNet.jl")
 
 
 function symmetrize_matrices(X)

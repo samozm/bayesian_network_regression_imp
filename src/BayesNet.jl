@@ -351,7 +351,7 @@ function update_M(u, Λ,V)
     end
     Ψ = I(V) .+ uΛu
     df = V + num_nonzero
-    M = rand(InverseWishart(df,round.(Ψ, digits=10)))
+    M = rand(InverseWishart(df,round.(Ψ, digits=8)))
     return M
 end
 
