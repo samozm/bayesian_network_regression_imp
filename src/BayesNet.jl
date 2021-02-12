@@ -40,39 +40,6 @@ function sample_rgig(a,b)
 end
 #endregion
 
-#region beginning of implementing sampling from GIG (unfinished)
-function sample_GIG(λ,Ψ,χ)
-    β = sqrt(Ψ*χ)
-    if(β > 1)
-        println("Uh oh, bad parameters for sample GIG")
-        return
-    elseif(β < min(1/2, (2/3)*sqrt(1 - λ))) 
-        return sample_GIG_bigβ(λ,β)
-    else
-        return sample_GIG_smallβ(λ,β)
-    end
-end
-
-function sample_GIG_bigβ(λ,β)
-    m = β/((1 - λ) + sqrt((1 - λ)^2 + β^2))
-    x⁺= ((1 + λ) + sqrt((1 + λ)^2 + β^2))/β
-    v⁺= sqrt(g(m,λ,β))
-    u⁺= x⁺ * sqrt(g(x⁺,λ,β))
-    V = 0
-    while true
-        
-    end
-end
-
-function sample_GIG_smallβ(λ,β)
-    
-end
-
-function g(x,λ,β)
-    x^(λ-1)*exp(-(β/2)*(x + (1/x)))
-end
-
-#endregion
 
 #region helper functions
 """
