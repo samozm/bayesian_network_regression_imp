@@ -169,8 +169,8 @@ end
 Sample the next μ value from the normal distribution with mean 1ᵀ(y - Xγ)/n and variance τ²/n
 
 # Arguments
-- `y` : response values 
 - `X` : 2 dimensional array of predictor values, 1 row per sample (upper triangle of original X)
+- `y` : response values 
 - `γ` : vector of regression parameters 
 - `τ²`: overall variance parameter
 - `n` : number of samples (length of y)
@@ -178,7 +178,7 @@ Sample the next μ value from the normal distribution with mean 1ᵀ(y - Xγ)/n 
 # Returns
 new value of μ
 """
-function update_μ(y, X, γ, τ², n)
+function update_μ(X, y, γ, τ², n)
     μₘ = (ones(1,n) * (y - X*γ)) / n
     σₘ² = τ²/n
     μ = rand(Normal(μₘ,σₘ²))
@@ -235,21 +235,22 @@ function update_τ²(X, y, μ, γ, W, D, V)
 end
 
 """
-    update_D(γ, u, Λ, τ², V)
+    update_D(γ, u, Λ, θ, τ², V)
 
-Sample the next D value from the GeneralizedInverseGaussian distribution with a = 1/2, b=((γ - uᵀΛu)^2)/τ², p=θ
+Sample the next D value from the GeneralizedInverseGaussian distribution with p = 1/2, a=((γ - uᵀΛu)^2)/τ², b=θ
 
 # Arguments
 - `γ` : vector of regression parameters 
 - `u` : the latent variables u
 - `Λ` : R × R diagonal matrix of λ values
+- `θ` : b parameter for the GeneralizedInverseGaussian distribution
 - `τ²`: overall variance parameter 
 - `V` : dimension of original symmetric adjacency matrices
 
 # Returns
 new value of D
 """
-function update_D(γ, u, Λ, τ², V)
+function update_D(γ, u, Λ, θ, τ², V)
     q = floor(Int,V*(V-1)/2)
     uᵀΛu = transpose(u) * Λ * u
     uᵀΛu_upper = upper_triangle(uᵀΛu)
@@ -392,7 +393,7 @@ function update_M(u,Λ,V)
 end
 
 """
-    update_λ(πᵥ, R, λ, u, τ², D)
+    update_Λ(πᵥ, R, λ, u, τ², D)
 
 Sample the next values of λ from [0,1,-1] with probabilities determined from a normal mixture
 
@@ -405,9 +406,9 @@ Sample the next values of λ from [0,1,-1] with probabilities determined from a 
 - `τ²`: overall variance parameter
 
 # Returns
-new values of λ
+new value of Λ
 """
-function update_λ(πᵥ, R, Λ, u, D, τ²)
+function update_Λ(πᵥ, R, Λ, u, D, τ²)
     λ = diag(Λ)
     λ_new = zeros(size(Λ,1))
     for r in 1:R
@@ -426,7 +427,7 @@ function update_λ(πᵥ, R, Λ, u, D, τ²)
         p3 = 1 - p1 - p2
         λ_new[r] = sample([0,1,-1],weights([p1,p2,p3]))
     end
-    return λ_new
+    return diagm(λ_new)
 end
 
 """
@@ -447,14 +448,54 @@ function update_π(Λ,η)
 end
 #endregion
 
-function GibbsSample(X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V, η, ζ, ι, R, aΔ, bΔ)
-    
+"""
+    GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ)
+
+Take one GibbsSample
+
+# Arguments
+
+
+# Returns
+A tuple of the new values, (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
+"""
+function GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ)
+    n = size(X,1)
+    τ²_n = update_τ²(X, y, μ, γ, W, D, V)
+    u_n, ξ_n = update_u_ξ(u,γ,D,τ²_n,Δ,M,Λ,V)
+    γ_n = update_γ(X,D,W,μ,τ²_n,n)
+    D_n = update_D(γ_n,u_n,Λ,θ,τ²_n,V)
+    θ_n = update_θ(ζ,ι,V,D_n)
+    Δ_n = update_Δ(aΔ,bΔ,ξ,V)
+    M_n = update_M(u_n,Λ,V)
+    μ_n = update_μ(X,y,γ_n,τ²_n,n)
+    Λ_n = update_Λ(πᵥ,R,Λ,u_n,D_n,τ²_n)
+    πᵥ_n = update_π(Λ_n,η)
+    return (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
 end
 
 
-function BayesNet(X::Matrix,R::Real,η::Real=1.01,ζ::Real=1,ι::Real=1,aΔ::Real=0,bΔ::Real=0)
+function BayesNet(X::Matrix,R::Real,η::Real=1.01,ζ::Real=1,ι::Real=1,aΔ::Real=0,bΔ::Real=0, nburn::Int64=30000, nsamples::Int64=20000)
     X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V = init_vars(X, η, ζ, ι, R, aΔ, bΔ)
-
+    
+    # burn-in
+    for i in 1:nburn
+        τ²[1], u[1], ξ[1], γ[1], D[1], θ[1], Δ[1], M[1], μ[1], Λ[1], πᵥ[1] = GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ)
+    end
+    for i in 1:nsamples 
+        result = GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ)
+        push!(τ²,result[1])
+        push!(u,result[2])
+        push!(ξ,result[3])
+        push!(γ,result[4])
+        push!(D,result[5])
+        push!(θ,result[6])
+        push!(Δ,result[7])
+        push!(M,result[8])
+        push!(μ,result[9])
+        push!(Λ,result[10])
+        push!(πᵥ,result[11])
+    end
 end
 
 #main()
