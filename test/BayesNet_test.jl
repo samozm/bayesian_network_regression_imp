@@ -36,6 +36,9 @@ X = [[0, 1, 0, 1,
 Z = symmetrize_matrices(X)
 #show(stdout,"text/plain",Z)
 
+y = ones(size(Z[1],1))*12 + rand(Normal(0,1.2),size(Z[1],1))
+
+
 η  = 1.01
 ζ  = 1
 ι  = 1
@@ -53,7 +56,9 @@ n = size(Z,1)
     #show(stdout, "text/plain",γ[1])
     #println("\n-\n")
     #show(stdout, "text/plain", γ)
-    @test (size(X,1),size(X[1],1)) == (n,q)
+    show(stdout, "text/plain", Z)
+    show(stdout, "text/plain", X)
+    @test size(X) == (n,q)
     @test size(D[1]) == (q,q)
     @test size(πᵥ[1]) == (R,3)
     @test size(Λ[1]) == (R,R)
@@ -63,3 +68,5 @@ n = size(Z,1)
     @test size(γ[1]) == (q,)
     @test V == V_new
 end
+
+τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(Z, y, R)
