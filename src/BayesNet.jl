@@ -83,6 +83,18 @@ function create_upper_tri(vec,V)
     return mat
 end
 
+
+function sample_π_dirichlet(r,η,λ)
+    wts = [r^η,1,1]
+    if(λ[r] == 0)
+        wts[0] = r^η + 1
+    elseif(λ[r] == 0)
+        wts[1] = 2
+    else
+        wts[2] = 2
+    end
+    rand(Dirichlet(wts))
+end
 #endregion
 
 """
@@ -147,7 +159,7 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ)
     uᵀΛu = transpose(u) * Λ * u
     uᵀΛu_upper = upper_triangle(uᵀΛu)
     γ = rand(MultivariateNormal(uᵀΛu_upper, τ²*D))
-    return (X_new, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V)
+    return (X_new, [θ], [D], [πᵥ], [Λ], [Δ], [ξ], [M], [u], [μ], [τ²], [γ], V)
 end
 
 #region update variables
@@ -242,6 +254,7 @@ function update_D(γ, u, Λ, τ², V)
     uᵀΛu = transpose(u) * Λ * u
     uᵀΛu_upper = upper_triangle(uᵀΛu)
     a = (γ - uᵀΛu_upper).^2 / τ²
+    # TODO: update this to use new sampler from distributions
     D = diagm(map(k -> sample_rgig(a[k],θ), 1:q))
 end
 
@@ -255,7 +268,7 @@ Sample the next θ value from the Gamma distribution with a = ζ + V(V-1)/2 and 
 - `ι` : hyperparameter, used to construct `b` parameter
 - `V` : dimension of original symmetric adjacency matrices
 - `D` : diagonal matrix of s values
-
+- `τ²`: overall variance parameter 
 # Returns
 new value of θ
 """
@@ -265,7 +278,24 @@ function update_θ(ζ, ι, V, D)
     θ = rand(Gamma(a,b))
 end
 
+"""
+    update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
 
+Sample the next u and ξ values 
+
+# Arguments
+- `u` : the current latent variables u
+- `γ` : vector of regression parameters 
+- `D` : diagonal matrix of s values
+- `τ²`: overall variance parameter
+- `Δ` : set to 1 draw from Beta(aΔ, bΔ) (or 1 if aΔ or bΔ are 0).
+- `M` : set to R × R matrix drawn from InverseWishart(V, I_R) (where I_R is the identity matrix with dimension R × R)
+- `Λ` : R × R diagonal matrix of λ values
+- `V` : dimension of original symmetric adjacency matrices
+
+# Returns
+A touple with the new values of u and ξ
+"""
 function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
     q = V*(V-1)
     w_top = zeros(V)
@@ -297,17 +327,56 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
     return u_new,ξ
 end
 
+"""
+    update_ξ(w)
+
+Sample the next ξ value from the Bernoulli distribution with parameter 1-w
+
+# Arguments
+- `w` : parameter to use for sampling, probability that 0 is drawn
+
+# Returns
+the new value of ξ
+"""
 function update_ξ(w)
     rand(Bernoulli(1 - w))
 end
 
+"""
+    update_Δ(aΔ, bΔ, ξ, V)
+
+Sample the next Δ value from the Beta distribution with parameters a = aΔ + ∑ξ and b = bΔ + V - ∑ξ
+
+# Arguments
+- `aΔ`: hyperparameter used as part of the a parameter in the beta distribution used to sample Δ. 
+- `bΔ`: hyperparameter used as part of the b parameter in the beta distribution used to sample Δ.
+- `ξ` : vector of ξ values, 0 or 1
+- `V` : dimension of original symmetric adjacency matrices
+
+# Returns
+the new value of Δ
+"""
 function update_Δ(aΔ, bΔ, ξ, V)
     a = aΔ + sum(ξ)
     b = bΔ + V - sum(ξ)
     return rand(Beta(a,b))
 end
 
-function update_M(u, Λ,V)
+
+"""
+    update_M(u,Λ,V)
+
+Sample the next M value from the InverseWishart distribution with df = V + # of nonzero columns in u and Ψ = I + ∑ uΛuᵀ
+
+# Arguments
+- `u` : R × V matrix of latent variables
+- `Λ` : R × R diagonal matrix of λ values
+- `V` : dimension of original symmetric adjacency matrices
+
+# Returns
+the new value of M
+"""
+function update_M(u,Λ,V)
     uΛu = 0
     num_nonzero = 0
     for i in 1:V
@@ -322,32 +391,70 @@ function update_M(u, Λ,V)
     return M
 end
 
-function update_λ()
-    
+"""
+    update_λ(πᵥ, R, λ, u, τ², D)
+
+Sample the next values of λ from [0,1,-1] with probabilities determined from a normal mixture
+
+# Arguments
+- `πᵥ`: 3 column vectors of dimension R used to weight normal mixture for probability values
+- `R` : the dimensionality of the latent variables u
+- `Λ` : R × R diagonal matrix of λ values
+- `u` : R × V matrix of latent variables
+- `D` : diagonal matrix of s values
+- `τ²`: overall variance parameter
+
+# Returns
+new values of λ
+"""
+function update_λ(πᵥ, R, Λ, u, D, τ²)
+    λ = diag(Λ)
+    λ_new = zeros(size(Λ,1))
+    for r in 1:R
+        Λ₋₁= diagm(hcat(λ[1:r-1],[-1],λ[r+1:R]))
+        Λ₀ = diagm(hcat(λ[1:r-1],[0],λ[r+1:R]))
+        Λ₁ = diagm(hcat(λ[1:r-1],[1],λ[r+1:R]))
+        W₋₁= upper_triangle(u * Λ₋₁ * transpose(u))
+        W₀ = upper_triangle(u * Λ₀ * transpose(u))
+        W₁ = upper_triangle(u * Λ₁ * transpose(u))
+        n₀ = pdf(MultivariateNormal(transpose(W₀), τ² * D),γ)
+        n₁ = pdf(MultivariateNormal(transpose(W₁), τ² * D),γ)
+        n₋₁= pdf(MultivariateNormal(transpose(W₋₁), τ² * D),γ)
+        p_bot = πᵥ[:,1] * n₀ + πᵥ[:,2] * n₁ + πᵥ[:3] * n₋₁
+        p1 = πᵥ[:,1] * n₀ / p_bot
+        p2 = πᵥ[:,2] * n₁ / p_bot
+        p3 = 1 - p1 - p2
+        λ_new[r] = sample([0,1,-1],weights([p1,p2,p3]))
+    end
+    return λ_new
 end
 
-function update_π()
+"""
+    update_π(λ,η)
 
+Sample the new values of πᵥ from the Dirichlet distribution with parameters [#{r: λᵣ = 0} + r^η, 1 + #{r: λᵣ= 1}, 1 + #{r: λᵣ = -1 }]
+
+# Arguments
+- `Λ` : R × R diagonal matrix of λ values
+- `η` : hyperparameter used for sampling the 0 value (r^η)
+
+# Returns
+new value of πᵥ
+"""
+function update_π(Λ,η)
+    λ = diag(Λ)
+    π_new = transpose(hcat(map(r -> sample_π_dirichlet(r,η,λ),1:R)...))
 end
 #endregion
 
-function main()
-    #data = DataFrame!(CSV.File())
-    #X  = convert(Matrix, select(data, Not()))
-    #A = [0, 1, 0, 1, 
-    #    1, 0, 1, 1, 
-    #    0, 1, 0, 0, 
-    #    0, 1, 0, 0]
-    #B = convert(Matrix, reshape(A, 4, 4))
-    #X = Symmetric(B)
-    η  = 1.01
-    ζ  = 1
-    ι  = 1
-    R  = 3
-    aΔ = 0
-    bΔ = 0
+function GibbsSample(X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V, η, ζ, ι, R, aΔ, bΔ)
+    
+end
 
-    θ, s, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ = init_vars(X, η, ζ, ι, R, aΔ, bΔ)
+
+function BayesNet(X::Matrix,R::Real,η::Real=1.01,ζ::Real=1,ι::Real=1,aΔ::Real=0,bΔ::Real=0)
+    X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V = init_vars(X, η, ζ, ι, R, aΔ, bΔ)
+
 end
 
 #main()

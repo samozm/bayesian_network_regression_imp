@@ -27,7 +27,11 @@ X = [[0, 1, 0, 1,
     [0, 0, 1, 0, 
      0, 0, 1, 1, 
      1, 1, 0, 0, 
-     0, 1, 0, 0]]
+     0, 1, 0, 0],
+    [0, 0, 1, 0, 
+     0, 0, 1, 1, 
+     1, 1, 0, 1, 
+     0, 1, 1, 0]]
 #show(stdout,"text/plain",X)
 Z = symmetrize_matrices(X)
 #show(stdout,"text/plain",Z)
@@ -48,14 +52,14 @@ n = size(Z,1)
     #println("\n-\n")
     #show(stdout, "text/plain",γ[1])
     #println("\n-\n")
-    show(stdout, "text/plain", update_M(u, Λ, V))
+    #show(stdout, "text/plain", γ)
     @test (size(X,1),size(X[1],1)) == (n,q)
-    @test size(D) == (q,q)
-    @test size(πᵥ) == (R,3)
-    @test size(Λ) == (R,R)
-    @test issubset(ξ,[0,1])
-    @test size(M) == (R,R)
-    @test size(u) == (R,V)
-    @test size(γ) == (q,)
+    @test size(D[1]) == (q,q)
+    @test size(πᵥ[1]) == (R,3)
+    @test size(Λ[1]) == (R,R)
+    @test issubset(ξ[1],[0,1])
+    @test size(M[1]) == (R,R)
+    @test size(u[1]) == (R,V)
+    @test size(γ[1]) == (q,)
     @test V == V_new
 end
