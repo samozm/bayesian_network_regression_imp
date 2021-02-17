@@ -75,6 +75,9 @@ upper triangluar matrix containing values of `vec`
 function create_upper_tri(vec,V)
     mat = zeros(V,V)
     vec2 = deepcopy(vec)
+    println("vec2")
+    show(stdout,"text/plain",vec2)
+    println("")
     for k = 1:V
         for l = k+1:V
             mat[k,l] = popfirst!(vec2)
@@ -87,11 +90,11 @@ end
 function sample_π_dirichlet(r,η,λ)
     wts = [r^η,1,1]
     if(λ[r] == 0)
-        wts[0] = r^η + 1
+        wts[1] = r^η + 1
     elseif(λ[r] == 0)
-        wts[1] = 2
-    else
         wts[2] = 2
+    else
+        wts[3] = 2
     end
     rand(Dirichlet(wts))
 end
@@ -114,7 +117,7 @@ end
     # Returns
     - `X` : matrix of re-ordered predictors. one row per sample, V*(V-1) columns 
     - `θ` : set to 1 draw from Gamma(ζ,ι)
-    - `S` : set to a matrix of V×V draws from the Exponential(θ/2) distribution
+    - `D` : set to a diagonal matrix of V(V-1)/2 draws from the Exponential(θ/2) distribution
     - `πᵥ`: set to a R × 3 matrix of draws from the Dirichlet distribution, where the second and third columns are draws from Dirichlet(1) and the first are draws from Dirichlet(r^η)
     - `Λ` : R × R diagonal matrix of λ values, which are sampled from [0,1,-1] with probabilities assigned from the rth row of πᵥ
     - `Δ` : set to 1 draw from Beta(aΔ, bΔ) (or 1 if aΔ or bΔ are 0).
@@ -154,11 +157,17 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ)
     ξ = map(keys -> rand(Binomial(1,Δ)), 1:V)
     M = rand(InverseWishart(V,Matrix(I,R,R)))
     u = hcat(map(k -> sample_u(ξ[k], R, M), 1:V)...)
-    μ = 1
+    μ = 1.0
     τ²= rand(Uniform(0,1))^2
     uᵀΛu = transpose(u) * Λ * u
     uᵀΛu_upper = upper_triangle(uᵀΛu)
     γ = rand(MultivariateNormal(uᵀΛu_upper, τ²*D))
+    println("γ")
+    show(stdout, "text/plain", γ)
+    println("")
+    println("[γ]")
+    show(stdout, "text/plain", [γ])
+    println("")
     return (X_new, [θ], [D], [πᵥ], [Λ], [Δ], [ξ], [M], [u], [μ], [τ²], [γ], V)
 end
 
@@ -332,7 +341,7 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         mvn_f = MultivariateNormal(m,round.(Σ,digits=10))
         
         ξ[k] = update_ξ(w)
-        # the paper says take the pdf of mvn_f at u_k, but that doesn't really make sense since we need R values not 1
+        # TODO: the paper says take the pdf of mvn_f at u_k, but that doesn't really make sense since we need R values not 1
         # in their implementation they sample from mvn_f
         # also, the paper says the first term is (1-w) but their code uses 1-ξ. again i think this makes more sense
         # that this term would essentially be an indicator rather than a weight
@@ -372,6 +381,7 @@ the new value of Δ
 """
 function update_Δ(aΔ, bΔ, ξ, V)
     a = aΔ + sum(ξ)
+    #TODO: ensure b is > 0
     b = bΔ + V - sum(ξ)
     return rand(Beta(a,b))
 end
@@ -428,29 +438,31 @@ Sample the next values of λ from [0,1,-1] with probabilities determined from a 
 - `u` : R × V matrix of latent variables
 - `D` : diagonal matrix of s values
 - `τ²`: overall variance parameter
+- `γ` : vector of regression parameters 
 
 # Returns
 new value of Λ
 """
-function update_Λ(πᵥ, R, Λ, u, D, τ²)
+function update_Λ(πᵥ, R, Λ, u, D, τ², γ)
     λ = diag(Λ)
     λ_new = zeros(size(Λ,1))
     for r in 1:R
-        Λ₋₁= diagm(hcat(λ[1:r-1],[-1],λ[r+1:R]))
-        println("Λ₋₁")
-        show(stdout, "text/plain", Λ₋₁)
-        println("")
-        Λ₀ = diagm(hcat(λ[1:r-1],[0],λ[r+1:R]))
-        Λ₁ = diagm(hcat(λ[1:r-1],[1],λ[r+1:R]))
-        W₋₁= upper_triangle(u * Λ₋₁ * transpose(u))
-        W₀ = upper_triangle(u * Λ₀ * transpose(u))
-        W₁ = upper_triangle(u * Λ₁ * transpose(u))
-        n₀ = pdf(MultivariateNormal(transpose(W₀), τ² * D),γ)
-        n₁ = pdf(MultivariateNormal(transpose(W₁), τ² * D),γ)
-        n₋₁= pdf(MultivariateNormal(transpose(W₋₁), τ² * D),γ)
-        p_bot = πᵥ[:,1] * n₀ + πᵥ[:,2] * n₁ + πᵥ[:3] * n₋₁
-        p1 = πᵥ[:,1] * n₀ / p_bot
-        p2 = πᵥ[:,2] * n₁ / p_bot
+        Λ₋₁= Λ
+        Λ₋₁[r,r] = -1
+        Λ₀ = Λ
+        Λ₀[r,r] = 0
+        Λ₁ = Λ
+        Λ₀[r,r] = 1
+        # TODO: confirm it's correct to have the transpose u first
+        W₋₁= upper_triangle(transpose(u) * Λ₋₁ * u)
+        W₀ = upper_triangle(transpose(u) * Λ₀ * u)
+        W₁ = upper_triangle(transpose(u) * Λ₁ * u)
+        n₀ = pdf(MultivariateNormal(W₀, τ² * D),γ)
+        n₁ = pdf(MultivariateNormal(W₁, τ² * D),γ)
+        n₋₁= pdf(MultivariateNormal(W₋₁, τ² * D),γ)
+        p_bot = πᵥ[r,1] * n₀ + πᵥ[r,2] * n₁ + πᵥ[r,3] * n₋₁
+        p1 = πᵥ[r,1] * n₀ / p_bot
+        p2 = πᵥ[r,2] * n₁ / p_bot
         p3 = 1 - p1 - p2
         λ_new[r] = sample([0,1,-1],weights([p1,p2,p3]))
     end
@@ -496,7 +508,7 @@ function GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι
     Δ_n = update_Δ(aΔ, bΔ, ξ, V)
     M_n = update_M(u_n, Λ, V)
     μ_n = update_μ(X, y, γ_n, τ²_n, n)
-    Λ_n = update_Λ(πᵥ, R, Λ, u_n, D_n, τ²_n)
+    Λ_n = update_Λ(πᵥ, R, Λ, u_n, D_n, τ²_n, γ)
     πᵥ_n = update_π(Λ_n, η)
     return (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
 end
@@ -507,7 +519,19 @@ function BayesNet(X::Array{Array{T,2},1}, y::Array, R::Real,η::Real=1.01,ζ::Re
     
     # burn-in
     for i in 1:nburn
-        τ²[1], u[1], ξ[1], γ[1], D[1], θ[1], Δ[1], M[1], μ[1], Λ[1], πᵥ[1] = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), last(γ), V, η, ζ, ι, R, aΔ, bΔ)
+        #τ²[1], u[1], ξ[1], γ[1], D[1], θ[1], Δ[1], M[1], μ[1], Λ[1], πᵥ[1] = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), last(γ), V, η, ζ, ι, R, aΔ, bΔ)
+        result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), last(γ), V, η, ζ, ι, R, aΔ, bΔ)
+        push!(τ²,result[1])
+        push!(u,result[2])
+        push!(ξ,result[3])
+        γ = vcat(γ,[result[4]])
+        push!(D,result[5])
+        push!(θ,result[6])
+        push!(Δ,result[7])
+        push!(M,result[8])
+        push!(μ,result[9])
+        push!(Λ,result[10])
+        push!(πᵥ,result[11])
     end
     for i in 1:nsamples 
         result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), last(γ), V, η, ζ, ι, R, aΔ, bΔ)
