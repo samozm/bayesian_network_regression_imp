@@ -1,4 +1,4 @@
-using Test
+using Test,TickTock,Suppressor
 
 include("../src/BayesNet.jl")
 
@@ -80,4 +80,51 @@ n = size(Z,1)
     @test V == V_new
 end
 
-τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(Z, y, R, V_in = 20, x_transform = false)
+nburn = 30000
+nsamp = 20000
+tick()
+#τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(Z, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, x_transform = false)
+tock()
+
+low = zeros(20)
+high = zeros(20)
+#lw = round(20000 * 0.25)
+#hi = round(20000 * 0.75)
+lw = convert(Int64, round(nsamp * 0.1))
+hi = convert(Int64, round(nsamp * 0.9))
+
+#γ_n = hcat(γ...)
+
+#for i in 1:20
+#    srtd = sort(γ_n[i,nburn+1:nburn+nsamp])
+#    low[i] = srtd[lw]
+#    high[i] = srtd[hi]
+#end
+
+#show(stdout,"text/plain",DataFrame(n = collect(1:20),l = low, h = high))
+println("")
+
+
+R"outlist=readRDS('data/guha_out.Rdata')"
+R"g_gamma=outlist$betamat; g_q=outlist$q; g_lambda=outlist$kappa; g_epsilon_k=outlist$epsilon_k; g_theta=outlist$theta; g_Lambda=outlist$Lambda; g_tau=outlist$tau; g_u=outlist$u; g_pi=outlist$pi; g_mu=outlist$mu; g_M=outlist$M; g_delta=outlist$delta; g_S=outlist$S"
+g_mu=@rget g_mu
+g_gamma=@rget g_gamma
+g_tau=@rget g_tau
+
+mus = zeros(500)
+
+for i in 1:500
+    gam = upper_triangle(g_gamma[i + 32000,:,:])
+    mus[i] = update_μ(Z, y, gam, g_tau[i + 32000,:][1], size(Z,1))
+end
+
+show(stdout, "text/plain", DataFrame(n=collect(1:500), GuhaMu=g_mu[32001:32500], MeMu=mus))
+
+GuhaSort=sort(g_mu[32001:32500])
+MeSort=sort(mus)
+lo = convert(Int64, round(500 * 0.10))
+hi = convert(Int64, round(500 * 0.90))
+
+show(stdout, "text/plain", DataFrame(GuhaLo=GuhaSort[lo], GuhaHi=GuhaSort[hi]))
+show(stdout, "text/plain", DataFrame(GuhaMu=MeSort[lo], MeMu=MeSort[hi]))
+

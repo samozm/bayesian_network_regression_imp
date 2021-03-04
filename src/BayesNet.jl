@@ -42,12 +42,12 @@ function sample_rgig(a,b)
     #R"r=rgig(n=1, lambda=1/2,chi=b,psi=a)"
     #l=@rget r
     
-    #print("a: ")
-    #println(a)
-    #print("b: ")
-    #println(b)
+    print("psi(a): ")
+    println(a)
+    print("chi(b): ")
+    println(b)
     l = rand(GeneralizedInverseGaussian(a,b,1/2))
-    #println("end GIG")
+    println("end GIG")
     return l
 end
 #endregion
@@ -232,8 +232,12 @@ function update_γ(X, D, Λ, u, μ, τ², n)
     uᵀΛu = transpose(u) * Λ * u
     W = upper_triangle(uᵀΛu)
     q = size(D,1)
+    println("W")
+    show(stdout,"text/plain",W)
+    println("")
 
-    Δᵧ₁ = rand(MultivariateNormal(zeros(q), τ²*D))
+    # TODO: why is this sqrt? It's from the code but not in the paper
+    Δᵧ₁ = rand(MultivariateNormal(zeros(q), sqrt.(τ²*D)))
     Δᵧ₂ = rand(MultivariateNormal(zeros(n), I(n)))
     Δᵧ₃ = (X/sqrt(τ²))*Δᵧ₁ + Δᵧ₂
     γw = Δᵧ₁ + (τ²*D)*(transpose(X)/sqrt(τ²))*inv(X*D*transpose(X) + I(n)) * (((y - μ*ones(n,1) - X*W)/sqrt(τ²)) - Δᵧ₃)
@@ -313,7 +317,16 @@ function update_D(γ, u, Λ, θ, τ², V)
     q = floor(Int,V*(V-1)/2)
     uᵀΛu = transpose(u) * Λ * u
     uᵀΛu_upper = upper_triangle(uᵀΛu)
+    print("γ")
+    show(stdout, "text/plain", γ)
+    println("")
+    print("uᵀΛu_upper")
+    show(stdout, "text/plain", uᵀΛu_upper)
+    println("")
     a = (γ - uᵀΛu_upper).^2 / τ²
+    print("a")
+    show(stdout, "text/plain", a)
+    println("")
     # TODO: update this to use new sampler from distributions
     D = diagm(map(k -> sample_rgig(θ,a[k]), 1:q))
 end
@@ -335,6 +348,9 @@ new value of θ
 function update_θ(ζ, ι, V, D)
     a = ζ + (V*(V-1))/2
     b = ι + sum(D)/2
+    #print("D: ")
+    #show(stdout,"text/plain",D)
+    #println("")
     θ = rand(Gamma(a,b))
 end
 
@@ -396,24 +412,35 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         #println("H")
         #show(stdout, "text/plain", H)
         #println("")
-        mvn_a = MultivariateNormal(zeros(size(H,1)),τ²*H)
-        mvn_b_Σ = round.(τ²*H + U*M*transpose(U), digits=10)
+        mvn_a = zeros(size(H,1))
+        try
+            mvn_a = MultivariateNormal(zeros(size(H,1)),Symmetric(τ²*H)) 
+        catch
+            println("τ²*H")
+            show(stdout, "text/plain", τ²*H)
+            println("")
+        end
+        mvn_b_Σ = Symmetric(τ²*H + U*M*transpose(U))
         mvn_b = MultivariateNormal(zeros(size(H,1)),mvn_b_Σ)
         w_top = (1-Δ) * pdf(mvn_a,γk)
         w_bot = w_top + Δ*pdf(mvn_b,γk)
-        if (w_bot == 0)
-            println("τ²")
-            show(stdout, "text/plain", τ²)
+        # TODO: this may just be papering over problems, might have to actually fix this
+        if w_bot == 0
+            w = 0
+            println("τ²*H")
+            show(stdout, "text/plain", τ²*H)
             println("")
-            println("H")
-            show(stdout, "text/plain", H)
+            println("w_top")
+            show(stdout, "text/plain", w_top)
             println("")
-            println("w")
-            show(stdout, "text/plain", w)
+            println("γk")
+            show(stdout, "text/plain", γk)
             println("")
+        else 
+            w = w_top / w_bot
         end
-        w = w_top / w_bot
-        mvn_f = MultivariateNormal(m,round.(Σ,digits=10))
+        
+        mvn_f = MultivariateNormal(m,Symmetric(Σ))
         
         
         #TODO: sometimes w is NaN
@@ -495,7 +522,7 @@ function update_M(u,Λ,V)
     end
     Ψ = I(R) .+ uΛu
     df = V + num_nonzero
-    M = rand(InverseWishart(df,round.(Ψ, digits=5)))
+    M = rand(InverseWishart(df,Ψ))
     return M
 end
 
