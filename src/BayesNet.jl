@@ -42,12 +42,12 @@ function sample_rgig(a,b)
     #R"r=rgig(n=1, lambda=1/2,chi=b,psi=a)"
     #l=@rget r
     
-    print("psi(a): ")
-    println(a)
-    print("chi(b): ")
-    println(b)
+    #print("psi(a): ")
+    #println(a)
+    #print("chi(b): ")
+    #println(b)
     l = rand(GeneralizedInverseGaussian(a,b,1/2))
-    println("end GIG")
+    #println("end GIG")
     return l
 end
 #endregion
@@ -66,7 +66,16 @@ return the upper triangle (without the diagonal) of the matrix as a vector
 vector of upper triangluar section of `matrix`
 """
 function upper_triangle(matrix)
-    [matrix[i,j] for i = 1:size(matrix,1), j = 2:size(matrix,2) if i < j]
+    #[matrix[i,j] for i = 1:size(matrix,1), j = 2:size(matrix,2) if i < j]
+    k = 1
+    ret = zeros(convert(Int64, round(size(matrix,1)*(size(matrix,2) - 1)/2)))
+    for i in 1:size(matrix,1)
+        for j in (i+1):size(matrix,2)
+            ret[k] = matrix[i,j]
+            k = k + 1
+        end
+    end
+    return ret
 end
 
 """
@@ -97,11 +106,11 @@ end
 
 
 function sample_π_dirichlet(r,η,λ)
-    wts = [r^η,1,1]
-    if(λ[r] == 0)
-        wts[1] = r^η + 1
-    elseif(λ[r] == 0)
-        wts[2] = 2
+    wts = [1,r^η,1]
+    if λ[r] == 1
+        wts[1] = 1
+    elseif λ[r] == 0
+        wts[2] = r^η + 1
     else
         wts[3] = 2
     end
@@ -165,8 +174,8 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ, V_in=NaN, x_transform=true)
 
     S = map(k -> rand(Exponential(θ/2)), 1:q)
     D = diagm(S)
-    πᵥ = transpose(hcat(map(r -> rand(Dirichlet([r^η,1,1])),1:R)...))
-    λ = map(r -> sample([0,1,-1], weights(πᵥ[r,:]),1)[1], 1:R)
+    πᵥ = transpose(hcat(map(r -> rand(Dirichlet([1,r^η,1])),1:R)...))
+    λ = map(r -> sample([1,0,-1], weights(πᵥ[r,:]),1)[1], 1:R)
     Λ = diagm(λ)
     if (aΔ == 0 || bΔ == 0)
         Δ = 0.5
@@ -206,8 +215,13 @@ Sample the next μ value from the normal distribution with mean 1ᵀ(y - Xγ)/n 
 new value of μ
 """
 function update_μ(X, y, γ, τ², n)
-    μₘ = (ones(1,n) * (y - X*γ)) / n
-    σₘ² = τ²/n
+    #μₘ = (ones(1,n) * (y .- X*γ)) / n
+    μₘ = mean(y .- (X*γ))
+    σₘ² = sqrt(τ²/n)
+    #println("y")
+    #println(y)
+    #println("μₘ")
+    #println(μₘ)
     μ = rand(Normal(μₘ[1],σₘ²))
 end
 
@@ -232,15 +246,17 @@ function update_γ(X, D, Λ, u, μ, τ², n)
     uᵀΛu = transpose(u) * Λ * u
     W = upper_triangle(uᵀΛu)
     q = size(D,1)
-    println("W")
-    show(stdout,"text/plain",W)
-    println("")
+    #println("W")
+    #show(stdout,"text/plain",W)
+    #println("")
 
     # TODO: why is this sqrt? It's from the code but not in the paper
     Δᵧ₁ = rand(MultivariateNormal(zeros(q), sqrt.(τ²*D)))
     Δᵧ₂ = rand(MultivariateNormal(zeros(n), I(n)))
     Δᵧ₃ = (X/sqrt(τ²))*Δᵧ₁ + Δᵧ₂
-    γw = Δᵧ₁ + (τ²*D)*(transpose(X)/sqrt(τ²))*inv(X*D*transpose(X) + I(n)) * (((y - μ*ones(n,1) - X*W)/sqrt(τ²)) - Δᵧ₃)
+    one = (τ²*D)*(transpose(X)/sqrt(τ²))*inv(X*D*transpose(X) + I(n))
+    two = (((y - μ*ones(n,1) - X*W)/sqrt(τ²)) - Δᵧ₃)
+    γw = Δᵧ₁ + one * two
     γ = γw + W
 end
 
@@ -317,16 +333,16 @@ function update_D(γ, u, Λ, θ, τ², V)
     q = floor(Int,V*(V-1)/2)
     uᵀΛu = transpose(u) * Λ * u
     uᵀΛu_upper = upper_triangle(uᵀΛu)
-    print("γ")
-    show(stdout, "text/plain", γ)
-    println("")
-    print("uᵀΛu_upper")
-    show(stdout, "text/plain", uᵀΛu_upper)
-    println("")
+    #print("γ")
+    #show(stdout, "text/plain", γ)
+    #println("")
+    #print("uᵀΛu_upper")
+    #show(stdout, "text/plain", uᵀΛu_upper)
+    #println("")
     a = (γ - uᵀΛu_upper).^2 / τ²
-    print("a")
-    show(stdout, "text/plain", a)
-    println("")
+    #print("a")
+    #show(stdout, "text/plain", a)
+    #println("")
     # TODO: update this to use new sampler from distributions
     D = diagm(map(k -> sample_rgig(θ,a[k]), 1:q))
 end
@@ -347,11 +363,17 @@ new value of θ
 """
 function update_θ(ζ, ι, V, D)
     a = ζ + (V*(V-1))/2
-    b = ι + sum(D)/2
+    b = ι + sum(diag(D))/2
     #print("D: ")
     #show(stdout,"text/plain",D)
     #println("")
-    θ = rand(Gamma(a,b))
+    #=if b < 10
+        print(a)
+        print(" ")
+        println(b)
+    end=#
+    θ = rand(Gamma(a,1/b))
+    return θ
 end
 
 """
@@ -416,9 +438,9 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         try
             mvn_a = MultivariateNormal(zeros(size(H,1)),Symmetric(τ²*H)) 
         catch
-            println("τ²*H")
-            show(stdout, "text/plain", τ²*H)
-            println("")
+            #println("τ²*H")
+            #show(stdout, "text/plain", τ²*H)
+            #println("")
         end
         mvn_b_Σ = Symmetric(τ²*H + U*M*transpose(U))
         mvn_b = MultivariateNormal(zeros(size(H,1)),mvn_b_Σ)
@@ -427,15 +449,15 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         # TODO: this may just be papering over problems, might have to actually fix this
         if w_bot == 0
             w = 0
-            println("τ²*H")
-            show(stdout, "text/plain", τ²*H)
-            println("")
-            println("w_top")
-            show(stdout, "text/plain", w_top)
-            println("")
-            println("γk")
-            show(stdout, "text/plain", γk)
-            println("")
+            #println("τ²*H")
+            #show(stdout, "text/plain", τ²*H)
+            #println("")
+            #println("w_top")
+            #show(stdout, "text/plain", w_top)
+            #println("")
+            #println("γk")
+            #show(stdout, "text/plain", γk)
+            #println("")
         else 
             w = w_top / w_bot
         end
@@ -485,9 +507,8 @@ function update_Δ(aΔ, bΔ, ξ, V)
     a = aΔ + sum(ξ)
     #TODO: ensure b is > 0
     b = bΔ + V - sum(ξ)
-    if (a == 0 || b == 0)
-        Δ = 0.5
-    else 
+    Δ = 0.5
+    if a > 0 && b > 0
         Δ = rand(Beta(a, b))
     end
     return Δ
@@ -515,6 +536,7 @@ function update_M(u,Λ,V)
         # TODO: in the paper this is uᵀΛu but in the code it's just uuᵀ
         # should we email them and ask?
         # once the code works better I can play with the difference a bit more and see what works better
+        # currently using the one from the Rcode
         uΛu = uΛu .+ u[:,i]*transpose(u[:,i])#*Λ*u[:,i]
         if u[:,i] != zeros(size(u,1))
             num_nonzero = num_nonzero + 1
@@ -529,7 +551,7 @@ end
 """
     update_Λ(πᵥ, R, λ, u, τ², D)
 
-Sample the next values of λ from [0,1,-1] with probabilities determined from a normal mixture
+Sample the next values of λ from [1,0,-1] with probabilities determined from a normal mixture
 
 # Arguments
 - `πᵥ`: 3 column vectors of dimension R used to weight normal mixture for probability values
@@ -552,7 +574,7 @@ function update_Λ(πᵥ, R, Λ, u, D, τ², γ)
         Λ₀ = Λ
         Λ₀[r,r] = 0
         Λ₁ = Λ
-        Λ₀[r,r] = 1
+        Λ₁[r,r] = 1
         # TODO: confirm it's correct to have the transpose u first
         # is this actually asking for the pdfs here?
         W₋₁= upper_triangle(transpose(u) * Λ₋₁ * u)
@@ -561,11 +583,11 @@ function update_Λ(πᵥ, R, Λ, u, D, τ², γ)
         n₀ = pdf(MultivariateNormal(W₀, τ² * D),γ)
         n₁ = pdf(MultivariateNormal(W₁, τ² * D),γ)
         n₋₁= pdf(MultivariateNormal(W₋₁, τ² * D),γ)
-        p_bot = πᵥ[r,1] * n₀ + πᵥ[r,2] * n₁ + πᵥ[r,3] * n₋₁
-        p1 = πᵥ[r,1] * n₀ / p_bot
-        p2 = πᵥ[r,2] * n₁ / p_bot
+        p_bot = max(πᵥ[r,2] * n₀, πᵥ[r,1] * n₁, πᵥ[r,3] * n₋₁)
+        p2 = πᵥ[r,2] * n₀ / p_bot
+        p1 = πᵥ[r,1] * n₁ / p_bot
         p3 = 1 - p1 - p2
-        λ_new[r] = sample([0,1,-1],weights([p1,p2,p3]))
+        λ_new[r] = sample([1,0,-1],weights([p1,p2,p3]))
     end
     return diagm(λ_new)
 end
@@ -573,7 +595,7 @@ end
 """
     update_π(λ,η)
 
-Sample the new values of πᵥ from the Dirichlet distribution with parameters [#{r: λᵣ = 0} + r^η, 1 + #{r: λᵣ= 1}, 1 + #{r: λᵣ = -1 }]
+Sample the new values of πᵥ from the Dirichlet distribution with parameters [1 + #{r: λᵣ= 1}, #{r: λᵣ = 0} + r^η, 1 + #{r: λᵣ = -1 }]
 
 # Arguments
 - `Λ` : R × R diagonal matrix of λ values
