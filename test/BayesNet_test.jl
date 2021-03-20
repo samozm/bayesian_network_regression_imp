@@ -3,7 +3,7 @@ using Test,TickTock,Suppressor
 include("../src/BayesNet.jl")
 
 #g_data = read_rda("data/GuhaData.Rdata")
-R"g=load('data/GuhaData.Rdata')"
+R"load('data/GuhaData.Rdata')"
 R"X <- simdata$Xmat; y <- simdata$y"
 Z=@rget X
 y=@rget y
@@ -54,14 +54,14 @@ bΔ = 0
 V = 20
 q = floor(Int,V*(V-1)/2)
 n = size(Z,1)
-
+a_wish = 12
 #println("Z")
 #show(stdout,"text/plain",Z)
 #println(" ")
 
-
+#=
 @testset "InitTests" begin
-    X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V_new = init_vars(Z, η, ζ, ι, R, aΔ, bΔ,V,false)
+    X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V_new = init_vars(Z, η, ζ, ι, R, aΔ, bΔ, a_wish, V,false)
     #show(stdout, "text/plain",γ)
     #println("\n-\n")
     #show(stdout, "text/plain",γ[1])
@@ -79,6 +79,9 @@ n = size(Z,1)
     @test size(γ[1]) == (q,)
     @test V == V_new
 end
+=#
+
+#region full run test
 #=
 nburn = 30000
 nsamp = 20000
@@ -88,8 +91,6 @@ tock()
 
 low = zeros(20)
 high = zeros(20)
-lw = round(20000 * 0.25)
-hi = round(20000 * 0.75)
 lw = convert(Int64, round(nsamp * 0.1))
 hi = convert(Int64, round(nsamp * 0.9))
 
@@ -100,12 +101,14 @@ for i in 1:20
     low[i] = srtd[lw]
     high[i] = srtd[hi]
 end
+
+show(stdout,"text/plain",DataFrame(n = collect(1:20),l = low, h = high))
+println("")
 =#
-#show(stdout,"text/plain",DataFrame(n = collect(1:20),l = low, h = high))
-#println("")
+#endregion
 
 
-
+#region individual function tests
 
 R"outlist=readRDS('data/guha_out.Rdata')"
 R"g_gamma=outlist$betamat; g_q=outlist$q; g_lambda=outlist$kappa; g_epsilon_k=outlist$epsilon_k; g_theta=outlist$theta; g_Lambda=outlist$Lambda; g_tau=outlist$tau; g_u=outlist$u; g_pi=outlist$pi; g_mu=outlist$mu; g_M=outlist$M; g_delta=outlist$delta; g_S=outlist$S; g_lambda=outlist$lambda"
@@ -163,36 +166,6 @@ println("u,epsilon")
 us = zeros(500)
 epsilons = zeros(500)
 
-println("g_M")
-println(size(g_S))
-println(size(g_S[1,:,:]))
-#=
-for i in 1:500
-    print(size(upper_triangle(g_S[i + 32000,:,:])))
-    print(size(g_delta))
-    w=diagm(upper_triangle(g_S[i + 32000,:,:]))
-    qqq=diagm(g_lambda[i + 32000,:])
-    l=transpose(g_u[i + 32000])
-    #print(typeof(g_M[i,:,:]))
-    gam = upper_triangle(g_gamma[i + 32000,:,:])
-    us[i],epsilons[i] = update_u_ξ(transpose(g_u[i + 32000]),gam,diagm(upper_triangle(g_S[i + 32000,:,:])),g_tau[i + 32000],g_delta[i + 32000],g_M[i + 32000],diagm(g_lambda[i + 32000,:]),20)
-end
-
-GuhaSort=sort(g_u[32001:32500])
-MeSort=sort(us)
-
-show(stdout, "text/plain", DataFrame(GuhaLo=GuhaSort[lo], GuhaHi=GuhaSort[hi]))
-println("")
-show(stdout, "text/plain", DataFrame(MeLo=MeSort[lo], MeHi=MeSort[hi]))
-println("")
-=#
-GuhaSort=sort(g_epsilon[32001:32500])
-MeSort=sort(epsilons)
-
-show(stdout, "text/plain", DataFrame(GuhaLo=GuhaSort[lo], GuhaHi=GuhaSort[hi]))
-println("")
-show(stdout, "text/plain", DataFrame(MeLo=MeSort[lo], MeHi=MeSort[hi]))
-println("")
 
 println("gamma")
 gammas = zeros(500,190)
@@ -237,6 +210,7 @@ for i in 1:500
     g_pi2 = g_pi[i + 32000,:,:]
     #g_pi2[:,1] = g_pi2[:,2]
     #g_pi2[:,2] = g_pi[i + 32000,:,1]
+    println(i)
     gam = upper_triangle(g_gamma[i + 32000,:,:])
     lambdas[i,:,:] = update_Λ(g_pi2,R,diagm(g_lambda[i + 32000,:]),transpose(g_u[i + 32000]),diagm(upper_triangle(g_S[i + 32000,:,:])),g_tau[i + 32000],gam)
 end
@@ -293,16 +267,26 @@ println("")
 
 println("M")
 Ms = zeros(500,5,5)
+uΛu = zeros(500,5,5)
 
 for i in 1:500
-    Ms[i,:,:] = update_M(transpose(g_u[32000 + i]),diagm(g_lambda[i + 32000,:]),20)
+    Ms[i,:,:] = update_M(transpose(g_u[32000 + i]),a_wish,20,g_epsilon[32010+i,:])
+    #=
+    if i == 10
+        println("")
+        show(stdout, "text/plain", Ms[i,:,:])
+        println("")
+    end
+    =#
 end
+#show(stdout, "text/plain", mean(uΛu,dims=1))
+println("")
 
 g_m_mn = 0
 m_mn = 0
 
-for i in 1:100
-    global g_m_mn = g_m_mn + sum(upper_triangle(g_M[i + 32000,:,:]))
+for i in 1:500
+    global g_m_mn = g_m_mn + sum(upper_triangle(g_M[i + 32000][:,:]))
     global m_mn = m_mn + sum(upper_triangle(Ms[i,:,:]))
 end
 
@@ -310,25 +294,83 @@ show(stdout, "text/plain", DataFrame(guha=g_m_mn .* (1/100),me=m_mn .* (1/100)))
 println("")
 
 show(stdout,"text/plain",Ms[200,:,:])
+println("")
 show(stdout,"text/plain",g_M[32200,:,:])
-
-##############
-# START HERE #
-##############
+println("")
 println("pi")
-pis = zeros(500,5,5)
+pis = zeros(500,5,3)
 
 for i in 1:500
-    pis[i,:] = update_π(diagm(g_lambda[i + 32000,:]),η)
+    pis[i,:,:] = update_π(diagm(g_lambda[i + 32000,:]),η)
 end
 
-GuhaSort=sort(upper_triangle(g_pi[32001:32500]))
-MeSort=sort(pis)
+g_pi_mn = zeros(3)
+pi_mn = zeros(3)
 
-show(stdout, "text/plain", DataFrame(GuhaLo=GuhaSort[lo], GuhaHi=GuhaSort[hi]))
+for i in 1:100
+    for j in 1:3
+        global g_pi_mn[j] = g_pi_mn[j] .+ sum(g_pi[i + 32000,:,j])
+        global pi_mn[j] = pi_mn[j] .+ sum(pis[i,:,j])
+    end
+end
 println("")
-show(stdout, "text/plain", DataFrame(MeLo=MeSort[lo], MeHi=MeSort[hi]))
+show(stdout, "text/plain", DataFrame(guha=g_pi_mn .* (1/100),me=pi_mn .* (1/100)))
 println("")
+
+println("u_ξ")
+us = zeros(500,5,20)
+epsilons = zeros(500,20)
+mn = zeros(500,5,20)
+cov=zeros(500,5,20)
+
+for i in 1:500
+    gam = upper_triangle(g_gamma[i + 32000,:,:])
+    res = update_u_ξ(transpose(g_u[i + 32000]),gam,diagm(upper_triangle(g_S[i + 32000,:,:])),g_tau[i + 32000],g_delta[i + 32000],g_M[i + 32000],diagm(g_lambda[i + 32000,:]),20)
+    us[i,:,:] = res[1]
+    epsilons[i,:,:] = res[2]
+    if i == 10 || i == 200 || i==400
+        println(i)
+        println("mu")
+        show(stdout,"text/plain",res[3])
+        println("cov")
+        show(stdout,"text/plain",res[4])
+    end
+end
+
+
+my_u = zeros(20,5)
+gam_u = zeros(20,5)
+my_ep = zeros(20)
+gam_ep = zeros(20)
+println(size(g_u[32000]))
+for i in 1:20
+    for j in 1:5
+        my_u[i,j] = mean(us[:,j,i])
+        #gam_u[i,j] = mean(g_u[32000:32500][j,i])
+    end
+    my_ep[i] = mean(epsilons[:,i])
+    gam_ep[i] = mean(g_epsilon[32000:32500,i])
+end
+gam_u = mean(g_u[32000:32500])
+
+#=
+for i in [1,200,400]
+    println(i)
+    println("mean")
+    show(stdout, "text/plain", mn[i,:,:])
+    println("cov")
+    show(stdout, "text/plain", cov[i,:,:])
+end
+
+println("my u")
+show(stdout, "text/plain", my_u)
+println("")
+println("gamma u")
+show(stdout, "text/plain", gam_u)
+println("")
+show(stdout, "text/plain", DataFrame(Me_ep=my_ep, Gamma_ep=gam_ep))
+println("")
+=#
 
 #=
 
@@ -346,3 +388,4 @@ println("")
 #show(stdout, "text/plain",upper_triangle(g_gamma[32001,:,:]))
 println("")
 =#
+#endregion
