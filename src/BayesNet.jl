@@ -50,6 +50,28 @@ function sample_rgig(a,b)
     #println("end GIG")
     return l
 end
+
+"""
+    sample_Beta(a,b)
+
+Sample from the Beta distribution, with handling for a=0 and/or b=0
+
+#Arguments
+- `a` : shape parameter a ≥ 0
+- `b` : shape parameter b ≥ 0
+"""
+function sample_Beta(a,b)
+    if a > 0 && b > 0
+        Δ = rand(Beta(a, b))
+    elseif a > 0 
+        Δ = 1
+    elseif b > 0
+        Δ = 0
+    else 
+        Δ = sample([0,1])
+    end
+    return Δ
+end
 #endregion
 
 
@@ -108,7 +130,7 @@ end
 function sample_π_dirichlet(r,η,λ)
     wts = [1,r^η,1]
     if λ[r] == 1
-        wts[1] = 1
+        wts[1] = 2
     elseif λ[r] == 0
         wts[2] = r^η + 1
     else
@@ -119,7 +141,7 @@ end
 #endregion
 
 """
-    init_vars(X, η, ζ, ι, R, aΔ, bΔ, a_wish, V_in, x_transform)
+    init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in, x_transform)
 
     Initialize all variables using prior distributions. Note, any value passed in a parameter marked as 'output parameter' will be ignored and overwritten.
 
@@ -131,7 +153,7 @@ end
     - `R` : the dimensionality of the latent variables u, a hyperparameter
     - `aΔ`: hyperparameter used as the a parameter in the beta distribution used to sample Δ. 
     - `bΔ`: hyperparameter used as the b parameter in the beta distribution used to sample Δ. aΔ and bΔ values causing the Beta distribution to have mass concentrated closer to 0 will cause more zeros in ξ
-    - `a_wish` :
+    - `ν` :
     - `V_in`: Value of V, the number of nodes in the original X matrix. Only used when x_transform is false
     - `x_transform`: boolean, set to false if X has been pre-transformed into one row per sample. True by default.
 
@@ -150,7 +172,7 @@ end
     - `γ` : set to 1 draw from MultivariateNormal(uᵀΛu_upper, τ²*s), where uᵀΛu_upper is a vector of the terms in the upper triangle of uᵀΛu (does not include the diagonal)
     - `V` : dimension of original symmetric adjacency matrices
 """
-function init_vars(X, η, ζ, ι, R, aΔ, bΔ, a_wish, V_in=NaN, x_transform=true)
+function init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in=NaN, x_transform=true)
     # η must be greater than 1, if it's not set it to its default value of 1.01
     if (η <= 1)
         η = 1.01
@@ -175,21 +197,17 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ, a_wish, V_in=NaN, x_transform=tru
 
     S = map(k -> rand(Exponential(θ/2)), 1:q)
     D = diagm(S)
-    πᵥ = transpose(hcat(map(r -> rand(Dirichlet([1,r^η,1])),1:R)...))
+    πᵥ = transpose(hcat(map(r -> rand(Dirichlet([r^η,1,1])),1:R)...))
     λ = map(r -> sample([1,0,-1], weights(πᵥ[r,:]),1)[1], 1:R)
     Λ = diagm(λ)
-    if (aΔ == 0 || bΔ == 0)
-        Δ = 0.5
-    else 
-        Δ = rand(Beta(aΔ, bΔ))
-    end
+    Δ = sample_Beta(aΔ, bΔ)
     #println("V")
     #println(V)
     #println("R")
     #println(R)
 
     ξ = map(keys -> rand(Binomial(1,Δ)), 1:V)
-    M = rand(InverseWishart(a_wish,cholesky(Matrix(I,R,R))))
+    M = rand(InverseWishart(ν,cholesky(Matrix(I,R,R))))
     u = hcat(map(k -> sample_u(ξ[k], R, M), 1:V)...)
     μ = 1.0
     τ²= rand(Uniform(0,1))^2
@@ -216,14 +234,9 @@ Sample the next μ value from the normal distribution with mean 1ᵀ(y - Xγ)/n 
 new value of μ
 """
 function update_μ(X, y, γ, τ², n)
-    #μₘ = (ones(1,n) * (y .- X*γ)) / n
-    μₘ = mean(y .- (X*γ))
-    σₘ² = sqrt(τ²/n)
-    #println("y")
-    #println(y)
-    #println("μₘ")
-    #println(μₘ)
-    μ = rand(Normal(μₘ[1],σₘ²))
+    μₘ = (ones(1,n) * (y .- X*γ)) / n
+    σₘ = sqrt(τ²/n)
+    μ = rand(Normal(μₘ[1],σₘ))
 end
 
 """
@@ -248,8 +261,8 @@ function update_γ(X, D, Λ, u, μ, τ², n)
     W = upper_triangle(uᵀΛu)
     q = size(D,1)
 
-    # TODO: why is this sqrt? It's from the code but not in the paper
-    Δᵧ₁ = rand(MultivariateNormal(zeros(q), sqrt.(τ²*D)))
+
+    Δᵧ₁ = rand(MultivariateNormal(zeros(q), (τ²*D)))
     Δᵧ₂ = rand(MultivariateNormal(zeros(n), I(n)))
     Δᵧ₃ = (X/sqrt(τ²))*Δᵧ₁ + Δᵧ₂
     one = (τ²*D)*(transpose(X)/sqrt(τ²))*inv(X*D*transpose(X) + I(n))
@@ -443,13 +456,8 @@ the new value of Δ
 """
 function update_Δ(aΔ, bΔ, ξ, V)
     a = aΔ + sum(ξ)
-    #TODO: ensure b is > 0
     b = bΔ + V - sum(ξ)
-    Δ = 0.5
-    if a > 0 && b > 0
-        Δ = rand(Beta(a, b))
-    end
-    return Δ
+    return sample_Beta(a,b)
 end
 
 
@@ -467,18 +475,18 @@ Sample the next M value from the InverseWishart distribution with df = V + # of 
 # Returns
 the new value of M
 """
-function update_M(u,a_wish,V, ξ)
+function update_M(u,ν,V, ξ)
     R = size(u,1)
     uΛu = zeros(R,R)
     num_nonzero = 0
     for i in 1:V
-        uΛu = uΛu + u[:,i]*transpose(u[:,i])#*Λ*u[:,i]
+        uΛu = uΛu + u[:,i]*transpose(u[:,i])
         if ξ[i] ≉ 0
             num_nonzero = num_nonzero + 1
         end
     end
     Ψ = I(R) + uΛu
-    df = a_wish + num_nonzero
+    df = ν + num_nonzero
     M = rand(InverseWishart(df,Ψ))
     return M
 end
@@ -510,46 +518,17 @@ function update_Λ(πᵥ, R, Λ, u, D, τ², γ)
         Λ₀[r,r] = 0
         Λ₁ = deepcopy(Λ)
         Λ₁[r,r] = 1
-        # TODO: there's something wrong here I'm getting lots of 0 in ns
-        # Seems like these W values are wrong?
         W₋₁= upper_triangle(transpose(u) * Λ₋₁ * u)
         W₀ = upper_triangle(transpose(u) * Λ₀ * u)
         W₁ = upper_triangle(transpose(u) * Λ₁ * u)
-        #if r==3
-        #    println("")
-        #    show(stdout, "text/plain", transpose(W₀))
-        #    println("")
-        #end
-        #n₀ = pdf(MultivariateNormal(W₀, τ² * D),γ)
-        #n₁ = pdf(MultivariateNormal(W₁, τ² * D),γ)
-        #n₋₁= pdf(MultivariateNormal(W₋₁, τ² * D),γ)
-        #p_bot = max(πᵥ[r,2] * n₀, πᵥ[r,1] * n₁, πᵥ[r,3] * n₋₁)
-        n₀ = 0
-        n₁ = 0
-        n₋₁= 0
-        for i in 1:V
-            n₀ = n₀ + logpdf(Normal(W₀[i], sqrt(τ² * D[i,i])),γ[i])
-            n₁ = n₁ + logpdf(Normal(W₁[i], sqrt(τ² * D[i,i])),γ[i])
-            n₋₁= n₋₁+ logpdf(Normal(W₋₁[i], sqrt(τ² * D[i,i])),γ[i])
-        end
-        p_bot = max(πᵥ[r,2] * n₀,πᵥ[r,1] * n₁, πᵥ[r,3] * n₋₁)
-        if p_bot == 0
-            #println([πᵥ[r,1], n₁, πᵥ[r,2], n₀, πᵥ[r,3], n₋₁])
-            #show(stdout, "text/plain", transpose(W₀))
-            #println("")
-            #show(stdout, "text/plain", transpose(diag(τ² * D)))
-            #println("")
-            #show(stdout, "text/plain", transpose(γ))
-            #println("")
-        end
-        p2 = πᵥ[r,2] * exp(n₀ - p_bot)
-        p1 = πᵥ[r,1] * exp(n₁ - p_bot)
-        p3 = πᵥ[r,3] * exp(n₋₁ - p_bot)
-        if (r == 3)
-            println([exp(n₀ - p_bot),exp(n₁ - p_bot),exp(n₋₁ - p_bot)])
-        end
-        #print([p1,p2,p3])
-        λ_new[r] = sample([1,0,-1],weights([p1,p2,p3]))
+        n₀ = pdf(MultivariateNormal(W₀, τ² * D),γ)[1]
+        n₁ = pdf(MultivariateNormal(W₁, τ² * D),γ)[1]
+        n₋₁= pdf(MultivariateNormal(W₋₁, τ² * D),γ)[1]
+        p_bot = πᵥ[r,1] * n₀ + πᵥ[r,2] * n₁ + πᵥ[r,3] * n₋₁
+        p1 = πᵥ[r,1] * n₀ / p_bot
+        p2 = πᵥ[r,2] * n₁ / p_bot
+        p3 = πᵥ[r,3] * n₋₁ / p_bot
+        λ_new[r] = sample([0,1,-1],weights([p1,p2,p3]))
     end
     return diagm(λ_new)
 end
@@ -583,30 +562,30 @@ Take one GibbsSample
 # Returns
 A tuple of the new values, (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
 """
-function GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ, a_wish)
+function GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ, ν)
     n = size(X,1)
     τ²_n = update_τ²(X, y, μ, γ, Λ, u, D, V)
     u_n, ξ_n = update_u_ξ(u, γ, D, τ²_n, Δ, M, Λ, V)
-    γ_n = update_γ(X, D, Λ, u, μ, τ²_n, n)
+    γ_n = update_γ(X, D, Λ, u_n, μ, τ²_n, n)
     D_n = update_D(γ_n, u_n, Λ, θ, τ²_n, V)
     θ_n = update_θ(ζ, ι, V, D_n)
-    Δ_n = update_Δ(aΔ, bΔ, ξ, V)
-    M_n = update_M(u_n, a_wish, V,ξ)
+    Δ_n = update_Δ(aΔ, bΔ, ξ_n, V)
+    M_n = update_M(u_n, ν, V,ξ_n)
     μ_n = update_μ(X, y, γ_n, τ²_n, n)
-    Λ_n = update_Λ(πᵥ, R, Λ, u_n, D_n, τ²_n, γ)
+    Λ_n = update_Λ(πᵥ, R, Λ, u_n, D_n, τ²_n, γ_n)
     πᵥ_n = update_π(Λ_n, η)
     return (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
 end
 
 
-function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real=1,aΔ::Real=0,bΔ::Real=0, a_wish::Int64=12, nburn::Int64=30000, nsamples::Int64=20000, V_in::Int64=NaN, x_transform::Bool=true)
-    X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V = init_vars(X, η, ζ, ι, R, aΔ, bΔ, a_wish, V_in, x_transform)
+function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real=1,aΔ::Real=0,bΔ::Real=0, ν::Int64=12, nburn::Int64=30000, nsamples::Int64=20000, V_in::Int64=NaN, x_transform::Bool=true)
+    X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V = init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in, x_transform)
     
     # burn-in
     for i in 1:nburn
         #τ²[1], u[1], ξ[1], γ[1], D[1], θ[1], Δ[1], M[1], μ[1], Λ[1], πᵥ[1] = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), last(γ), V, η, ζ, ι, R, aΔ, bΔ)
         #TODO: better solution than just flattening last(γ)
-        result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), vec(last(γ)), V, η, ζ, ι, R, aΔ, bΔ,a_wish)
+        result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), vec(last(γ)), V, η, ζ, ι, R, aΔ, bΔ,ν)
         push!(τ²,result[1])
         push!(u,result[2])
         push!(ξ,result[3])
@@ -620,11 +599,11 @@ function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real
         push!(πᵥ,result[11])
     end
     for i in 1:nsamples 
-        result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), vec(last(γ)), V, η, ζ, ι, R, aΔ, bΔ,a_wish)
+        result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), vec(last(γ)), V, η, ζ, ι, R, aΔ, bΔ,ν)
         push!(τ²,result[1])
         push!(u,result[2])
         push!(ξ,result[3])
-        push!(γ,result[4])
+        γ = vcat(γ,[result[4]])
         push!(D,result[5])
         push!(θ,result[6])
         push!(Δ,result[7])

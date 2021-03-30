@@ -69,6 +69,9 @@ a_wish = 12
     #show(stdout, "text/plain", γ)
     #show(stdout, "text/plain", Z)
     #show(stdout, "text/plain", X)
+    println("u size")
+    show(stdout, "text/plain", size(u[1]))
+    println("")
     @test size(X) == (n,q)
     @test size(D[1]) == (q,q)
     @test size(πᵥ[1]) == (R,3)
@@ -80,36 +83,47 @@ a_wish = 12
     @test V == V_new
 end
 =#
-
 #region full run test
-#=
+
 nburn = 30000
 nsamp = 20000
 tick()
 τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(Z, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, x_transform = false)
 tock()
 
-low = zeros(20)
-high = zeros(20)
+low = zeros(190)
+high = zeros(190)
 lw = convert(Int64, round(nsamp * 0.1))
 hi = convert(Int64, round(nsamp * 0.9))
 
 γ_n = hcat(γ...)
 
-for i in 1:20
+println(size(γ[1]))
+println(size(upper_triangle(γ[1])))
+
+for i in 1:190
     srtd = sort(γ_n[i,nburn+1:nburn+nsamp])
     low[i] = srtd[lw]
     high[i] = srtd[hi]
 end
 
-show(stdout,"text/plain",DataFrame(n = collect(1:20),l = low, h = high))
+γ_df = DataFrame(n = collect(1:190),l = low, h = high)
+
+println(lw)
+println(hi)
+
+sort_df = sort(γ_df,[:l])
+
+show(stdout,"text/plain",sort_df)
 println("")
-=#
+
+println(sort_df[!,:n])
+
 #endregion
 
 
 #region individual function tests
-
+#=
 R"outlist=readRDS('data/guha_out.Rdata')"
 R"g_gamma=outlist$betamat; g_q=outlist$q; g_lambda=outlist$kappa; g_epsilon_k=outlist$epsilon_k; g_theta=outlist$theta; g_Lambda=outlist$Lambda; g_tau=outlist$tau; g_u=outlist$u; g_pi=outlist$pi; g_mu=outlist$mu; g_M=outlist$M; g_delta=outlist$delta; g_S=outlist$S; g_lambda=outlist$lambda"
 g_mu=@rget g_mu
@@ -166,13 +180,14 @@ println("u,epsilon")
 us = zeros(500)
 epsilons = zeros(500)
 
-
 println("gamma")
 gammas = zeros(500,190)
 
 for i in 1:500
-    gammas[i,:,:] = update_γ(Z, diagm(upper_triangle(g_S[i + 32000,:,:])),diagm(g_lambda[i + 32000,:]),transpose(g_u[i + 32000]),g_mu[i + 32000],g_tau[i + 32000],70)
+    gammas[i,:] = update_γ(Z, diagm(upper_triangle(g_S[i + 32000,:,:])),diagm(g_lambda[i + 32000,:]),transpose(g_u[i + 32000]),g_mu[i + 32000],g_tau[i + 32000],70)
 end
+
+println(size(gammas))
 
 g_gam_mn = zeros(190)
 gam_mn = zeros(190)
@@ -181,8 +196,36 @@ for i in 1:100
     global g_gam_mn = g_gam_mn + upper_triangle(g_gamma[32000 + i,:,:])
     global gam_mn = gam_mn + gammas[i,:]
 end
-show(stdout, "text/plain", DataFrame(guha=g_gam_mn .* (1/100),me=gam_mn .* (1/100)))
+#show(stdout, "text/plain", DataFrame(guha=g_gam_mn .* (1/100),me=gam_mn .* (1/100)))
 println("")
+
+low = zeros(190)
+high = zeros(190)
+g_low = zeros(190)
+g_high = zeros(190)
+lw = convert(Int64, round(500 * 0.1))
+hi = convert(Int64, round(500 * 0.9))
+
+#γ_n = hcat(gammas...)
+betasample = zeros(500,q)
+
+for i in 1:500
+    betasample[i,:] = upper_triangle(g_gamma[32000 + i,:,:])
+end
+
+println(size(betasample))
+
+for i in 1:190
+    srtd = sort(gammas[:,i])
+    g_srtd = sort(betasample[:,i])
+    low[i] = srtd[lw]
+    high[i] = srtd[hi]
+    g_low[i] = g_srtd[lw]
+    g_high[i] = g_srtd[hi]
+end
+
+γ_df = DataFrame(n = collect(1:190),m_l = low, m_h = high, g_l = g_low, g_h = g_high)
+show(stdout, "text/plain", γ_df)
 
 
 println("D")
@@ -210,7 +253,6 @@ for i in 1:500
     g_pi2 = g_pi[i + 32000,:,:]
     #g_pi2[:,1] = g_pi2[:,2]
     #g_pi2[:,2] = g_pi[i + 32000,:,1]
-    println(i)
     gam = upper_triangle(g_gamma[i + 32000,:,:])
     lambdas[i,:,:] = update_Λ(g_pi2,R,diagm(g_lambda[i + 32000,:]),transpose(g_u[i + 32000]),diagm(upper_triangle(g_S[i + 32000,:,:])),g_tau[i + 32000],gam)
 end
@@ -387,5 +429,7 @@ println("")
 #println("γ")
 #show(stdout, "text/plain",upper_triangle(g_gamma[32001,:,:]))
 println("")
+=#
+
 =#
 #endregion
