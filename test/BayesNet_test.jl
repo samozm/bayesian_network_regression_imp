@@ -119,6 +119,8 @@ println("")
 
 println(sort_df[!,:n])
 
+show(DataFrame(xi=mean(ξ[nburn:nburn+nsamp])))
+
 #endregion
 
 

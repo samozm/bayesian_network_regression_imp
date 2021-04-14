@@ -61,6 +61,7 @@ Sample from the Beta distribution, with handling for a=0 and/or b=0
 - `b` : shape parameter b ≥ 0
 """
 function sample_Beta(a,b)
+    Δ = 0
     if a > 0 && b > 0
         Δ = rand(Beta(a, b))
     elseif a > 0 
@@ -404,17 +405,11 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         mvn_b = MultivariateNormal(zeros(size(H,1)),mvn_b_Σ)
         w_top = (1-Δ) * pdf(mvn_a,γk)
         w_bot = w_top + Δ*pdf(mvn_b,γk)
-        # TODO: this may just be papering over problems, might have to actually fix this
-        if w_bot == 0
-            w = 0
-        else 
-            w = w_top / w_bot
-        end
+        w = w_top / w_bot
         
         mvn_f = MultivariateNormal(m,Symmetric(Σ))
         mus[k,:] = m
         cov[k,:,:] = Σ
-        
         
         #TODO: sometimes w is NaN
         ξ[k] = update_ξ(w)
@@ -422,7 +417,7 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         # that this term would essentially be an indicator rather than a weight
         u_new[:,k] = ξ[k].*rand(mvn_f)
     end
-    return u_new,ξ,mus,cov
+    return u_new,ξ
 end
 
 """
