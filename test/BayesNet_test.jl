@@ -1,4 +1,4 @@
-using Test,TickTock,Suppressor
+using Test,TickTock
 
 include("../src/BayesNet.jl")
 
