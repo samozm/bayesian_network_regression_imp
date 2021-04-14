@@ -9,9 +9,7 @@ function symmetrize_matrices(X)
     V = size(X[1],1)
     X_new = Array{Array{Int8,2},1}(undef,0)
     for i in 1:size(X,1)
-        #show(stdout,"text/plain",X[i])
         B = convert(Matrix, reshape(X[i], 4, 4))
-        #show(stdout,"text/plain",B)
         push!(X_new,Symmetric(B))
     end
     X = X_new
@@ -33,9 +31,9 @@ X = [[0, 1, 0, 1,
      0, 0, 1, 1, 
      1, 1, 0, 1, 
      0, 1, 1, 0]]
-#show(stdout,"text/plain",X)
+
 Z = symmetrize_matrices(X)
-#show(stdout,"text/plain",Z)
+
 
 y = ones(size(Z[1],1))*12 + rand(Normal(0,2),size(Z[1],1))
 
@@ -46,8 +44,7 @@ y = ones(size(Z[1],1))*12 + rand(Normal(0,2),size(Z[1],1))
 R  = 5
 aΔ = 0
 bΔ = 0
-#V = size(Z,1)
-V = 20
+V = size(Z,1)
 q = floor(Int,V*(V-1)/2)
 n = size(Z,1)
 a_wish = 12
