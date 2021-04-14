@@ -36,4 +36,4 @@ jobs:
 
       # Runs a julia file containing unit tests
       - name: Run basic unit tests
-        run: julia BayesNet_test.jl
+        run: julia test/BayesNet_test.jl
