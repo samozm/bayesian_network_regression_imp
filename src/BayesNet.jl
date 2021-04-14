@@ -37,17 +37,7 @@ one sample from the GIG distribution with p=1/2, b=b, a=a
 """
 function sample_rgig(a,b)
     #TODO: confirm documentation/parameters are correct
-    #@rput b
-    #@rput a
-    #R"r=rgig(n=1, lambda=1/2,chi=b,psi=a)"
-    #l=@rget r
-    
-    #print("psi(a): ")
-    #println(a)
-    #print("chi(b): ")
-    #println(b)
     l = rand(GeneralizedInverseGaussian(a,b,1/2))
-    #println("end GIG")
     return l
 end
 
@@ -89,7 +79,6 @@ return the upper triangle (without the diagonal) of the matrix as a vector
 vector of upper triangluar section of `matrix`
 """
 function upper_triangle(matrix)
-    #[matrix[i,j] for i = 1:size(matrix,1), j = 2:size(matrix,2) if i < j]
     k = 1
     ret = zeros(convert(Int64, round(size(matrix,1)*(size(matrix,2) - 1)/2)))
     for i in 1:size(matrix,1)
@@ -202,10 +191,6 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in=NaN, x_transform=true)
     λ = map(r -> sample([1,0,-1], weights(πᵥ[r,:]),1)[1], 1:R)
     Λ = diagm(λ)
     Δ = sample_Beta(aΔ, bΔ)
-    #println("V")
-    #println(V)
-    #println("R")
-    #println(R)
 
     ξ = map(keys -> rand(Binomial(1,Δ)), 1:V)
     M = rand(InverseWishart(ν,cholesky(Matrix(I,R,R))))
