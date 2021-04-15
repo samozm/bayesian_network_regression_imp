@@ -51,7 +51,7 @@ a_wish = 12
 
 
 @testset "InitTests" begin
-    X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V_new = init_vars(Z, η, ζ, ι, R, aΔ, bΔ, a_wish, V,false)
+    X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V_new = init_vars(Z, η, ζ, ι, R, aΔ, bΔ, a_wish, V,true)
 
     println("u size")
     show(stdout, "text/plain", size(u[1]))
