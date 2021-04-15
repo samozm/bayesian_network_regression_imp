@@ -1,8 +1,5 @@
 using Random, DataFrames, LinearAlgebra, StatsBase, RCall, InvertedIndices
 using Distributions
-R"library(GIGrvg)"
-
-#include("../../../Distributions.jl/src/Distributions.jl")
 
 #region custom sampling
 """
