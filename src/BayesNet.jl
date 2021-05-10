@@ -1,4 +1,4 @@
-using Random, DataFrames, LinearAlgebra, StatsBase, RCall, InvertedIndices
+using Random, DataFrames, LinearAlgebra, StatsBase, RCall, InvertedIndices, ProgressMeter
 using Distributions
 
 #region custom sampling
@@ -10,7 +10,7 @@ Sample rows of the u matrix, either from MVN with mean 0 and covariance matrix M
 # Arguments
 - `ξ` : ξ value sampled from Binomial distribution. Set to 0 to return a row of 0s, 1 to sample from MVN
 - `R` : dimension of u vectors, length of return vector
-- `M` : R×R covariance matrix for MVN samples 
+- `M` : R×R covariance matrix for MVN samples
 """
 function sample_u(ξ, R, M)
     if (ξ == 1)
@@ -51,11 +51,11 @@ function sample_Beta(a,b)
     Δ = 0
     if a > 0 && b > 0
         Δ = rand(Beta(a, b))
-    elseif a > 0 
+    elseif a > 0
         Δ = 1
     elseif b > 0
         Δ = 0
-    else 
+    else
         Δ = sample([0,1])
     end
     return Δ
@@ -90,7 +90,7 @@ end
 """
     create_upper_tri(vec,V)
 
-create an upper triangluar matrix from a vector of the form [12, ... 1V,23,...(V-1)V] 
+create an upper triangluar matrix from a vector of the form [12, ... 1V,23,...(V-1)V]
 to the form [0 12 13  ... 1V]
             [0 0  23  ... 2V]
             [.............]
@@ -100,7 +100,7 @@ to the form [0 12 13  ... 1V]
 - `V`  : dimension of output matrix
 
 # Returns
-upper triangluar matrix containing values of `vec` 
+upper triangluar matrix containing values of `vec`
 """
 function create_upper_tri(vec,V)
     mat = zeros(V,V)
@@ -115,11 +115,11 @@ end
 
 
 function sample_π_dirichlet(r,η,λ)
-    wts = [1,r^η,1]
+    wts = [r^η,1,1]
     if λ[r] == 1
-        wts[1] = 2
+        wts[2] = 2
     elseif λ[r] == 0
-        wts[2] = r^η + 1
+        wts[1] = r^η + 1
     else
         wts[3] = 2
     end
@@ -138,14 +138,14 @@ end
     - `ζ` : hyperparameter used as the shape parameter in the gamma distribution used to sample θ
     - `ι` : hyperparameter used as the scale parameter in the gamma distribution used to sample θ
     - `R` : the dimensionality of the latent variables u, a hyperparameter
-    - `aΔ`: hyperparameter used as the a parameter in the beta distribution used to sample Δ. 
+    - `aΔ`: hyperparameter used as the a parameter in the beta distribution used to sample Δ.
     - `bΔ`: hyperparameter used as the b parameter in the beta distribution used to sample Δ. aΔ and bΔ values causing the Beta distribution to have mass concentrated closer to 0 will cause more zeros in ξ
     - `ν` :
     - `V_in`: Value of V, the number of nodes in the original X matrix. Only used when x_transform is false
     - `x_transform`: boolean, set to false if X has been pre-transformed into one row per sample. True by default.
 
     # Returns
-    - `X` : matrix of re-ordered predictors. one row per sample, V*(V-1)/2 columns 
+    - `X` : matrix of re-ordered predictors. one row per sample, V*(V-1)/2 columns
     - `θ` : set to 1 draw from Gamma(ζ,ι)
     - `D` : set to a diagonal matrix of V(V-1)/2 draws from the Exponential(θ/2) distribution
     - `πᵥ`: set to a R × 3 matrix of draws from the Dirichlet distribution, where the second and third columns are draws from Dirichlet(1) and the first are draws from Dirichlet(r^η)
@@ -170,33 +170,43 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in=NaN, x_transform=true)
         V = size(X[1],1)
     else
         V = V_in
-    end 
+    end
     q = floor(Int,V*(V-1)/2)
 
+    X_new = Matrix{Float64}(undef, size(X,1), q)
     if x_transform
-        X_new = Matrix{Float64}(undef, size(X,1), q)
-        X_new = transpose(hcat(map(k -> upper_triangle(X[k]), 1:size(X,1))...))
+        for i in 1:size(X,1)
+            X_new[i,:] = upper_triangle(X[i])
+        end
     else
         X_new = X
     end
 
-    θ = rand(Gamma(ζ, ι))
+    θ = rand(Gamma(ζ, 1/ι))
 
     S = map(k -> rand(Exponential(θ/2)), 1:q)
     D = diagm(S)
-    πᵥ = transpose(hcat(map(r -> rand(Dirichlet([r^η,1,1])),1:R)...))
-    λ = map(r -> sample([1,0,-1], weights(πᵥ[r,:]),1)[1], 1:R)
+    #πᵥ = transpose(hcat(map(r -> rand(Dirichlet([r^η,1,1])),1:R)...))
+    πᵥ = zeros(R,3)
+    for r in 1:R
+        πᵥ[r,:] = rand(Dirichlet([r^η,1,1]))
+    end
+    λ = map(r -> sample([0,1,-1], weights(πᵥ[r,:]),1)[1], 1:R)
     Λ = diagm(λ)
     Δ = sample_Beta(aΔ, bΔ)
 
-    ξ = map(keys -> rand(Binomial(1,Δ)), 1:V)
+    ξ = map(k -> rand(Binomial(1,Δ)), 1:V)
     M = rand(InverseWishart(ν,cholesky(Matrix(I,R,R))))
-    u = hcat(map(k -> sample_u(ξ[k], R, M), 1:V)...)
+    #u = hcat(map(k -> sample_u(ξ[k], R, M), 1:V)...)
+    u = zeros(R,V)
+    for i in 1:V
+        u[:,i] = sample_u(ξ[i],R,M)
+    end
     μ = 1.0
     τ²= rand(Uniform(0,1))^2
     uᵀΛu = transpose(u) * Λ * u
     uᵀΛu_upper = upper_triangle(uᵀΛu)
-    γ = rand(MultivariateNormal(uᵀΛu_upper, τ²*D))
+    γ = reshape(rand(MultivariateNormal(uᵀΛu_upper, τ²*D)),length(uᵀΛu_upper),1)
     return (X_new, [θ], [D], [πᵥ], [Λ], [Δ], [ξ], [M], [u], [μ], [τ²], [γ], V)
 end
 
@@ -208,8 +218,8 @@ Sample the next μ value from the normal distribution with mean 1ᵀ(y - Xγ)/n 
 
 # Arguments
 - `X` : 2 dimensional array of predictor values, 1 row per sample (upper triangle of original X)
-- `y` : response values 
-- `γ` : vector of regression parameters 
+- `y` : response values
+- `γ` : vector of regression parameters
 - `τ²`: overall variance parameter
 - `n` : number of samples (length of y)
 
@@ -233,8 +243,8 @@ Sample the next γ value from the normal distribution, decomposed as described i
 - `Λ` : R × R diagonal matrix of λ values
 - `u` : the latent variables u
 - `μ` : overall mean value for the relationship
-- `τ²`: overall variance parameter 
-- `n` : number of samples 
+- `τ²`: overall variance parameter
+- `n` : number of samples
 
 # Returns
 new value of γ
@@ -244,18 +254,18 @@ function update_γ(X, D, Λ, u, μ, τ², n)
     W = upper_triangle(uᵀΛu)
     q = size(D,1)
 
-
     Δᵧ₁ = rand(MultivariateNormal(zeros(q), (τ²*D)))
     Δᵧ₂ = rand(MultivariateNormal(zeros(n), I(n)))
     Δᵧ₃ = (X/sqrt(τ²))*Δᵧ₁ + Δᵧ₂
     one = (τ²*D)*(transpose(X)/sqrt(τ²))*inv(X*D*transpose(X) + I(n))
-    two = (((y - μ*ones(n,1) - X*W)/sqrt(τ²)) - Δᵧ₃)
+    two = (((y - μ.*ones(n,1) - X*W)/sqrt(τ²)) - Δᵧ₃)
     γw = Δᵧ₁ + one * two
     γ = γw + W
+    return γ
 end
 
 """
-    update_τ²(X, y, μ, γ, Λ, u, D, V) 
+    update_τ²(X, y, μ, γ, Λ, u, D, V)
 
 Sample the next τ² value from the InverseGaussian distribution with mean n/2 + V(V-1)/4 and variance ((y - μ1 - Xγ)ᵀ(y - μ1 - Xγ) + (γ - W)ᵀD⁻¹(γ - W)
 
@@ -263,7 +273,7 @@ Sample the next τ² value from the InverseGaussian distribution with mean n/2 +
 - `X` : 2 dimensional array of predictor values, 1 row per sample (upper triangle of original X)
 - `y` : vector of response values
 - `μ` : overall mean value for the relationship
-- `γ` : vector of regression parameters 
+- `γ` : vector of regression parameters
 - `Λ` : R × R diagonal matrix of λ values
 - `u` : the latent variables u
 - `D` : diagonal matrix of s values
@@ -276,17 +286,19 @@ function update_τ²(X, y, μ, γ, Λ, u, D, V)
     uᵀΛu = transpose(u) * Λ * u
     W = upper_triangle(uᵀΛu)
     n  = size(y,1)
-    
+
     #TODO: better variable names, not so much reassignment
     μₜ  = (n/2) + (V*(V-1)/4)
-    yμ1Xγ = (y .- μ*ones(n,1) .- X*γ)
+    #yμ1Xγ = (y - μ.*ones(n,1) - X*γ)
+    yμ1Xγ = (y - X*γ)
 
-    γW = (γ .- W)
+    γW = (γ - W)
     yμ1Xγᵀyμ1Xγ = transpose(yμ1Xγ)*yμ1Xγ
     γWᵀγW = transpose(γW)*inv(D)*γW
 
     σₜ² = (yμ1Xγᵀyμ1Xγ[1] + γWᵀγW[1])/2
     τ² = rand(InverseGamma(μₜ, σₜ²))
+    #τ² = 1/rand(Gamma(μₜ,1/σₜ²))
 end
 
 """
@@ -295,11 +307,11 @@ end
 Sample the next D value from the GeneralizedInverseGaussian distribution with p = 1/2, a=((γ - uᵀΛu)^2)/τ², b=θ
 
 # Arguments
-- `γ` : vector of regression parameters 
+- `γ` : vector of regression parameters
 - `u` : the latent variables u
 - `Λ` : R × R diagonal matrix of λ values
 - `θ` : b parameter for the GeneralizedInverseGaussian distribution
-- `τ²`: overall variance parameter 
+- `τ²`: overall variance parameter
 - `V` : dimension of original symmetric adjacency matrices
 
 # Returns
@@ -323,7 +335,7 @@ Sample the next θ value from the Gamma distribution with a = ζ + V(V-1)/2 and 
 - `ι` : hyperparameter, used to construct `b` parameter
 - `V` : dimension of original symmetric adjacency matrices
 - `D` : diagonal matrix of s values
-- `τ²`: overall variance parameter 
+- `τ²`: overall variance parameter
 # Returns
 new value of θ
 """
@@ -337,14 +349,14 @@ end
 """
     update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
 
-Sample the next u and ξ values 
+Sample the next u and ξ values
 
 # Arguments
 - `u` : the current latent variables u
-- `γ` : vector of regression parameters 
+- `γ` : vector of regression parameters
 - `D` : diagonal matrix of s values
 - `τ²`: overall variance parameter
-- `Δ` : set to 1 draw from Beta(aΔ, bΔ) (or 1 if aΔ or bΔ are 0).
+- `Δ` : set to 1 draw from Beta(aΔ, bΔ)
 - `M` : set to R × R matrix drawn from InverseWishart(V, I_R) (where I_R is the identity matrix with dimension R × R)
 - `Λ` : R × R diagonal matrix of λ values
 - `V` : dimension of original symmetric adjacency matrices
@@ -377,7 +389,7 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         m = Σ*(transpose(U)*inv(H)*γk)/τ²
         mvn_a = zeros(size(H,1))
         try
-            mvn_a = MultivariateNormal(zeros(size(H,1)),Symmetric(τ²*H)) 
+            mvn_a = MultivariateNormal(zeros(size(H,1)),Symmetric(τ²*H))
         catch
             println("τ²*H")
             show(stdout, "text/plain", τ²*H)
@@ -388,14 +400,16 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         w_top = (1-Δ) * pdf(mvn_a,γk)
         w_bot = w_top + Δ*pdf(mvn_b,γk)
         w = w_top / w_bot
-        
+
+        #show(stdout,"text/plain",Symmetric(Σ))
         mvn_f = MultivariateNormal(m,Symmetric(Σ))
         mus[k,:] = m
         cov[k,:,:] = Σ
-        
-        #TODO: sometimes w is NaN
+
+        #TODO: why do i get closer results to theirs when i use 1-ξ here?
+        # that doesn't seem right
         ξ[k] = update_ξ(w)
-        # the paper says the first term is (1-w) but their code uses 1-ξ. again i think this makes more sense
+        # the paper says the first term is (1-w) but their code uses ξ. Again i think this makes more sense
         # that this term would essentially be an indicator rather than a weight
         u_new[:,k] = ξ[k].*rand(mvn_f)
     end
@@ -423,7 +437,7 @@ end
 Sample the next Δ value from the Beta distribution with parameters a = aΔ + ∑ξ and b = bΔ + V - ∑ξ
 
 # Arguments
-- `aΔ`: hyperparameter used as part of the a parameter in the beta distribution used to sample Δ. 
+- `aΔ`: hyperparameter used as part of the a parameter in the beta distribution used to sample Δ.
 - `bΔ`: hyperparameter used as part of the b parameter in the beta distribution used to sample Δ.
 - `ξ` : vector of ξ values, 0 or 1
 - `V` : dimension of original symmetric adjacency matrices
@@ -433,7 +447,8 @@ the new value of Δ
 """
 function update_Δ(aΔ, bΔ, ξ, V)
     a = aΔ + sum(ξ)
-    b = bΔ + V - sum(ξ)
+    #b = bΔ + V - sum(ξ)
+    b = bΔ + sum(1 .- ξ)
     return sample_Beta(a,b)
 end
 
@@ -480,7 +495,7 @@ Sample the next values of λ from [1,0,-1] with probabilities determined from a 
 - `u` : R × V matrix of latent variables
 - `D` : diagonal matrix of s values
 - `τ²`: overall variance parameter
-- `γ` : vector of regression parameters 
+- `γ` : vector of regression parameters
 
 # Returns
 new value of Λ
@@ -524,7 +539,11 @@ new value of πᵥ
 """
 function update_π(Λ,η)
     λ = diag(Λ)
-    π_new = transpose(hcat(map(r -> sample_π_dirichlet(r,η,λ),1:R)...))
+    π_new = zeros(R,3)#transpose(hcat(map(r -> sample_π_dirichlet(r,η,λ),1:R)...))
+    for r in 1:R
+        π_new[r,:] = sample_π_dirichlet(r,η,λ)
+    end
+    return π_new
 end
 #endregion
 
@@ -557,7 +576,9 @@ end
 
 function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real=1,aΔ::Real=0,bΔ::Real=0, ν::Int64=12, nburn::Int64=30000, nsamples::Int64=20000, V_in::Int64=NaN, x_transform::Bool=true)
     X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V = init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in, x_transform)
-    
+
+    total = nburn + nsamples
+    p = Progress(total,2)
     # burn-in
     for i in 1:nburn
         #τ²[1], u[1], ξ[1], γ[1], D[1], θ[1], Δ[1], M[1], μ[1], Λ[1], πᵥ[1] = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), last(γ), V, η, ζ, ι, R, aΔ, bΔ)
@@ -566,7 +587,8 @@ function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real
         push!(τ²,result[1])
         push!(u,result[2])
         push!(ξ,result[3])
-        γ = vcat(γ,[result[4]])
+        #γ = vcat(γ,[result[4]])
+        push!(γ,result[4])
         push!(D,result[5])
         push!(θ,result[6])
         push!(Δ,result[7])
@@ -574,13 +596,15 @@ function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real
         push!(μ,result[9])
         push!(Λ,result[10])
         push!(πᵥ,result[11])
+        next!(p)
     end
-    for i in 1:nsamples 
+    for i in 1:nsamples
         result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), vec(last(γ)), V, η, ζ, ι, R, aΔ, bΔ,ν)
         push!(τ²,result[1])
         push!(u,result[2])
         push!(ξ,result[3])
-        γ = vcat(γ,[result[4]])
+        #γ = vcat(γ,[result[4]])
+        push!(γ,result[4])
         push!(D,result[5])
         push!(θ,result[6])
         push!(Δ,result[7])
@@ -588,9 +612,9 @@ function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real
         push!(μ,result[9])
         push!(Λ,result[10])
         push!(πᵥ,result[11])
+        next!(p)
     end
     return τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ
 end
 
 #main()
-
