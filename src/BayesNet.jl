@@ -23,7 +23,7 @@ end
 """
     sample_rgig(a,b)
 
-Sample from the GeneralizedInverseGaussian distribution using RCall with p=1/2, b=b, a=a
+Sample from the GeneralizedInverseGaussian distribution with p=1/2, b=b, a=a
 
 # Arguments
 - `a` : shape and scale parameter a, sometimes also called ψ
@@ -33,9 +33,7 @@ Sample from the GeneralizedInverseGaussian distribution using RCall with p=1/2, 
 one sample from the GIG distribution with p=1/2, b=b, a=a
 """
 function sample_rgig(a,b)
-    #TODO: confirm documentation/parameters are correct
-    l = rand(GeneralizedInverseGaussian(a,b,1/2))
-    return l
+    return rand(GeneralizedInverseGaussian(a,b,1/2))
 end
 
 """
@@ -67,13 +65,13 @@ end
 """
     upper_triangle(matrix)
 
-return the upper triangle (without the diagonal) of the matrix as a vector
+Return the upper triangle (without the diagonal) of the matrix as a vector
 
 # Arguments
 - `matrix`: matrix of which to capture the upper triangle
 
 # Returns
-vector of upper triangluar section of `matrix`
+Vector of upper triangluar section of `matrix`
 """
 function upper_triangle(matrix)
     k = 1
@@ -90,17 +88,17 @@ end
 """
     create_upper_tri(vec,V)
 
-create an upper triangluar matrix from a vector of the form [12, ... 1V,23,...(V-1)V]
+Create an upper triangluar matrix from a vector of the form [12, ... 1V,23,...(V-1)V]
 to the form [0 12 13  ... 1V]
             [0 0  23  ... 2V]
-            [.............]
+            [...............]
             [0 0  0...(V-1)V]
 # Arguments
 - `vec`: vector containing values to put into the upper triangluar matrix
 - `V`  : dimension of output matrix
 
 # Returns
-upper triangluar matrix containing values of `vec`
+Upper triangluar matrix containing values of `vec`
 """
 function create_upper_tri(vec,V)
     mat = zeros(V,V)
@@ -113,7 +111,20 @@ function create_upper_tri(vec,V)
     return mat
 end
 
+"""
+    sample_π_dirichlet(r,η,λ)
 
+Sample from the 3-variable doirichlet distribution with weights
+[r^η,1,1] + [#{λ[r] == 0}, #{λ[r] == 1}, #{λ[r] = -1}]
+
+# Arguments
+- `r` : real number, base term for the first weight and index for λ vector
+- `η` : real number, power term for the first weight
+- `λ` : vector of -1,0,1s, used to determine which weight is added to
+
+# Returns
+A vector of length 3 drawn from the Dirichlet distribution
+"""
 function sample_π_dirichlet(r,η,λ)
     wts = [r^η,1,1]
     if λ[r] == 1
@@ -140,8 +151,8 @@ end
     - `R` : the dimensionality of the latent variables u, a hyperparameter
     - `aΔ`: hyperparameter used as the a parameter in the beta distribution used to sample Δ.
     - `bΔ`: hyperparameter used as the b parameter in the beta distribution used to sample Δ. aΔ and bΔ values causing the Beta distribution to have mass concentrated closer to 0 will cause more zeros in ξ
-    - `ν` :
-    - `V_in`: Value of V, the number of nodes in the original X matrix. Only used when x_transform is false
+    - `ν` : hyperparameter used as the degrees of freedom parameter in the InverseWishart distribution used to sample M.
+    - `V_in`: Value of V, the number of nodes in the original X matrix. Only used when x_transform is false.
     - `x_transform`: boolean, set to false if X has been pre-transformed into one row per sample. True by default.
 
     # Returns
@@ -152,7 +163,7 @@ end
     - `Λ` : R × R diagonal matrix of λ values, which are sampled from [0,1,-1] with probabilities assigned from the rth row of πᵥ
     - `Δ` : set to 1 draw from Beta(aΔ, bΔ) (or 1 if aΔ or bΔ are 0).
     - `ξ` : set to V draws from Bernoulli(Δ)
-    - `M` : set to R × R matrix drawn from InverseWishart(V, I_R) (where I_R is the identity matrix with dimension R × R)
+    - `M` : set to R × R matrix drawn from InverseWishart(ν, I_R) (where I_R is the identity matrix with dimension R × R)
     - `u` : the latent variables u, set to a V × R matrix where each row is sampled from MultivariateNormal(0,M) if ξ[r] is 1 or set to a row of 1s otherwise.
     - `μ` : set to 1 (non-informative prior)
     - `τ²`: set to the square of 1 sample from Uniform(0,1) (non-informative prior)
@@ -186,7 +197,6 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in=NaN, x_transform=true)
 
     S = map(k -> rand(Exponential(θ/2)), 1:q)
     D = diagm(S)
-    #πᵥ = transpose(hcat(map(r -> rand(Dirichlet([r^η,1,1])),1:R)...))
     πᵥ = zeros(R,3)
     for r in 1:R
         πᵥ[r,:] = rand(Dirichlet([r^η,1,1]))
@@ -197,7 +207,6 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in=NaN, x_transform=true)
 
     ξ = map(k -> rand(Binomial(1,Δ)), 1:V)
     M = rand(InverseWishart(ν,cholesky(Matrix(I,R,R))))
-    #u = hcat(map(k -> sample_u(ξ[k], R, M), 1:V)...)
     u = zeros(R,V)
     for i in 1:V
         u[:,i] = sample_u(ξ[i],R,M)
@@ -289,8 +298,8 @@ function update_τ²(X, y, μ, γ, Λ, u, D, V)
 
     #TODO: better variable names, not so much reassignment
     μₜ  = (n/2) + (V*(V-1)/4)
-    #yμ1Xγ = (y - μ.*ones(n,1) - X*γ)
-    yμ1Xγ = (y - X*γ)
+    yμ1Xγ = (y - μ.*ones(n,1) - X*γ)
+    #yμ1Xγ = (y - X*γ)
 
     γW = (γ - W)
     yμ1Xγᵀyμ1Xγ = transpose(yμ1Xγ)*yμ1Xγ
@@ -335,7 +344,7 @@ Sample the next θ value from the Gamma distribution with a = ζ + V(V-1)/2 and 
 - `ι` : hyperparameter, used to construct `b` parameter
 - `V` : dimension of original symmetric adjacency matrices
 - `D` : diagonal matrix of s values
-- `τ²`: overall variance parameter
+
 # Returns
 new value of θ
 """
@@ -401,13 +410,10 @@ function update_u_ξ(u, γ, D, τ², Δ, M, Λ, V)
         w_bot = w_top + Δ*pdf(mvn_b,γk)
         w = w_top / w_bot
 
-        #show(stdout,"text/plain",Symmetric(Σ))
         mvn_f = MultivariateNormal(m,Symmetric(Σ))
         mus[k,:] = m
         cov[k,:,:] = Σ
 
-        #TODO: why do i get closer results to theirs when i use 1-ξ here?
-        # that doesn't seem right
         ξ[k] = update_ξ(w)
         # the paper says the first term is (1-w) but their code uses ξ. Again i think this makes more sense
         # that this term would essentially be an indicator rather than a weight
@@ -454,20 +460,20 @@ end
 
 
 """
-    update_M(u,Λ,V)
+    update_M(u,ν,V,ξ)
 
 Sample the next M value from the InverseWishart distribution with df = V + # of nonzero columns in u and Ψ = I + ∑ uΛuᵀ
 
 # Arguments
 - `u` : R × V matrix of latent variables
-- `Λ` : R × R diagonal matrix of λ values
+- `ν` : hyperparameter, base df for IW distribution (to be added to by sum of ξs)
 - `V` : dimension of original symmetric adjacency matrices
-- `ξ` :
+- `ξ` : vector of ξ values, 0 or 1 (sum is added to df for IW distribution)
 
 # Returns
 the new value of M
 """
-function update_M(u,ν,V, ξ)
+function update_M(u,ν,V,ξ)
     R = size(u,1)
     uΛu = zeros(R,R)
     num_nonzero = 0
@@ -484,7 +490,7 @@ function update_M(u,ν,V, ξ)
 end
 
 """
-    update_Λ(πᵥ, R, Λ, u, τ², D)
+    update_Λ(πᵥ, R, Λ, u, D, τ², γ)
 
 Sample the next values of λ from [1,0,-1] with probabilities determined from a normal mixture
 
@@ -548,12 +554,30 @@ end
 #endregion
 
 """
-    GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ)
+    GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ, ν)
 
 Take one GibbsSample
 
 # Arguments
-
+- `X` :
+- `y` :
+- `θ` :
+- `D` :
+- `πᵥ`:
+- `Λ` :
+- `Δ` :
+- `ξ` :
+- `M` :
+- `u` :
+- `γ` :
+- `V` :
+- `η` :
+- `ζ` :
+- `ι` :
+- `R` :
+- `aΔ`:
+- `bΔ`:
+- `ν` :
 
 # Returns
 A tuple of the new values, (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
@@ -581,13 +605,12 @@ function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real
     p = Progress(total,2)
     # burn-in
     for i in 1:nburn
-        #τ²[1], u[1], ξ[1], γ[1], D[1], θ[1], Δ[1], M[1], μ[1], Λ[1], πᵥ[1] = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), last(γ), V, η, ζ, ι, R, aΔ, bΔ)
+        #τ²[1], u[1], ξ[1], γ[1], D[1], θ[1], Δ[1], M[1], μ[1], Λ[1], πᵥ[1] = GibbsSample(...
         #TODO: better solution than just flattening last(γ)
         result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(ξ), last(M), last(u), last(μ), vec(last(γ)), V, η, ζ, ι, R, aΔ, bΔ,ν)
         push!(τ²,result[1])
         push!(u,result[2])
         push!(ξ,result[3])
-        #γ = vcat(γ,[result[4]])
         push!(γ,result[4])
         push!(D,result[5])
         push!(θ,result[6])
@@ -603,7 +626,6 @@ function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real
         push!(τ²,result[1])
         push!(u,result[2])
         push!(ξ,result[3])
-        #γ = vcat(γ,[result[4]])
         push!(γ,result[4])
         push!(D,result[5])
         push!(θ,result[6])
