@@ -1,48 +1,86 @@
-
-
+using ArgParse,RCall,TickTock
 include("../src/BayesNet.jl")
+include("plot_output.jl")
 
-R"load('data/GuhaData.Rdata')"
-R"X <- simdata$Xmat; y <- simdata$y"
-Z=@rget X
-y=@rget y
 
-#region full run test
-nburn = 30000
-nsamp = 20000
-tick()
-τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(Z, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, x_transform = false)
-tock()
-
-low = zeros(190)
-high = zeros(190)
-lw = convert(Int64, round(nsamp * 0.1))
-hi = convert(Int64, round(nsamp * 0.9))
-
-γ_n = hcat(γ...)
-
-println(size(γ[1]))
-println(size(upper_triangle(γ[1])))
-
-for i in 1:190
-    srtd = sort(γ_n[i,nburn+1:nburn+nsamp])
-    low[i] = srtd[lw]
-    high[i] = srtd[hi]
+function parse_CL_args()
+    args = ArgParseSettings()
+    @add_arg_table! args begin
+    "--nburn", "-b"
+        help="Number of burn-in Gibbs samples to take"
+        arg_type = Int
+        default = 30000
+    "--nsamp", "-s"
+        help="Number of Gibbs samples to keep (after burn-in)"
+        arg_type = Int
+        default = 20000
+    end
+    return parse_args(args)
 end
 
-γ_df = DataFrame(n = collect(1:190),l = low, h = high)
+function main()
+    parsed_CL_args = parse_CL_args()
+    nburn = parsed_CL_args["nburn"]
+    nsamp = parsed_CL_args["nsamp"]
+    γ₁,MSE₁,ξ₁ = sim_one_case(nburn,nsamp)
+    @rput nburn
+    @rput nsamp
+    R"source('test/run_guha_sim1.R');retlist <- guha_sim1(nburn,nsamp)"
+    R"gamma <- retlist$gamma; MSE <- retlist$MSE; xis <- retlist$xis"
+    γ₂ = @rget gamma
+    MSE₂ = @rget MSE
+    ξ₂ = @rget xis
+    output_results(γ₁[:,nburn+1:nburn+nsamp],MSE₁,mean(ξ₁[nburn+1:nburn+nsamp]),γ₂,MSE₂,ξ₂)
+end
 
-println(lw)
-println(hi)
 
-sort_df = sort(γ_df,[:l])
+function sim_one_case(nburn,nsamp)
+    η  = 1.01
+    ζ  = 1
+    ι  = 1
+    R  = 5
+    aΔ = 1
+    bΔ = 1
+    ν = 12
+    V = 20
+    q = floor(Int,V*(V-1)/2)
 
-show(stdout,"text/plain",sort_df)
-println("")
+    R"load('data/GuhaData.Rdata')"
+    R"X <- simdata$Xmat; y <- simdata$y; b_in <- simdata$true.b"
+    Z=@rget X
+    y=@rget y
+    B₀=@rget b_in
+    println("Sim 1 Case 1")
 
-println(sort_df[!,:n])
+    #region full run test
+    tick()
+    τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(Z, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, x_transform = false)
+    tock()
 
-show(DataFrame(xi=mean(ξ[nburn:nburn+nsamp])))
+    γ_n = hcat(γ...)
+
+
+    γ_n2 = mean(γ[nburn+1:10:nburn+nsamp])
+    γ₀ = B₀
+    MSE = 0
+    for i in 1:190
+        MSE = MSE + (γ_n2[i] - γ₀[i])^2
+    end
+    MSE = MSE * (2/(V*(V-1)))
+
+    return γ_n,MSE,ξ
+
+end
+
+function output_results(γ₁,MSE₁,ξ₁,γ₂,MSE₂,ξ₂)
+    plot_γs(γ₁, γ₂, "Mine", "Guha", "sim1")
+    show(stdout,"text/plain",DataFrame(My_Xi=ξ₁,Guha_Xi=ξ₂))
+    println("")
+    show(stdout,"text/plain",DataFrame(My_MSE=MSE₁,Guha_MSE=MSE₂))
+    println("")
+end
+
+main()
 
 #endregion
 

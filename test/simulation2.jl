@@ -1,78 +1,102 @@
-using Distributions,Random,TickTock,CSV
+using Distributions,Random,TickTock,CSV,ArgParse,Printf,RCall
 include("../src/BayesNet.jl")
-
-η  = 1.01
-ζ  = 1
-ι  = 1
-R  = 5
-aΔ = 1
-bΔ = 1
-ν = 10
-V = 20
-q = floor(Int,V*(V-1)/2)
-
-data_in = CSV.File("data/simulation2_case2.csv")
-
-X = data_in[:,1:190]
-y = data_in[:,191]
-
-#nburn = 30000
-#nsamp = 20000
-
-nburn = 15000
-nsamp = 10000
-
-tick()
-τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, aΔ=1, bΔ=1,ν=10,ι=1,ζ=1)
-tock()
+include("plot_output.jl")
 
 
-low = zeros(190)
-high = zeros(190)
-lw = convert(Int64, round(nsamp * 0.1))
-hi = convert(Int64, round(nsamp * 0.9))
+function parse_CL_args()
+    args = ArgParseSettings()
+    @add_arg_table! args begin
+        "--case", "-c"
+            help="Case number, 1 or 2 controls sparsity parameter"
+            arg_type = Int
+            default = 1
+        "--nburn", "-b"
+            help="Number of burn-in Gibbs samples to take"
+            arg_type = Int
+            default = 30000
+        "--nsamp", "-s"
+            help="Number of Gibbs samples to keep (after burn-in)"
+            arg_type = Int
+            default = 20000
+    end
 
-γ_n = hcat(γ...)
-
-for i in 1:190
-    srtd = sort(γ_n[i,nburn+1:nburn+nsamp])
-    low[i] = srtd[lw]
-    high[i] = srtd[hi]
+    return parse_args(args)
 end
 
-γ_n2 = mean(γ[nburn+1:10:nburn+nsamp])
-γ₀ = upper_triangle(B₀)*2
-MSE = 0
-for i in 1:190
-    global MSE = MSE + (γ_n2[i] - γ₀[i])^2
+function main()
+    parsed_CL_args = parse_CL_args()
+    case = parsed_CL_args["case"]
+    nburn = parsed_CL_args["nburn"]
+    nsamp = parsed_CL_args["nsamp"]
+    γ₁,MSE₁,ξ₁ = sim_one_case(case,nburn,nsamp)
+    @rput nburn
+    @rput nsamp
+    if (case == 1)
+        R"source('test/run_guha_sim2_case1.R');retlist <- guha_sim2_case1(nburn,nsamp)"
+    else
+        R"source('test/run_guha_sim2_case2.R');retlist <- guha_sim2_case2(nburn,nsamp)"
+    end
+    println("done r")
+    R"gamma <- retlist$gamma; MSE <- retlist$MSE; xis <- retlist$xis"
+    γ₂ = @rget gamma
+    println(size(γ₁))
+    println("done loop")
+    MSE₂ = @rget MSE
+    ξ₂ = @rget xis
+    output_results(γ₁[:,nburn+1:nburn+nsamp],MSE₁,mean(ξ₁[nburn+1:nburn+nsamp]),γ₂,MSE₂,ξ₂,case)
 end
 
-println("MSE")
-println(MSE * (2/(V*(V-1))))
-println("")
+function output_results(γ₁,MSE₁,ξ₁,γ₂,MSE₂,ξ₂,case)
+    plot_γs(γ₁, γ₂, "Mine", "Guha","sim2_case$case")
+    show(stdout,"text/plain",DataFrame(My_Xi=ξ₁,Guha_Xi=ξ₂))
+    println("")
+    show(stdout,"text/plain",DataFrame(My_MSE=MSE₁,Guha_MSE=MSE₂))
+    println("")
+end
 
-println("Other MSE")
-println(mean((γ_n2 - γ₀)^2))
-#show(stdout,"text/plain",γ_n2)
-γ_diff = γ_n2[:,1]-γ₀
+function sim_one_case(case,nburn,nsamp)
+    η  = 1.01
+    ζ  = 1
+    ι  = 1
+    R  = 5
+    aΔ = 1
+    bΔ = 1
+    ν = 10
+    V = 20
+    q = floor(Int,V*(V-1)/2)
 
-show(stdout,"text/plain",DataFrame(gamhat=γ_n2[:,1], gamnaut=γ₀, diff=γ_diff))
-#println(typeof(γ_n2))
-#println("")
-#println(typeof(γ₀))
-println("")
-#println(typeof(γ_n2-γ₀))
+    data_in = DataFrame(CSV.File("data/simulation2_case$(case).csv"))
 
-γ_df = DataFrame(n = collect(1:190),l = low, h = high)
+    X = convert(Matrix,data_in[:,1:190])
+    y = data_in[:,191]
 
-sort_df = sort(γ_df,[:l])
+    b_in = DataFrame(CSV.File("data/simulation2_case$(case)_bs.csv"))
+    B₀ = convert(Array{Float64,1},b_in[!,:B])
 
-#show(stdout,"text/plain",sort_df)
-#println("")
+    @printf("Sim 2 Case %d",case)
+    println("")
+
+    tick()
+    τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, aΔ=1, bΔ=1,ν=10,ι=1,ζ=1,x_transform=false)
+    tock()
+
+    low = zeros(190)
+    high = zeros(190)
+    lw = convert(Int64, round(nsamp * 0.1))
+    hi = convert(Int64, round(nsamp * 0.9))
+
+    γ_n = hcat(γ...)
+
+    γ_n2 = mean(γ[nburn+1:nburn+nsamp])
+    γ₀ = B₀
+    MSE = 0
+    for i in 1:190
+        MSE = MSE + (γ_n2[i] - γ₀[i])^2
+    end
+    MSE = MSE * (2/(V*(V-1)))
+
+    return γ_n,MSE,ξ
+end
 
 
-
-show(stdout,"text/plain",DataFrame(hat=mean(ξ[nburn+1:10:nburn+nsamp]),real=ξ⁰))
-#show(DataFrame(hat=mean(ξ[nburn:nburn+nsamp]),real=ξ⁰))
-println("")
-#println(ξ[2])
+main()

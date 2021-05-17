@@ -242,12 +242,13 @@ function update_μ(X, y, γ, τ², n)
 end
 
 """
-    update_γ(X, D, Λ, u, μ, τ²)
+    update_γ(X, y, D, Λ, u, μ, τ²)
 
 Sample the next γ value from the normal distribution, decomposed as described in Guha & Rodriguez 2018
 
 # Arguments
 - `X` : 2 dimensional array of predictor values, 1 row per sample (upper triangle of original X)
+- `y` : response values
 - `D` : diagonal matrix of s values
 - `Λ` : R × R diagonal matrix of λ values
 - `u` : the latent variables u
@@ -258,7 +259,7 @@ Sample the next γ value from the normal distribution, decomposed as described i
 # Returns
 new value of γ
 """
-function update_γ(X, D, Λ, u, μ, τ², n)
+function update_γ(X, y, D, Λ, u, μ, τ², n)
     uᵀΛu = transpose(u) * Λ * u
     W = upper_triangle(uᵀΛu)
     q = size(D,1)
@@ -532,18 +533,19 @@ function update_Λ(πᵥ, R, Λ, u, D, τ², γ)
 end
 
 """
-    update_π(λ,η)
+    update_π(λ,η,R)
 
 Sample the new values of πᵥ from the Dirichlet distribution with parameters [1 + #{r: λᵣ= 1}, #{r: λᵣ = 0} + r^η, 1 + #{r: λᵣ = -1 }]
 
 # Arguments
 - `Λ` : R × R diagonal matrix of λ values
 - `η` : hyperparameter used for sampling the 0 value (r^η)
+- `R` : dimension of u vectors
 
 # Returns
 new value of πᵥ
 """
-function update_π(Λ,η)
+function update_π(Λ,η,R)
     λ = diag(Λ)
     π_new = zeros(R,3)#transpose(hcat(map(r -> sample_π_dirichlet(r,η,λ),1:R)...))
     for r in 1:R
@@ -586,19 +588,19 @@ function GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι
     n = size(X,1)
     τ²_n = update_τ²(X, y, μ, γ, Λ, u, D, V)
     u_n, ξ_n = update_u_ξ(u, γ, D, τ²_n, Δ, M, Λ, V)
-    γ_n = update_γ(X, D, Λ, u_n, μ, τ²_n, n)
+    γ_n = update_γ(X, y, D, Λ, u_n, μ, τ²_n, n)
     D_n = update_D(γ_n, u_n, Λ, θ, τ²_n, V)
     θ_n = update_θ(ζ, ι, V, D_n)
     Δ_n = update_Δ(aΔ, bΔ, ξ_n, V)
     M_n = update_M(u_n, ν, V,ξ_n)
     μ_n = update_μ(X, y, γ_n, τ²_n, n)
     Λ_n = update_Λ(πᵥ, R, Λ, u_n, D_n, τ²_n, γ_n)
-    πᵥ_n = update_π(Λ_n, η)
+    πᵥ_n = update_π(Λ_n, η,R)
     return (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
 end
 
 
-function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real=1,aΔ::Real=0,bΔ::Real=0, ν::Int64=12, nburn::Int64=30000, nsamples::Int64=20000, V_in::Int64=NaN, x_transform::Bool=true)
+function BayesNet(X::Array, y::Array, R::Real; η::Real=1.01,ζ::Real=1,ι::Real=1,aΔ::Real=1,bΔ::Real=1, ν::Int64=12, nburn::Int64=30000, nsamples::Int64=20000, V_in::Int64=NaN, x_transform::Bool=true)
     X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V = init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in, x_transform)
 
     total = nburn + nsamples
