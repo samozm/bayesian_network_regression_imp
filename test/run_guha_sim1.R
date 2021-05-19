@@ -4,7 +4,7 @@ guha_sim1 <- function(nburn=30000,nsamp=20000)
   rm(list=ls())
   #if (!require(timeR)) install.packages('timeR')
   
-  load("data/GuhaData.Rdata") 
+  load("data/test/GuhaData.Rdata") 
   #### Xmat (Predictor Matrix) and y (continuous response vector) are loaded.
   Xmat <- simdata$Xmat
   y <- simdata$y

@@ -45,7 +45,7 @@ function sim_one_case(nburn,nsamp)
     V = 20
     q = floor(Int,V*(V-1)/2)
 
-    R"load('data/GuhaData.Rdata')"
+    R"load('data/test/GuhaData.Rdata')"
     R"X <- simdata$Xmat; y <- simdata$y; b_in <- simdata$true.b"
     Z=@rget X
     y=@rget y
@@ -87,7 +87,7 @@ main()
 
 #region individual function tests
 #=
-R"outlist=readRDS('data/guha_out.Rdata')"
+R"outlist=readRDS('data/test/guha_out.Rdata')"
 R"g_gamma=outlist$betamat; g_q=outlist$q; g_lambda=outlist$kappa; g_epsilon_k=outlist$epsilon_k; g_theta=outlist$theta; g_Lambda=outlist$Lambda; g_tau=outlist$tau; g_u=outlist$u; g_pi=outlist$pi; g_mu=outlist$mu; g_M=outlist$M; g_delta=outlist$delta; g_S=outlist$S; g_lambda=outlist$lambda"
 g_mu=@rget g_mu
 g_gamma=@rget g_gamma

@@ -2,8 +2,8 @@ guha_sim2_case2 <- function(nburn  = 30000, nsamp = 20000)
 {
   rm(list=ls())
   #if (!require(timeR)) install.packages('timeR')
-  sim2 <- read.csv("data/simulation2_case2.csv")
-  sim2_b <- read.csv("data/simulation2_case2_bs.csv")
+  sim2 <- read.csv("data/test/simulation2_case2.csv")
+  sim2_b <- read.csv("data/test/simulation2_case2_bs.csv")
   
   y <- sim2$y
   Xmat <- data.matrix(sim2[1:190])

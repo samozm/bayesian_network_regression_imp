@@ -84,6 +84,6 @@ function generate_data(case)
     out_df = DataFrame(X_new,:auto)
     out_df[!,:y] = y
 
-    CSV.write("data/simulation2_case$(case).csv",out_df)
-    CSV.write("data/simulation2_case$(case)_bs.csv",DataFrame(B=upper_triangle(B₀)))
+    CSV.write("data/test/simulation2_case$(case).csv",out_df)
+    CSV.write("data/test/simulation2_case$(case)_bs.csv",DataFrame(B=upper_triangle(B₀)))
 end

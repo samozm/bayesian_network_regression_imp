@@ -65,12 +65,12 @@ function sim_one_case(case,nburn,nsamp)
     V = 20
     q = floor(Int,V*(V-1)/2)
 
-    data_in = DataFrame(CSV.File("data/simulation2_case$(case).csv"))
+    data_in = DataFrame(CSV.File("data/test/simulation2_case$(case).csv"))
 
     X = convert(Matrix,data_in[:,1:190])
     y = data_in[:,191]
 
-    b_in = DataFrame(CSV.File("data/simulation2_case$(case)_bs.csv"))
+    b_in = DataFrame(CSV.File("data/test/simulation2_case$(case)_bs.csv"))
     B₀ = convert(Array{Float64,1},b_in[!,:B])
 
     @printf("Sim 2 Case %d",case)
