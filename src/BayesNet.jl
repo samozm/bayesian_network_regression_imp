@@ -561,25 +561,25 @@ end
 Take one GibbsSample
 
 # Arguments
-- `X` :
-- `y` :
-- `θ` :
-- `D` :
-- `πᵥ`:
-- `Λ` :
-- `Δ` :
-- `ξ` :
-- `M` :
-- `u` :
-- `γ` :
-- `V` :
-- `η` :
-- `ζ` :
-- `ι` :
-- `R` :
-- `aΔ`:
-- `bΔ`:
-- `ν` :
+- `X` : matrix of unweighted symmetric adjacency matrices to be used as predictors. each row should be the upper triangle of the adjacency matrix associated with one sample.
+- `y` : vector of response variables
+- `θ` : θ parameter, drawn from the Gamma Distribution
+- `D` : Diagonal matrix of s values
+- `πᵥ`: 3 column vectors of dimension R used to weight normal mixture for probability values
+- `Λ` : R × R diagonal matrix of λ values
+- `Δ` : Δ parameter, drawn from Beta distribution
+- `ξ` : vector of ξ values, 0 or 1 (whether node is influential)
+- `M` : R × R matrix, drawn from InverseWishart
+- `u` : R × V matrix of latent variables
+- `γ` : (V*V-1)-vector of regression parameters, influence of each edge
+- `V` : number of nodes in adjacency matrices
+- `η` : hyperparameter used for sampling the 0 value of the πᵥ parameter
+- `ζ` : hyperparameter used for sampling θ
+- `ι` : hyperparameter used for sampling θ
+- `R` : hyperparameter - depth of u vectors (and others)
+- `aΔ`: hyperparameter used for sampling Δ
+- `bΔ`: hyperparameter used for sampling Δ
+- `ν` : hyperparameter used for sampling M
 
 # Returns
 A tuple of the new values, (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
