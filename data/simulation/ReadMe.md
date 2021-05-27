@@ -1,6 +1,6 @@
 # Simulation
 
-### Files
+## Files
 Each simulation consists of 3 files:
 - The base file (simulationX.csv) contains the X matrices and corresponding y vectors for the simulation.
 - The b file (simulationX_bs.csv) contains the true B matrix (column matrix) associated with the simulated data.
