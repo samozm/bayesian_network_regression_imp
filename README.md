@@ -1,4 +1,4 @@
-# bayesian_network_regression_imp
+# Bayesian Network Regresion
 Implementing Guha &amp; Rodriguez 2018
 
 ### Testing
@@ -20,3 +20,6 @@ my implementation and Guha's implementation are output to text.
 Graphs of γ values (coefficients for each edge) are also created in `plots/test/`
 (Guha's in red, mine in blue) and automatically opened. As of 5/17/21 results for
 these tests appear to be consistent between my implementation and Guha's.
+
+### Simulation
+Notes for simulations are available [here](/data/simulation/ReadMe.md)
