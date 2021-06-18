@@ -8,14 +8,14 @@ Each simulation consists of 3 files:
 
 Simulation 1 (cases 1-6) is "unrealistic". Generated as follows:
 
-y<sub>i</sub> &= $\mu$<sub>0</sub> + <**A**<sub>i</sub>,**B**<sub>0</sub>><sub>F</sub> + $\epsilon$<sub>i</sub>
+y<sub>i</sub> = μ<sub>0</sub> + <**A**<sub>i</sub>,**B**<sub>0</sub>><sub>F</sub> + ϵ<sub>i</sub>
 
-$\epsilon$<sub>i</sub> ~ N(0,$\tau$<sub>0</sub><sup>2</sup>)
+ϵ<sub>i</sub> ~ N(0,τ<sub>0</sub><sup>2</sup>)
 
-$\tau$<sub>0</sub><sup>2</sup> &= 1
+τ<sub>0</sub><sup>2</sup> &= 1
 
 
-To generate $\textbf{A}_i$:
+To generate **A**<sub>i</sub>:
 
     1. using ape, simulate 70 phylogenetic trees with
         - 20 (?) total microbes
@@ -25,10 +25,10 @@ To generate $\textbf{A}_i$:
 
 To generate **B**<sub>0</sub>:
 
-    1. Generate 20 binary indicators $\xi$<sub>1</sub><sup>0</sup>,\hdots, $\xi$ _{20}^0$ independently from Ber($\pi_{s}$) (indicator of influential node)
-        - $\pi_s$ = 0.1, 0.3, 0.8
-    2. If $\xi_k^0 = \xi_l^0 = 1$ generate the edge coefficient between k and l from $N(\mu_s,1)$
-        - $\mu_s$ = 0.8,1.6
+    1. Generate 20 binary indicators ξ₁⁰,..., ξ₂₀⁰ independently from Ber(πₛ) (indicator of influential node)
+        - πₛ = 0.1, 0.3, 0.8
+    2. If ξₖ⁰ = ξₗ⁰ = 1$ generate the edge coefficient between k and l from N(μₛ,1)
+        - μₛ = 0.8,1.6
        Else set the edge coefficient between k and l to 0
 
 
