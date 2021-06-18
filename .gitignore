@@ -27,3 +27,18 @@ Manifest.toml
 
 # Mac-related file
 *.DS_Store*
+
+# Testing data
+data/test/*
+
+# R files
+*.Rproj
+*.RData
+*.Rhistory
+
+# Misc
+src/plot_distrs.R
+Project.toml
+
+# VS code files
+.vscode/*
