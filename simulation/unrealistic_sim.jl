@@ -61,9 +61,9 @@ function main()
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
-    CSV.write("data/simulation/simulation$(simn).csv",out_df)
-    CSV.write("data/simulation/simulation$(simn)_bs.csv",DataFrame(B=upper_triangle(B)))
-    CSV.write("data/simulation/simulation$(simn)_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
+    CSV.write("data/simulation/simulation1_case$(simn).csv",out_df)
+    CSV.write("data/simulation/simulation1_case$(simn)_bs.csv",DataFrame(B=upper_triangle(B)))
+    CSV.write("data/simulation/simulation1_case$(simn)_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
 
     #println("y")
     #show(stdout,"text/plain",y)

@@ -6,7 +6,7 @@ Each simulation consists of 3 files:
 - The b file (simulationX_bs.csv) contains the true B matrix (column matrix) associated with the simulated data.
 - The m file (simulationX_ms.csv) contains the m value (which shows which taxa were "sampled" for each "sample" (row in the X matrix/entry in the y vector)). A 1 indicates that taxa was included in that sample, a 0 indicates that it wasn't.
 
-Simulations 1-6 are "unrealistic". Generated as follows:
+Simulation 1 (cases 1-6) is "unrealistic". Generated as follows:
 
 y<sub>i</sub> &= $\mu$<sub>0</sub> + <**A**<sub>i</sub>,**B**<sub>0</sub>><sub>F</sub> + $\epsilon$<sub>i</sub>
 
