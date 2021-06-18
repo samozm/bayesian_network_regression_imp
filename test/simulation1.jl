@@ -1,6 +1,6 @@
 using ArgParse,RCall,TickTock
 include("../src/BayesNet.jl")
-include("plot_output.jl")
+include("../src/plot_output.jl")
 
 
 function parse_CL_args()
@@ -73,7 +73,7 @@ function sim_one_case(nburn,nsamp)
 end
 
 function output_results(γ₁,MSE₁,ξ₁,γ₂,MSE₂,ξ₂)
-    plot_γs(γ₁, γ₂, "Mine", "Guha", "sim1")
+    plot_γs_test(γ₁, γ₂, "Mine", "Guha", "sim1")
     show(stdout,"text/plain",DataFrame(My_Xi=ξ₁,Guha_Xi=ξ₂))
     println("")
     show(stdout,"text/plain",DataFrame(My_MSE=MSE₁,Guha_MSE=MSE₂))
