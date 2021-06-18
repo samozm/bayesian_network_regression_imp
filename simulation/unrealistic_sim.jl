@@ -1,4 +1,4 @@
-using ArgParse,Distributions,Random,CSV
+using ArgParse,Distributions,Random,CSV,RCall
 include("../src/BayesNet.jl")
 
 function parse_CL_args()
@@ -20,14 +20,18 @@ function parse_CL_args()
         help = "number of samples to generate"
         arg_type = Int
         default = 70
-    "--interaction", "-i"
-        help = "interaction effect direction between microbes: 0,1,-1"
-        arg_type = Int
-        default = 0
-    "--simnum", "-m"
+    "--simnum", "-i"
         help = "number to append to the name of the csv files create"
         arg_type = Int
         default = 1
+    "--mean", "-m"
+        help = "mean to use to draw edge coefficients"
+        arg_type = Float64
+        default = 0.8
+    "--pi", "-p"
+        help = "probability of any single node being influential on the response"
+        arg_type = Float64
+        default = 0.1
     end
     return parse_args(args)
 end
@@ -41,16 +45,13 @@ function main()
     n = args_in["nsamp"]
     s = args_in["seed"]
     simn = args_in["simnum"]
+    μₛ = args_in["mean"]
+    πₛ = args_in["pi"]
     q = floor(Int,t*(t-1)/2)
-    if !(args_in["interaction"] in [0,1,-1])
-        println("invalid interaction value given. using no interaction (0)")
-    else
-        intxn = args_in["interaction"]
-    end
 
-    B,M_eff = generate_Bs(intxn,t)
+    B = generate_Bs(t,μₛ=μₛ,πₛ=πₛ)
 
-    y,A,m = generate_unrealistic_data(B,M_eff,t,k,n,s,0,0.25)
+    y,A,m = generate_unrealistic_data(B,t,k,n,s)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
@@ -75,65 +76,60 @@ function main()
     #println("")
 end
 
-function generate_Bs(intxn,t,μₘ=0,σₘ=1,μ_b=0.5,σ_b=1,p=0.8)
+function generate_Bs(t,μₛ=0.8,σₛ=1,πₛ=0.1)
 
-    M_eff = zeros(t)#map(i -> rand(Normal(μₘ,σₘ)),1:t)
+    ξ = rand(Bernoulli(πₛ),t)#map(i -> rand(Normal(μₘ,σₘ)),1:t)
     B = zeros(t,t)
 
-    if intxn == -1
-        for i in 1:t
-            if rand(Bernoulli(p))
-                M_eff[i] = rand(Normal(μₘ,σₘ))
-            end
-            for j in (i+1):t
-                B[i,j] = B[j,i] = -abs(rand(Normal(μ_b,σ_b)))
-            end
-        end
-    elseif intxn == 1
-        for i in 1:t
-            for j in (i+1):t
-                B[i,j] = B[j,i] = abs(rand(Normal(μ_b,σ_b)))
+    for i in 1:t
+        for j in (i+1):t
+            if (ξ[i] == 1 && ξ[j] == 1)
+                B[i,j] = B[j,i] = -abs(rand(Normal(μₛ,σₛ)))
             end
         end
     end
 
-    return B,M_eff
+    return B
 end
 
 
 
-function generate_unrealistic_data(B,M_eff,t,k,n,seed,μₐ,σₐ)
+function generate_unrealistic_data(B,t,k,n,seed)#,μₐ,σₐ)
 
     Random.seed!(seed)
     y = zeros(n)
     m = [zeros(t)]
     A = [zeros(t,t)]
-    A_base = zeros(t,t)
-    for i in 1:t
-        for j in (i+1):t
-            rnd = abs(rand(Normal(μₐ,σₐ)))
-            while rnd == 0
-                rnd = abs(rand(Normal(μₐ,σₐ)))
-            end
-            if rnd != 0
-                rnd = 1/rnd #TODO: confirm we're gonna want to invert
-            end
-            A_base[i,j] = A_base[j,i] = rnd
-        end
-    end
+    A_base = zeros(k,k)
+    ϵ = rand(Normal(0,1),n)
+    #for i in 1:t
+        #for j in (i+1):t
+        #    rnd = abs(rand(Normal(μₐ,σₐ)))
+        #    while rnd == 0
+        #        rnd = abs(rand(Normal(μₐ,σₐ)))
+        #    end
+        #    if rnd != 0
+        #        rnd = 1/rnd #TODO: confirm we're gonna want to invert
+        #    end
+        #    A_base[i,j] = A_base[j,i] = rnd
+        #end
+    #end
 
     for i in 1:n
         chosen = sort(sample(1:t,k,replace=false))
         ind = zeros(n,n)
-        for j in 1:t
-            for l in (j+1):t
-                if j in chosen && l in chosen
-                    A[i][j,l] = A[i][l,j] = A_base[j,l]
-                end
-            end
-        end
+        @rput k chosen
+        R"source('src/sim_trees.R');inv_dist <- sim_tree_dists(k,chosen)"
+        A[i] = @rget inv_dist
+        #for j in 1:t
+        #    for l in (j+1):t
+        #        if j in chosen && l in chosen
+        #            A[i][j,l] = A[i][l,j] = A_base[j,l]
+        #        end
+        #    end
+        #end
         m[i][chosen] .= 1
-        y[i] = transpose(m[i]) * M_eff + tr(transpose(B) * A[i])
+        y[i] = tr(transpose(B) * A[i]) + ϵ[i]
         if i != n
             append!(A,[zeros(t,t)])
             append!(m,[zeros(t)])
@@ -141,7 +137,7 @@ function generate_unrealistic_data(B,M_eff,t,k,n,seed,μₐ,σₐ)
     end
 
 
-    return y,A,m
+    return y,A,m,ϵ
 end
 
 main()
