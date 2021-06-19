@@ -1,5 +1,5 @@
 sim_tree_dists <- function(k,chosen) {
-  if(!require("ape",character.only = TRUE, quietly = TRUE)) quiet(install.packages("ape"),all=TRUE)
+  if(!require("ape",character.only = TRUE, quietly = TRUE)) install.packages("ape")
   tree <- rtree(k,tip.label=chosen)
   inv_dist <- 1/cophenetic.phylo(tree)
   diag(inv_dist) <- 0
