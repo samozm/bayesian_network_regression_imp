@@ -18,6 +18,10 @@ function parse_CL_args()
         help="which simulation to run"
         arg_type = Int
         default = 1
+    "--casenum", "-c"
+        help="which case of the simulation to run"
+        arg_type = Int
+        default = 1
     end
     return parse_args(args)
 end
@@ -27,18 +31,19 @@ function main()
     nburn = parsed_CL_args["nburn"]
     nsamp = parsed_CL_args["nsamp"]
     simnum = parsed_CL_args["simnum"]
-    γ,MSE,ξ = sim_one_case(simnum,nburn,nsamp)
+    casenum = parsed_CL_args["casenum"]
+    γ,MSE,ξ = sim_one_case(simnum,casenum,nburn,nsamp)
 
-    output_results(γ[:,nburn+1:nburn+nsamp],MSE,mean(ξ[nburn+1:nburn+nsamp]),simnum)
+    output_results(γ[:,nburn+1:nburn+nsamp],MSE,mean(ξ[nburn+1:nburn+nsamp]),simnum,casenum)
 end
 
-function sim_one_case(simnum,nburn,nsamp,η=1.01,ζ=1,ι=1,R=5,aΔ=1,bΔ=1,ν=10)
-    data_in = DataFrame(CSV.File("data/simulation/simulation$(simnum).csv"))
+function sim_one_case(simnum,casenum,nburn,nsamp,η=1.01,ζ=1,ι=1,R=5,aΔ=1,bΔ=1,ν=10)
+    data_in = DataFrame(CSV.File("data/simulation/simulation$(simnum)_case$(casenum).csv"))
 
     X = convert(Matrix,data_in[!,names(data_in,Not("y"))])
     y = data_in[:,:y]
 
-    b_in = DataFrame(CSV.File("data/simulation/simulation$(simnum)_bs.csv"))
+    b_in = DataFrame(CSV.File("data/simulation/simulation$(simnum)_case$(casenum)_bs.csv"))
     B₀ = convert(Array{Float64,1},b_in[!,:B])
 
     q = size(X,2)
@@ -66,11 +71,11 @@ function sim_one_case(simnum,nburn,nsamp,η=1.01,ζ=1,ι=1,R=5,aΔ=1,bΔ=1,ν=10
     return γ_n,MSE,ξ
 end
 
-function output_results(γ,MSE,ξ,simnum)
+function output_results(γ,MSE,ξ,simnum,casenum)
     q = size(γ,1)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
-    plot_γ_sim(γ, "Gamma", "simulation$simnum")
+    plot_γ_sim(γ, "Gamma", "simulation$(simnum)_case$(casenum)")
     show(stdout,"text/plain",DataFrame(Xi=ξ))
     println("")
     show(stdout,"text/plain",DataFrame(MSE=MSE))

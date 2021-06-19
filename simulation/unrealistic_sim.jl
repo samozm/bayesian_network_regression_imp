@@ -20,8 +20,8 @@ function parse_CL_args()
         help = "number of samples to generate"
         arg_type = Int
         default = 70
-    "--simnum", "-i"
-        help = "number to append to the name of the csv files create"
+    "--casenum", "-c"
+        help = "case number to append to the name of the csv files create"
         arg_type = Int
         default = 1
     "--mean", "-m"
@@ -44,7 +44,7 @@ function main()
     k = args_in["samptaxa"]
     n = args_in["nsamp"]
     s = args_in["seed"]
-    simn = args_in["simnum"]
+    casen = args_in["casenum"]
     μₛ = args_in["mean"]
     πₛ = args_in["pi"]
     q = floor(Int,t*(t-1)/2)
@@ -61,9 +61,9 @@ function main()
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
-    CSV.write("data/simulation/simulation1_case$(simn).csv",out_df)
-    CSV.write("data/simulation/simulation1_case$(simn)_bs.csv",DataFrame(B=upper_triangle(B)))
-    CSV.write("data/simulation/simulation1_case$(simn)_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
+    CSV.write("data/simulation/simulation1_case$(casen).csv",out_df)
+    CSV.write("data/simulation/simulation1_case$(casen)_bs.csv",DataFrame(B=upper_triangle(B)))
+    CSV.write("data/simulation/simulation1_case$(casen)_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
 
     #println("y")
     #show(stdout,"text/plain",y)
@@ -76,7 +76,7 @@ function main()
     #println("")
 end
 
-function generate_Bs(t,μₛ=0.8,σₛ=1,πₛ=0.1)
+function generate_Bs(t; μₛ=0.8,σₛ=1,πₛ=0.1)
 
     ξ = rand(Bernoulli(πₛ),t)#map(i -> rand(Normal(μₘ,σₘ)),1:t)
     B = zeros(t,t)
