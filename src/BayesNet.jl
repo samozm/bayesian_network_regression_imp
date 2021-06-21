@@ -435,6 +435,11 @@ Sample the next ξ value from the Bernoulli distribution with parameter 1-w
 the new value of ξ
 """
 function update_ξ(w)
+    if w == 0
+        return 1
+    elseif w == 1
+        return 0
+    end
     rand(Bernoulli(1 - w))
 end
 
