@@ -34,7 +34,22 @@ function main()
     casenum = parsed_CL_args["casenum"]
     γ,MSE,ξ = sim_one_case(simnum,casenum,nburn,nsamp)
 
-    output_results(γ[:,nburn+1:nburn+nsamp],MSE,mean(ξ[nburn+1:nburn+nsamp]),simnum,casenum)
+    ξ_in = DataFrame(CSV.File("data/simulation/simulation$(simnum)_case$(casenum)_xis.csv"))
+
+    step = Int(floor((nburn+nsamp)/100))
+    ξ_prog = map(i->mean(ξ[1:i]),1:step:nburn+nsamp)
+    #println("tst")
+    #show(stdout,"text/plain",tst)
+    #println("")
+    savefig(plot(transpose(hcat(ξ_prog...)),legend=false),"plots/simulation/xi_converge_simulation$(simnum)_case$(casenum)")
+
+    γ_prog = zeros(190,length(1:step:nburn+nsamp))
+    for j in 1:190
+        γ_prog[j,:] = map(i->mean(γ[j,1:i]),1:step:nburn+nsamp)
+    end
+    savefig(plot(transpose(γ_prog),legend=false),"plots/simulation/gamma_coverage_simulation$(simnum)_case$(casenum)")
+
+    output_results(γ[:,nburn+1:nburn+nsamp],MSE,mean(ξ[nburn+1:nburn+nsamp]),ξ_in,simnum,casenum)
 end
 
 function sim_one_case(simnum,casenum,nburn,nsamp,η=1.01,ζ=1,ι=1,R=5,aΔ=1,bΔ=1,ν=10)
@@ -71,19 +86,24 @@ function sim_one_case(simnum,casenum,nburn,nsamp,η=1.01,ζ=1,ι=1,R=5,aΔ=1,bΔ
     return γ_n,MSE,ξ
 end
 
-function output_results(γ,MSE,ξ,simnum,casenum)
+function output_results(γ,MSE,ξ,ξ⁰,simnum,casenum)
     q = size(γ,1)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
     plot_γ_sim(γ, "Gamma", "simulation$(simnum)_case$(casenum)")
-    show(stdout,"text/plain",DataFrame(Xi=ξ))
-    println("")
+    #ξ⁰[!,"Xi Probability"] = ξ
+    #show(stdout,"text/plain",ξ⁰)
+    #println("")
     show(stdout,"text/plain",DataFrame(MSE=MSE))
     println("")
-    println("Gamma")
+    #println("Gamma")
     gam = DataFrame(create_upper_tri(vec(median.(γ)),V),:auto)
-    show(stdout,"text/plain",gam[!,names(gam,Not("x1"))])
-    println("")
+    #show(stdout,"text/plain",gam[!,names(gam,Not("x1"))])
+    #println("")
+    output = DataFrame(ξ⁰)
+    #output[!,"MSE"] = MSE
+    CSV.write("results/simulation/simulation$(simnum)_case$(casenum).csv",output)
+    CSV.write("results/simulation/simulation$(simnum)_case$(casenum)_gammas.csv",gam)
 end
 
 main()
