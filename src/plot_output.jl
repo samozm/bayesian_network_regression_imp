@@ -21,7 +21,7 @@ function plot_γs_test(γ₁, γ₂, γ₁_label, γ₂_label,save_append)
 end
 
 
-function plot_γ_sim(γ,title,save_append)
+function plot_γ_sim(γ,title,save_append,jcon)
     len = size(γ,2)
     lower_bound = convert(Int,floor(len * 0.05))
     upper_bound = convert(Int,ceil(len * 0.95))
@@ -34,5 +34,9 @@ function plot_γ_sim(γ,title,save_append)
         plot!(intervals,[γ_sorted[lower_bound],γ_sorted[upper_bound]],[i,i],color="red",legend=false)
     end
     #legend((γ₁_label,γ₂_label))
-    savefig(intervals,"plots/simulation/gamma_cis_$save_append")
+    if jcon
+        savefig(intervals,"juliacon/plots/gamma_cis_$save_append")
+    else
+        savefig(intervals,"plots/simulation/gamma_cis_$save_append")
+    end
 end

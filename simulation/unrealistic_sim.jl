@@ -32,6 +32,9 @@ function parse_CL_args()
         help = "probability of any single node being influential on the response"
         arg_type = Float64
         default = 0.1
+    "--juliacon", "-j"
+        help = "flag indicating output should go to juliacon folder"
+        action = :store_true
     end
     return parse_args(args)
 end
@@ -47,6 +50,7 @@ function main()
     casen = args_in["casenum"]
     μₛ = args_in["mean"]
     πₛ = args_in["pi"]
+    jcon = args_in["juliacon"]
     q = floor(Int,t*(t-1)/2)
 
     B,ξ = generate_Bs(t,μₛ=μₛ,πₛ=πₛ)
@@ -61,6 +65,13 @@ function main()
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
+    if jcon
+        CSV.write("juliacon/data/simulation1_case$(casen).csv",out_df)
+        CSV.write("juliacon/data/simulation1_case$(casen)_bs.csv",DataFrame(B=upper_triangle(B)))
+        CSV.write("juliacon/data/simulation1_case$(casen)_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
+        CSV.write("juliacon/data/simulation1_case$(casen)_xis.csv",DataFrame(TrueXi=ξ))
+        return
+    end
     CSV.write("data/simulation/simulation1_case$(casen).csv",out_df)
     CSV.write("data/simulation/simulation1_case$(casen)_bs.csv",DataFrame(B=upper_triangle(B)))
     CSV.write("data/simulation/simulation1_case$(casen)_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
