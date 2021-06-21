@@ -8,24 +8,25 @@ Each simulation consists of 3 files:
 
 Simulation 1 (cases 1-6) is "unrealistic". Generated as follows:
 
-y<sub>i</sub> = μ<sub>0</sub> + <**A**<sub>i</sub>,**B**<sub>0</sub>><sub>F</sub> + ϵ<sub>i</sub>
+y<sub>i</sub> = μ<sub>0</sub> + <**A**<sub>i</sub>,**B**<sub>0</sub>><sub>F</sub> + ϵ <sub>i</sub>
 
 ϵ<sub>i</sub> ~ N(0,τ<sub>0</sub><sup>2</sup>)
 
-τ<sub>0</sub><sup>2</sup> &= 1
+τ<sub>0</sub><sup>2</sup> = 1
 
 
 To generate **A**<sub>i</sub>:
 
-    1. using ape, simulate 70 phylogenetic trees with
-        - 20 (?) total microbes
-        - 10 (?) microbes per tree
+    1. using ape, simulate 1 phylogenetic tree with 100 total microbes
     2. calculate the phylogenetic distance between each pair of microbes (again using ape)
+    3. for each sample (70 total) randomly (uniform) select t microbes
+        - t = 20, 50
+        - for A[k,l] if k and l are both chosen A[k,l] is the inverse of the phylogenetic distance between microbes k and l. Otherwise A[k,l] = 0
 
 
 To generate **B**<sub>0</sub>:
 
-    1. Generate 20 binary indicators ξ₁⁰,..., ξ₂₀⁰ independently from Ber(πₛ) (indicator of influential node)
+    1. Generate 100 binary indicators ξ₁⁰,..., ξₜ⁰ independently from Ber(πₛ) (indicator of influential node)
         - πₛ = 0.1, 0.3, 0.8
     2. If ξₖ⁰ = ξₗ⁰ = 1$ generate the edge coefficient between k and l from N(μₛ,1)
         - μₛ = 0.8,1.6

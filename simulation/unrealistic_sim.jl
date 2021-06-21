@@ -11,11 +11,11 @@ function parse_CL_args()
     "--tottaxa", "-t"
         help = "number of microbial taxa to generate"
         arg_type = Int
-        default = 20
+        default = 100
     "--samptaxa","-k"
         help = "number of taxa to actually use in each sample"
         arg_type = Int
-        default = 10
+        default = 20
     "--nsamp", "-n"
         help = "number of samples to generate"
         arg_type = Int
@@ -49,7 +49,7 @@ function main()
     πₛ = args_in["pi"]
     q = floor(Int,t*(t-1)/2)
 
-    B = generate_Bs(t,μₛ=μₛ,πₛ=πₛ)
+    B,ξ = generate_Bs(t,μₛ=μₛ,πₛ=πₛ)
 
     y,A,m = generate_unrealistic_data(B,t,k,n,s)#,0,0.25)
 
@@ -64,6 +64,7 @@ function main()
     CSV.write("data/simulation/simulation1_case$(casen).csv",out_df)
     CSV.write("data/simulation/simulation1_case$(casen)_bs.csv",DataFrame(B=upper_triangle(B)))
     CSV.write("data/simulation/simulation1_case$(casen)_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
+    CSV.write("data/simulation/simulation1_case$(casen)_xis.csv",DataFrame(TrueXi=ξ))
 
     #println("y")
     #show(stdout,"text/plain",y)
@@ -89,7 +90,7 @@ function generate_Bs(t; μₛ=0.8,σₛ=1,πₛ=0.1)
         end
     end
 
-    return B
+    return B,ξ
 end
 
 
@@ -100,7 +101,10 @@ function generate_unrealistic_data(B,t,k,n,seed)#,μₐ,σₐ)
     y = zeros(n)
     m = [zeros(t)]
     A = [zeros(t,t)]
-    A_base = zeros(k,k)
+    A_base = zeros(t,t)
+    @rput t
+    R"source('src/sim_trees.R');inv_dist <- sim_tree_dists(t)"
+    A_base = @rget inv_dist
     ϵ = rand(Normal(0,1),n)
     #for i in 1:t
         #for j in (i+1):t
@@ -118,16 +122,11 @@ function generate_unrealistic_data(B,t,k,n,seed)#,μₐ,σₐ)
     for i in 1:n
         chosen = sort(sample(1:t,k,replace=false))
         ind = zeros(n,n)
-        @rput k chosen
-        R"source('src/sim_trees.R');inv_dist <- sim_tree_dists(k,chosen)"
-        A[i] = @rget inv_dist
-        #for j in 1:t
-        #    for l in (j+1):t
-        #        if j in chosen && l in chosen
-        #            A[i][j,l] = A[i][l,j] = A_base[j,l]
-        #        end
-        #    end
-        #end
+        for j in chosen
+            for l in chosen
+                A[i][j,l] = A[i][l,j] = A_base[j,l]
+            end
+        end
         m[i][chosen] .= 1
         y[i] = tr(transpose(B) * A[i]) + ϵ[i]
         if i != n
