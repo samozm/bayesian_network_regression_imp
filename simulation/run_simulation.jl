@@ -73,7 +73,8 @@ function sim_one_case(simnum,casenum,nburn,nsamp,jcon,η=1.01,ζ=1,ι=1,R=5,aΔ=
         b_in = DataFrame(CSV.File("data/simulation/simulation$(simnum)_case$(casenum)_bs.csv"))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
     end
-    X = convert(Matrix,data_in[!,names(data_in,Not("y"))])
+    #X = convert(Matrix,data_in[:,names(data_in,Not("y"))])
+    X = Matrix(data_in[:,names(data_in,Not("y"))])
     y = data_in[:,:y]
 
     q = size(X,2)
@@ -85,8 +86,8 @@ function sim_one_case(simnum,casenum,nburn,nsamp,jcon,η=1.01,ζ=1,ι=1,R=5,aΔ=
 
     low = zeros(190)
     high = zeros(190)
-    lw = convert(Int64, round(nsamp * 0.1))
-    hi = convert(Int64, round(nsamp * 0.9))
+    lw = convert(Int64, round(nsamp * 0.05))
+    hi = convert(Int64, round(nsamp * 0.95))
 
     γ_n = hcat(γ...)
 
@@ -112,7 +113,8 @@ function output_results(γ,MSE,ξ,ξ⁰,simnum,casenum,jcon)
     show(stdout,"text/plain",DataFrame(MSE=MSE))
     println("")
     #println("Gamma")
-    gam = DataFrame(create_upper_tri(vec(median.(γ)),V),:auto)
+    #gam = DataFrame(create_upper_tri(vec(median.(γ)),V),:auto)
+    gam = DataFrame(create_upper_tri(vec(mean.(γ)),V),:auto)
     #show(stdout,"text/plain",gam[!,names(gam,Not("x1"))])
     #println("")
     output = DataFrame(ξ⁰)
