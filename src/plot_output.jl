@@ -1,4 +1,6 @@
 using Plots
+include("utils.jl")
+
 
 function plot_γs_test(γ₁, γ₂, γ₁_label, γ₂_label,save_append)
     len = size(γ₁,2)
@@ -39,4 +41,40 @@ function plot_γ_sim(γ,title,save_append,jcon)
     else
         savefig(intervals,"plots/simulation/gamma_cis_$save_append")
     end
+end
+
+function plot_sig_γ(γ,γ₀,simnum,casenum)
+    q = size(γ,1)
+    V = convert(Int,(1 + sqrt(1 + 8*q))/2)
+
+    selected_idx = select_edges(γ,0.05)
+    #selected_idx_true = select_edges(γ₀,0.05)
+
+    sel_γ = zeros(size(γ,1))
+    #sel_γ_true = zeros(size(γ₀,1))
+
+    sel_γ[selected_idx] .= 1
+    #sel_γ_true[selected_idx_true] .= 1
+
+
+
+    sel_B = create_upper_tri(sel_γ,V)
+    #sel_B_true = create_upper_tri(sel_γ_true,V)
+    plt = plot(sel_B,st=:heatmap,c=palette([:red,:white],10),yflip=true,colorbar=false,
+               legend=false,xaxis=(1:V),yaxis=(1:V),size=(1800,1800))
+
+    coords_x = zeros(V,V)
+    coords_y = zeros(V,V)
+    for i in 1:V
+        coords_x[i,:] = 1:V
+        coords_y[:,i] = 1:V
+    end
+
+    scatter!(plt,upper_triangle(coords_x),upper_triangle(coords_y),series_annotations=round.(γ₀,digits=2),marker=(0,0,0))
+    hline!(plt,0.5:(V+0.5),c=:black)
+    vline!(plt,0.5:(V+0.5),c=:black)
+
+    savefig(plt,"juliacon/plots/simulation$(simnum)_case$(casenum)_posterior_B")
+    #savefig(plot(sel_B_true,st=:heatmap),"juliacon/plots/simulation$(simnum)_case$(casenum)_true_B")
+
 end
