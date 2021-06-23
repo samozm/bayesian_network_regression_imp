@@ -1,6 +1,8 @@
 using Random, DataFrames, LinearAlgebra, StatsBase, RCall, InvertedIndices, ProgressMeter
 using Distributions
 
+include("utils.jl")
+
 #region custom sampling
 """
     sample_u(ξ, R, M)
@@ -62,54 +64,6 @@ end
 
 
 #region helper functions
-"""
-    upper_triangle(matrix)
-
-Return the upper triangle (without the diagonal) of the matrix as a vector
-
-# Arguments
-- `matrix`: matrix of which to capture the upper triangle
-
-# Returns
-Vector of upper triangluar section of `matrix`
-"""
-function upper_triangle(matrix)
-    k = 1
-    ret = zeros(convert(Int64, round(size(matrix,1)*(size(matrix,2) - 1)/2)))
-    for i in 1:size(matrix,1)
-        for j in (i+1):size(matrix,2)
-            ret[k] = matrix[i,j]
-            k = k + 1
-        end
-    end
-    return ret
-end
-
-"""
-    create_upper_tri(vec,V)
-
-Create an upper triangluar matrix from a vector of the form [12, ... 1V,23,...(V-1)V]
-to the form [0 12 13  ... 1V]
-            [0 0  23  ... 2V]
-            [...............]
-            [0 0  0...(V-1)V]
-# Arguments
-- `vec`: vector containing values to put into the upper triangluar matrix
-- `V`  : dimension of output matrix
-
-# Returns
-Upper triangluar matrix containing values of `vec`
-"""
-function create_upper_tri(vec,V)
-    mat = zeros(V,V)
-    vec2 = deepcopy(vec)
-    for k = 1:V
-        for l = k+1:V
-            mat[k,l] = popfirst!(vec2)
-        end
-    end
-    return mat
-end
 
 """
     sample_π_dirichlet(r,η,λ)
@@ -201,7 +155,7 @@ function init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in=NaN, x_transform=true)
     for r in 1:R
         πᵥ[r,:] = rand(Dirichlet([r^η,1,1]))
     end
-    λ = map(r -> sample([0,1,-1], weights(πᵥ[r,:]),1)[1], 1:R)
+    λ = map(r -> sample([0,1,-1], StatsBase.weights(πᵥ[r,:]),1)[1], 1:R)
     Λ = diagm(λ)
     Δ = sample_Beta(aΔ, bΔ)
 
@@ -532,7 +486,7 @@ function update_Λ(πᵥ, R, Λ, u, D, τ², γ)
         p1 = πᵥ[r,1] * n₀ / p_bot
         p2 = πᵥ[r,2] * n₁ / p_bot
         p3 = πᵥ[r,3] * n₋₁ / p_bot
-        λ_new[r] = sample([0,1,-1],weights([p1,p2,p3]))
+        λ_new[r] = sample([0,1,-1],StatsBase.weights([p1,p2,p3]))
     end
     return diagm(λ_new)
 end
