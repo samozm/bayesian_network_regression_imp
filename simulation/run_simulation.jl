@@ -118,6 +118,7 @@ function output_results(γ,MSE,ξ,ξ⁰,simnum,casenum,jcon)
     #show(stdout,"text/plain",gam[!,names(gam,Not("x1"))])
     #println("")
     output = DataFrame(ξ⁰)
+    output[:,"Xi posterior"] = ξ
     #output[!,"MSE"] = MSE
     if jcon
         CSV.write("juliacon/results/simulation$(simnum)_case$(casenum).csv",output)
