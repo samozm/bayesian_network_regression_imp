@@ -64,8 +64,8 @@ function select_edges(γ_means,α)
 
     while true
         new_fdr = (new_fdr*(H-1) + pb[sorted_abslog_means[H,:idx],argmin(gmm_means)])/H
-        #println("fdr")
-        #println(fdr)
+        println("fdr")
+        println(pb)
         #println("H")
         #println(H)
         if new_fdr > α || H == size(γ_means)

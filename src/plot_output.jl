@@ -78,3 +78,9 @@ function plot_sig_γ(γ,γ₀,simnum,casenum)
     #savefig(plot(sel_B_true,st=:heatmap),"juliacon/plots/simulation$(simnum)_case$(casenum)_true_B")
 
 end
+
+function plot_ξ_sim(ξ_df, simnum, casenum)
+    plt = bar(ξ_df[:,"Xi posterior"],fillcolor=ξ_df[:,"Color"],legend=false,xlabel="Microbe",ylabel="Probability of influence")
+
+    savefig(plt,"juliacon/plots/simulation$(simnum)_case$(casenum)_posterior_xi")
+end
