@@ -1,4 +1,7 @@
+using LinearAlgebra: Matrix
+using Base: Bool, Float16, Int16
 using CSV,ArgParse,TickTock
+using ProfileView
 include("../src/BayesNet.jl")
 include("../src/plot_output.jl")
 
@@ -36,6 +39,11 @@ function main()
     simnum = parsed_CL_args["simnum"]
     casenum = parsed_CL_args["casenum"]
     jcon = parsed_CL_args["juliacon"]
+
+    run_case_and_output(nburn,nsamp,simnum,casenum,jcon)
+end
+
+function run_case_and_output(nburn,nsamp,simnum,casenum,jcon)
     γ,MSE,ξ = sim_one_case(simnum,casenum,nburn,nsamp,jcon)
 
     if jcon
@@ -44,6 +52,9 @@ function main()
         ξ_in = DataFrame(CSV.File("data/simulation/simulation$(simnum)_case$(casenum)_xis.csv"))
 
         step = Int(floor((nburn+nsamp)/100))
+        if step==0
+            step=1
+        end
         ξ_prog = map(i->mean(ξ[1:i]),1:step:nburn+nsamp)
         #println("tst")
         #show(stdout,"text/plain",tst)
@@ -61,7 +72,7 @@ function main()
     output_results(γ[:,nburn+1:nburn+nsamp],MSE,mean(ξ[nburn+1:nburn+nsamp]),ξ_in,simnum,casenum,jcon)
 end
 
-function sim_one_case(simnum,casenum,nburn,nsamp,jcon,η=1.01,ζ=1,ι=1,R=5,aΔ=1,bΔ=1,ν=10)
+function sim_one_case(simnum::Int64,casenum::Int64,nburn::Int64,nsamp::Int64,jcon::Bool,η::Float64=1.01,ζ::Float64=1.0,ι::Float64=1.0,R::Int64=5,aΔ::Float64=1.0,bΔ::Float64=1.0,ν::Int64=10)
     if jcon
         data_in = DataFrame(CSV.File("juliacon/data/simulation$(simnum)_case$(casenum).csv"))
 
@@ -81,7 +92,7 @@ function sim_one_case(simnum,casenum,nburn,nsamp,jcon,η=1.01,ζ=1,ι=1,R=5,aΔ=
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
     tick()
-    τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
+    τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
     tock()
 
     low = zeros(190)
@@ -102,7 +113,7 @@ function sim_one_case(simnum,casenum,nburn,nsamp,jcon,η=1.01,ζ=1,ι=1,R=5,aΔ=
     return γ_n,MSE,ξ
 end
 
-function output_results(γ,MSE,ξ,ξ⁰,simnum,casenum,jcon)
+function output_results(γ::Array,MSE::Float64,ξ::Array,ξ⁰::DataFrame,simnum::Int64,casenum::Int64,jcon::Bool)
     q = size(γ,1)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
@@ -126,7 +137,9 @@ function output_results(γ,MSE,ξ,ξ⁰,simnum,casenum,jcon)
     else
         CSV.write("results/simulation/simulation$(simnum)_case$(casenum).csv",output)
         CSV.write("results/simulation/simulation$(simnum)_case$(casenum)_gammas.csv",gam)
+        CSV.write("results/simulation/simulation$(simnum)_case$(casenum)_MSE.csv",DataFrame(MSE=MSE))
     end
 end
 
-main()
+@profview run_case_and_output(5,5,1,1,false)
+#main()

@@ -26,6 +26,9 @@ end
 function plot_γ_sim(γ,title,save_append,jcon)
     len = size(γ,2)
     lower_bound = convert(Int,floor(len * 0.05))
+    if lower_bound == 0
+        lower_bound = 1
+    end
     upper_bound = convert(Int,ceil(len * 0.95))
     γ_sorted = sort(γ[1,:])
     intervals = scatter([γ_sorted[lower_bound],median(γ_sorted),γ_sorted[upper_bound]],[1,1,1],mark=(:vline),color="red",legend=false, size=(1200,1600))
