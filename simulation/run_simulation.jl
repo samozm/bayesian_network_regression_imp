@@ -1,8 +1,12 @@
 using LinearAlgebra: Matrix
 using Base: Bool, Float16, Int16
 using CSV,ArgParse,TickTock
-using ProfileView
-include("../src/BayesNet.jl")
+using ProfileView, Traceur
+using BayesianNetworkRegression
+using Random, DataFrames, LinearAlgebra, StatsBase
+using Distributions
+using BenchmarkTools
+#include("../src/BayesNet.jl")
 include("../src/plot_output.jl")
 
 
@@ -51,25 +55,25 @@ function run_case_and_output(nburn,nsamp,simnum,casenum,jcon)
     else
         ξ_in = DataFrame(CSV.File("data/simulation/simulation$(simnum)_case$(casenum)_xis.csv"))
 
-        step = Int(floor((nburn+nsamp)/100))
+        step = Int(floor(nsamp/100))
         if step==0
             step=1
         end
-        ξ_prog = map(i->mean(ξ[1:i]),1:step:nburn+nsamp)
+        ξ_prog = map(i->mean(ξ[1:i]),1:step:nsamp)
         #println("tst")
         #show(stdout,"text/plain",tst)
         #println("")
         savefig(plot(transpose(hcat(ξ_prog...)),legend=false),"plots/simulation/xi_converge_simulation$(simnum)_case$(casenum)")
 
-        γ_prog = zeros(190,length(1:step:nburn+nsamp))
+        γ_prog = zeros(190,length(1:step:nsamp))
         for j in 1:190
-            γ_prog[j,:] = map(i->mean(γ[j,1:i]),1:step:nburn+nsamp)
+            γ_prog[j,:] = map(i->mean(γ[j,1:i]),1:step:nsamp)
         end
         savefig(plot(transpose(γ_prog),legend=false),"plots/simulation/gamma_coverage_simulation$(simnum)_case$(casenum)")
 
     end
 
-    output_results(γ[:,nburn+1:nburn+nsamp],MSE,mean(ξ[nburn+1:nburn+nsamp]),ξ_in,simnum,casenum,jcon)
+    output_results(γ[:,1:nsamp],MSE,mean(ξ[1:nsamp]),ξ_in,simnum,casenum,jcon)
 end
 
 function sim_one_case(simnum::Int64,casenum::Int64,nburn::Int64,nsamp::Int64,jcon::Bool,η::Float64=1.01,ζ::Float64=1.0,ι::Float64=1.0,R::Int64=5,aΔ::Float64=1.0,bΔ::Float64=1.0,ν::Int64=10)
@@ -92,7 +96,8 @@ function sim_one_case(simnum::Int64,casenum::Int64,nburn::Int64,nsamp::Int64,jco
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
     tick()
-    τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
+    #τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
+    result = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
     tock()
 
     low = zeros(190)
@@ -100,9 +105,9 @@ function sim_one_case(simnum::Int64,casenum::Int64,nburn::Int64,nsamp::Int64,jco
     lw = convert(Int64, round(nsamp * 0.05))
     hi = convert(Int64, round(nsamp * 0.95))
 
-    γ_n = hcat(γ...)
+    γ_n = hcat(result.Gammas...)
 
-    γ_n2 = mean(γ[nburn+1:nburn+nsamp])
+    γ_n2 = mean(result.Gammas[1:nsamp])
     γ₀ = B₀
     MSE = 0
     for i in 1:190
@@ -110,7 +115,7 @@ function sim_one_case(simnum::Int64,casenum::Int64,nburn::Int64,nsamp::Int64,jco
     end
     MSE = MSE * (2/(V*(V-1)))
 
-    return γ_n,MSE,ξ
+    return γ_n,MSE,result.Xis
 end
 
 function output_results(γ::Array,MSE::Float64,ξ::Array,ξ⁰::DataFrame,simnum::Int64,casenum::Int64,jcon::Bool)
@@ -141,5 +146,6 @@ function output_results(γ::Array,MSE::Float64,ξ::Array,ξ⁰::DataFrame,simnum
     end
 end
 
-@profview run_case_and_output(5,5,1,1,false)
+run_case_and_output(3,3,1,1,false)
+#@trace run_case_and_output(10,10,1,1,false)
 #main()
