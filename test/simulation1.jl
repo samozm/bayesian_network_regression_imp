@@ -25,7 +25,11 @@ function main()
     γ₁,MSE₁,ξ₁ = sim_one_case(nburn,nsamp)
     @rput nburn
     @rput nsamp
-    R"source('test/run_guha_sim1.R');retlist <- guha_sim1(nburn,nsamp)"
+    R"source('test/run_guha_sim1.R')"
+    println("Guha:")
+    tick()
+    R"retlist <- guha_sim1(nburn,nsamp)"
+    tock()
     R"gamma <- retlist$gamma; MSE <- retlist$MSE; xis <- retlist$xis"
     γ₂ = @rget gamma
     MSE₂ = @rget MSE
@@ -49,6 +53,7 @@ function sim_one_case(nburn,nsamp)
     R"X <- simdata$Xmat; y <- simdata$y; b_in <- simdata$true.b"
     Z=@rget X
     y=@rget y
+    y=reshape(y,(size(y,1),))
     B₀=@rget b_in
     println("Sim 1 Case 1")
 

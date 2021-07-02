@@ -375,12 +375,12 @@ function update_u_ξ(u::Array{Float64,2}, γ::Array{Float64,1}, D::Array{Float64
         cov[k,:,:] = Σ
 
         if w > 1 || w < 0 || isnan(w)
-            println("wtop")
-            println(w_top)
-            println("wbot")
-            println(w_bot)
-            println("delta")
-            println(Δ)
+            #println("wtop")
+            #println(w_top)
+            #println("wbot")
+            #println(w_bot)
+            #println("delta")
+            #println(Δ)
         end
 
         ξ[k] = update_ξ(w)
@@ -409,14 +409,14 @@ function update_ξ(w::Float64)
     elseif w == 1
         #println("w == 1")
         return 0
-    elseif w > 1
+    #elseif w > 1
         #println("w > 1")
         #println(w)
-        return 0
-    elseif w < 0
+    #    return 0
+    #elseif w < 0
         #println("w < 0")
         #println(w)
-        return 1
+    #    return 1
     end
     #println(w)
     Int64(rand(Bernoulli(1 - w)))
@@ -479,6 +479,7 @@ end
 Sample the next values of λ from [1,0,-1] with probabilities determined from a normal mixture
 
 # Arguments
+- `Λ_new` : return array, populated with the new values of λ (a diagonal array of 1,0,-1s )
 - `πᵥ`: 3 column vectors of dimension R used to weight normal mixture for probability values
 - `R` : the dimensionality of the latent variables u
 - `Λ` : R × R diagonal matrix of λ values
@@ -490,8 +491,8 @@ Sample the next values of λ from [1,0,-1] with probabilities determined from a 
 # Returns
 new value of Λ
 """
-function update_Λ(πᵥ::Array{Float64,2}, R::Int64, Λ::Array{Int64,2}, u::Array{Float64,2}, D::Array{Float64,2}, τ²::Float64, γ::Array{Float64,1})
-    λ = diag(Λ)
+function update_Λ!(Λ_new::Array{Int64,2}, πᵥ::Array{Float64,2}, R::Int64, Λ::Array{Int64,2}, u::Array{Float64,2}, D::Array{Float64,2}, τ²::Float64, γ::Array{Float64,1})
+    #λ = diag(Λ)
     λ_new = zeros(Int64,size(Λ,1))
     for r in 1:R
         Λ₋₁= deepcopy(Λ)
@@ -500,19 +501,26 @@ function update_Λ(πᵥ::Array{Float64,2}, R::Int64, Λ::Array{Int64,2}, u::Arr
         Λ₀[r,r] = 0
         Λ₁ = deepcopy(Λ)
         Λ₁[r,r] = 1
-        W₋₁= upper_triangle(transpose(u) * Λ₋₁ * u)
-        W₀ = upper_triangle(transpose(u) * Λ₀ * u)
-        W₁ = upper_triangle(transpose(u) * Λ₁ * u)
-        n₀ = pdf(MultivariateNormal(W₀, τ² * D),γ)[1]
-        n₁ = pdf(MultivariateNormal(W₁, τ² * D),γ)[1]
-        n₋₁= pdf(MultivariateNormal(W₋₁, τ² * D),γ)[1]
+        u_tr = transpose(u)
+        W₋₁= upper_triangle(u_tr * Λ₋₁ * u)
+        W₀ = upper_triangle(u_tr * Λ₀ * u)
+        W₁ = upper_triangle(u_tr * Λ₁ * u)
+
+        τ²D = sqrt.(τ² * D)
+        #n₀ = pdf(MultivariateNormal(W₀, τ²D),γ)[1]
+        #n₁ = pdf(MultivariateNormal(W₁, τ²D),γ)[1]
+        #n₋₁= pdf(MultivariateNormal(W₋₁, τ²D),γ)[1]
+        n₀ = prod(map(i -> pdf(Normal(W₀[i],τ²D[i,i]),γ[i]),1:size(γ,1)))
+        n₁ = prod(map(i -> pdf(Normal(W₁[i],τ²D[i,i]),γ[i]),1:size(γ,1)))
+        n₋₁ = prod(map(i -> pdf(Normal(W₋₁[i],τ²D[i,i]),γ[i]),1:size(γ,1)))
         p_bot = πᵥ[r,1] * n₀ + πᵥ[r,2] * n₁ + πᵥ[r,3] * n₋₁
         p1 = πᵥ[r,1] * n₀ / p_bot
         p2 = πᵥ[r,2] * n₁ / p_bot
         p3 = πᵥ[r,3] * n₋₁ / p_bot
         λ_new[r] = sample([0,1,-1],StatsBase.weights([p1,p2,p3]))
     end
-    return diagm(λ_new)
+    Λ_new[:,:] = diagm(λ_new)
+    #return diagm(λ_new)
 end
 
 """
@@ -539,11 +547,12 @@ end
 #endregion
 
 """
-    GibbsSample(X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ, ν)
+    GibbsSample!(result,X, y, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, γ, V, η, ζ, ι, R, aΔ, bΔ, ν)
 
 Take one GibbsSample
 
 # Arguments
+- `result`: Array of outputs (see returns section for more detail)
 - `X` : matrix of unweighted symmetric adjacency matrices to be used as predictors. each row should be the upper triangle of the adjacency matrix associated with one sample.
 - `y` : vector of response variables
 - `θ` : θ parameter, drawn from the Gamma Distribution
@@ -564,9 +573,9 @@ Take one GibbsSample
 - `ν` : hyperparameter used for sampling M
 
 # Returns
-A tuple of the new values, (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
+An array of the new values, [τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n]
 """
-function GibbsSample(X::Array{Float64,2}, y::Array{Float64,1}, θ::Float64, D::Array{Float64,2}, πᵥ::Array{Float64,2}, Λ::Array{Int64,2}, Δ::Float64, M::Array{Float64,2}, u::Array{Float64,2}, μ::Float64, γ::Array{Float64,1}, V::Int64, η::Float64, ζ::Float64, ι::Float64, R::Int64, aΔ::Float64, bΔ::Float64, ν::Int64)
+function GibbsSample!(result::Array{Any,1},X::Array{Float64,2}, y::Array{Float64,1}, θ::Float64, D::Array{Float64,2}, πᵥ::Array{Float64,2}, Λ::Array{Int64,2}, Δ::Float64, M::Array{Float64,2}, u::Array{Float64,2}, μ::Float64, γ::Array{Float64,1}, V::Int64, η::Float64, ζ::Float64, ι::Float64, R::Int64, aΔ::Float64, bΔ::Float64, ν::Int64)
     n = size(X,1)
     τ²_n = update_τ²(X, y, μ, γ, Λ, u, D, V)
     u_n, ξ_n = update_u_ξ(u, γ, D, τ²_n, Δ, M, Λ, V)
@@ -576,22 +585,27 @@ function GibbsSample(X::Array{Float64,2}, y::Array{Float64,1}, θ::Float64, D::A
     Δ_n = update_Δ(aΔ, bΔ, ξ_n)
     M_n = update_M(u_n, ν, V,ξ_n)
     μ_n = update_μ(X, y, γ_n, τ²_n, n)
-    Λ_n = update_Λ(πᵥ, R, Λ, u_n, D_n, τ²_n, γ_n)
+    Λ_n = Array{Int64,2}(undef,(R,R))
+    update_Λ!(Λ_n, πᵥ, R, Λ, u_n, D_n, τ²_n, γ_n)
     πᵥ_n = update_π(Λ_n, η,R)
-    return (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
+    result[1:11] = [τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n]
+    #return (τ²_n, u_n, ξ_n, γ_n, D_n, θ_n, Δ_n, M_n, μ_n, Λ_n, πᵥ_n)
+    nothing
 end
 
 
-function BayesNet(X::Array, y::Array, R::Int64; η::Float64=1.01,ζ::Float64=1.0,ι::Float64=1.0,aΔ::Real=1,bΔ::Real=1, ν::Int64=12, nburn::Int64=30000, nsamples::Int64=20000, V_in::Int64=NaN, x_transform::Bool=true)
+function BayesNet(X::Array, y::Array{Float64,1}, R::Int64; η::Float64=1.01,ζ::Float64=1.0,ι::Float64=1.0,aΔ::Float64=1.0,bΔ::Float64=1.0, ν::Int64=12, nburn::Int64=30000, nsamples::Int64=20000, V_in::Int64=NaN, x_transform::Bool=true)
     X, θ, D, πᵥ, Λ, Δ, ξ, M, u, μ, τ², γ, V = init_vars(X, η, ζ, ι, R, aΔ, bΔ, ν, V_in, x_transform)
 
     total = nburn + nsamples
     p = Progress(total,1)
+    result = Array{Any,1}(undef,11)
     # burn-in
     for i in 1:nburn
         #τ²[1], u[1], ξ[1], γ[1], D[1], θ[1], Δ[1], M[1], μ[1], Λ[1], πᵥ[1] = GibbsSample(...
         #TODO: better solution than just flattening last(γ)
-        result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(M), last(u), last(μ), vec(last(γ)), V, η, ζ, ι, R, aΔ, bΔ,ν)
+        #result[1:11] = Array{Any,1}(undef,11)
+        GibbsSample!(result, X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(M), last(u), last(μ), last(γ), V, η, ζ, ι, R, aΔ, bΔ,ν)
         push!(τ²,result[1])
         push!(u,result[2])
         push!(ξ,result[3])
@@ -606,7 +620,8 @@ function BayesNet(X::Array, y::Array, R::Int64; η::Float64=1.01,ζ::Float64=1.0
         next!(p)
     end
     for i in 1:nsamples
-        result = GibbsSample(X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(M), last(u), last(μ), vec(last(γ)), V, η, ζ, ι, R, aΔ, bΔ,ν)
+        #result[1:11] = Array{Any,1}(undef,11)
+        GibbsSample!(result, X, y, last(θ), last(D), last(πᵥ), last(Λ), last(Δ), last(M), last(u), last(μ), last(γ), V, η, ζ, ι, R, aΔ, bΔ,ν)
         push!(τ²,result[1])
         push!(u,result[2])
         push!(ξ,result[3])

@@ -32,15 +32,20 @@ function main()
     @rput nburn
     @rput nsamp
     if (case == 1)
-        R"source('test/run_guha_sim2_case1.R');retlist <- guha_sim2_case1(nburn,nsamp)"
+        R"source('test/run_guha_sim2_case1.R')"
+        println("Guha:")
+        tick()
+        R"retlist <- guha_sim2_case1(nburn,nsamp)"
+        tock()
     else
-        R"source('test/run_guha_sim2_case2.R');retlist <- guha_sim2_case2(nburn,nsamp)"
+        R"source('test/run_guha_sim2_case2.R')"
+        println("Guha:")
+        tick()
+        R"retlist <- guha_sim2_case2(nburn,nsamp)"
+        tock()
     end
-    println("done r")
     R"gamma <- retlist$gamma; MSE <- retlist$MSE; xis <- retlist$xis"
     γ₂ = @rget gamma
-    println(size(γ₁))
-    println("done loop")
     MSE₂ = @rget MSE
     ξ₂ = @rget xis
     output_results(γ₁[:,nburn+1:nburn+nsamp],MSE₁,mean(ξ₁[nburn+1:nburn+nsamp]),γ₂,MSE₂,ξ₂,case)
@@ -67,7 +72,7 @@ function sim_one_case(case,nburn,nsamp)
 
     data_in = DataFrame(CSV.File("data/test/simulation2_case$(case).csv"))
 
-    X = convert(Matrix,data_in[:,1:190])
+    X = Matrix(data_in[:,1:190])
     y = data_in[:,191]
 
     b_in = DataFrame(CSV.File("data/test/simulation2_case$(case)_bs.csv"))
@@ -77,7 +82,7 @@ function sim_one_case(case,nburn,nsamp)
     println("")
 
     tick()
-    τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, aΔ=1, bΔ=1,ν=10,ι=1,ζ=1,x_transform=false)
+    τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, aΔ=1.0, bΔ=1.0,ν=10,ι=1.0,ζ=1.0,x_transform=false)
     tock()
 
     low = zeros(190)
