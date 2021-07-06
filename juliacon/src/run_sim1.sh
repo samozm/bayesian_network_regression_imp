@@ -2,25 +2,25 @@
 echo "unrealistic simulations for juliacon (sim 1)"
 
 echo "case 1: mean = 0.8, pi = 0.1, 8 microbes per sample"
-julia simulation/run_simulation.jl -n 1 -c 1 -j
+julia simulation/run_simulation.jl -n 1 -m 0.8 -p 0.1 -r 5 -k 8 -j
 
 echo "case 2: mean = 0.8, pi = 0.8, 8 microbes per sample"
-julia simulation/run_simulation.jl -n 1 -c 2 -j
+julia simulation/run_simulation.jl -n 1 -m 0.8 -p 0.8 -r 5 -k 8 -j
 
 echo "case 3: mean = 1.6, pi = 0.1, 8 microbes per sample"
-julia simulation/run_simulation.jl -n 1 -c 3 -j
+julia simulation/run_simulation.jl -n 1 -m 1.6 -p 0.1 -r 5 -k 8 -j
 
 echo "case 4: mean = 1.6, pi = 0.8, 8 microbes per sample"
-julia simulation/run_simulation.jl -n 1 -c 4 -j
+julia simulation/run_simulation.jl -n 1 -m 1.6 -p 0.8 -r 5 -k 8 -j
 
 echo "case 5: mean = 0.8, pi = 0.1, 15 microbes per sample"
-julia simulation/run_simulation.jl -n 1 -c 5 -j
+julia simulation/run_simulation.jl -n 1  -m 0.8 -p 0.1 -r 5 -k 15 -j
 
 echo "case 6: mean = 0.8, pi = 0.8, 15 microbes per sample"
-julia simulation/run_simulation.jl -n 1 -c 6 -j
+julia simulation/run_simulation.jl -n 1  -m 0.8 -p 0.8 -r 5 -k 15 -j
 
 echo "case 7: mean = 1.6, pi = 0.1, 15 microbes per sample"
-julia simulation/run_simulation.jl -n 1 -c 7 -j
+julia simulation/run_simulation.jl -n 1  -m 1.6 -p 0.1 -r 5 -k 15 -j
 
 echo "case 8: mean = 1.6, pi = 0.8, 15 microbes per sample"
-julia simulation/run_simulation.jl -n 1 -c 8 -j
+julia simulation/run_simulation.jl -n 1  -m 1.6 -p 0.8 -r 5 -k 15 -j
