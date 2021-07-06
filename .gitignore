@@ -28,8 +28,10 @@ Manifest.toml
 # Mac-related file
 *.DS_Store*
 
-# Testing data
-data/test/*
+# data
+data/*
+juliacon/data/*
+
 
 # R files
 *.Rproj
@@ -39,6 +41,8 @@ data/test/*
 # Misc
 src/plot_distrs.R
 Project.toml
+test/run_my_sim1_case1.R
+plots/profiling/*
 
 # VS code files
 .vscode/*
