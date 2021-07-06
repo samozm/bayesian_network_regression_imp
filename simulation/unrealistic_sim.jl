@@ -20,10 +20,6 @@ function parse_CL_args()
         help = "number of samples to generate"
         arg_type = Int
         default = 70
-    "--casenum", "-c"
-        help = "case number to append to the name of the csv files create"
-        arg_type = Int
-        default = 1
     "--mean", "-m"
         help = "mean to use to draw edge coefficients"
         arg_type = Float64
@@ -47,7 +43,6 @@ function main()
     k = args_in["samptaxa"]
     n = args_in["nsamp"]
     s = args_in["seed"]
-    casen = args_in["casenum"]
     μₛ = args_in["mean"]
     πₛ = args_in["pi"]
     jcon = args_in["juliacon"]
@@ -66,16 +61,16 @@ function main()
     out_df[!,:y] = y
 
     if jcon
-        CSV.write("juliacon/data/simulation1_case$(casen).csv",out_df)
-        CSV.write("juliacon/data/simulation1_case$(casen)_bs.csv",DataFrame(B=upper_triangle(B)))
-        CSV.write("juliacon/data/simulation1_case$(casen)_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
-        CSV.write("juliacon/data/simulation1_case$(casen)_xis.csv",DataFrame(TrueXi=ξ))
+        CSV.write("juliacon/data/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_XYs.csv",out_df)
+        CSV.write("juliacon/data/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_bs.csv",DataFrame(B=upper_triangle(B)))
+        CSV.write("juliacon/data/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
+        CSV.write("juliacon/data/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_xis.csv",DataFrame(TrueXi=ξ))
         return
     end
-    CSV.write("data/simulation/simulation1_case$(casen).csv",out_df)
-    CSV.write("data/simulation/simulation1_case$(casen)_bs.csv",DataFrame(B=upper_triangle(B)))
-    CSV.write("data/simulation/simulation1_case$(casen)_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
-    CSV.write("data/simulation/simulation1_case$(casen)_xis.csv",DataFrame(TrueXi=ξ))
+    CSV.write("data/simulation/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_XYs.csv",out_df)
+    CSV.write("data/simulation/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_bs.csv",DataFrame(B=upper_triangle(B)))
+    CSV.write("data/simulation/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
+    CSV.write("data/simulation/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_xis.csv",DataFrame(TrueXi=ξ))
 
     #println("y")
     #show(stdout,"text/plain",y)
