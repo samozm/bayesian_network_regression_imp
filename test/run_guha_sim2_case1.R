@@ -1,7 +1,7 @@
 
 guha_sim2_case1 <- function(nburn=30000, nsamp=20000)
 {
-  rm(list=ls())
+  #rm(list=ls())
   #if (!require(timeR)) install.packages('timeR')
   
   sim2 <- read.csv("data/test/simulation2_case1.csv")
