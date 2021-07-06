@@ -61,11 +61,11 @@ end
 
 function sim_one_case(case,nburn,nsamp)
     η  = 1.01
-    ζ  = 1
-    ι  = 1
+    ζ  = 1.0
+    ι  = 1.0
     R  = 5
-    aΔ = 1
-    bΔ = 1
+    aΔ = 1.0
+    bΔ = 1.0
     ν = 10
     V = 20
     q = floor(Int,V*(V-1)/2)
