@@ -1,5 +1,4 @@
-using Random,Statistics,Plots
-include("../../../Distributions.jl/src/Distributions.jl")
+using Random,Statistics,Plots,Distributions
 
 function plot_dists()
     d = Distributions.GeneralizedInverseGaussian(1,2,1.1)
