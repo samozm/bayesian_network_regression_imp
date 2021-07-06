@@ -11,7 +11,7 @@ function plot_γs_test(γ₁, γ₂, γ₁_label, γ₂_label,save_append)
     intervals = scatter([γ₁_sorted[lower_bound],median(γ₁_sorted),γ₁_sorted[upper_bound]],[1,1,1],mark=(:vline),color="red",legend=false, size=(1200,1600))
     plot!(intervals,[γ₁_sorted[lower_bound],γ₁_sorted[upper_bound]],[1,1],color="red",legend=false)
     plot!(intervals,[γ₂_sorted[lower_bound],γ₂_sorted[upper_bound]],[1,1],color="blue",legend=false)
-    for i in 2:190
+    for i in 2:size(γ₁,1)
         γ₁_sorted = sort(γ₁[i,:])
         γ₂_sorted = sort(γ₂[:,i])
         scatter!(intervals,[γ₁_sorted[lower_bound],median(γ₁_sorted),γ₁_sorted[upper_bound]],[i,i,i],mark=(:vline),color="red",legend=false)
