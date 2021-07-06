@@ -54,25 +54,41 @@ end
 function select_edges(γ_means,α)
     abslog_means = DataFrame(idx=1:size(γ_means,1),means=log.(abs.(γ_means)))
     #abslog_means = DataFrame(idx=1:size(γ_means,1),means=abs.(γ_means))
-    gmm = GMM(2,abslog_means[:,:means])
+    #println("")
+    #show(stdout,"text/plain",abslog_means[:,:means])
+    #println("")
+    gmm = GMM(2,reshape(abslog_means[:,:means],(size(γ_means,1),1)))
+    #gmm = GMM(2,1,kind=:full)
+    #em!(gmm,reshape(abslog_means[:,:means],(size(γ_means,1),1)))
     pb = gmmposterior(gmm,reshape(abslog_means[:,:means],(size(γ_means,1),1)))[1]
     gmm_means = means(gmm)
     fdr = 0
     new_fdr = 0
     H = 1
-    sorted_abslog_means = sort(abslog_means,:means,rev=true)
+    sorted_abslog_means = abslog_means
+    sorted_abslog_means[:,"origmeans"] = γ_means
+    sorted_abslog_means = sort(sorted_abslog_means,:means,rev=true)
 
     while true
+        fdr = new_fdr
         new_fdr = (new_fdr*(H-1) + pb[sorted_abslog_means[H,:idx],argmin(gmm_means)])/H
-        println("fdr")
-        println(pb)
+        #println("fdr")
+        #println(pb[sorted_abslog_means[H,:idx],:])
+        #println(min(pb[:,argmin(gmm_means)]...))
+        #println("")
+        #show(stdout,"text/plain",sorted_abslog_means)
+        #println("")
+        pb2 = DataFrame(pb,:auto)
+        pb2[:,"idx"] = 1:size(γ_means,1)
+        #show(stdout,"text/plain",pb2)
+        #println("")
+        #show(stdout,"text/plain",gmm_means)
         #println("H")
         #println(H)
-        if new_fdr > α || H == size(γ_means)
-            fdr = new_fdr
+        if new_fdr > α || H == size(γ_means,1)
             break
         end
         H = H+1
     end
-    return sorted_abslog_means[1:H,:idx]
+    return gmm#sorted_abslog_means[1:H,:idx]
 end
