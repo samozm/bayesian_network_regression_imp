@@ -1,5 +1,5 @@
 using Distributions,Random,TickTock,CSV,ArgParse,Printf,RCall
-include("../src/BayesNet.jl")
+using BayesianNetworkRegression,DataFrames,StatsBase
 include("../src/plot_output.jl")
 
 
@@ -48,7 +48,7 @@ function main()
     γ₂ = @rget gamma
     MSE₂ = @rget MSE
     ξ₂ = @rget xis
-    output_results(γ₁[:,nburn+1:nburn+nsamp],MSE₁,mean(ξ₁[nburn+1:nburn+nsamp]),γ₂,MSE₂,ξ₂,case)
+    output_results(γ₁[:,:,1],MSE₁,mean(ξ₁,dims=1)[1,:,1],γ₂,MSE₂,ξ₂,case)
 end
 
 function output_results(γ₁,MSE₁,ξ₁,γ₂,MSE₂,ξ₂,case)
@@ -82,17 +82,10 @@ function sim_one_case(case,nburn,nsamp)
     println("")
 
     tick()
-    τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, aΔ=1.0, bΔ=1.0,ν=10,ι=1.0,ζ=1.0,x_transform=false)
+    state = GenerateSamples!(X, y, R, nburn=nburn,nsamples=nsamp, V = 20, aΔ=1.0, bΔ=1.0,ν=10,ι=1.0,ζ=1.0,x_transform=false)
     tock()
 
-    low = zeros(190)
-    high = zeros(190)
-    lw = convert(Int64, round(nsamp * 0.1))
-    hi = convert(Int64, round(nsamp * 0.9))
-
-    γ_n = hcat(γ...)
-
-    γ_n2 = mean(γ[nburn+1:nburn+nsamp])
+    γ_n2 = mean(state.γ[nburn+1:nburn+nsamp,:,:],dims=1)[1,:,1]
     γ₀ = B₀
     MSE = 0
     for i in 1:190
@@ -100,7 +93,7 @@ function sim_one_case(case,nburn,nsamp)
     end
     MSE = MSE * (2/(V*(V-1)))
 
-    return γ_n,MSE,ξ
+    return state.γ[nburn+1:nburn+nsamp,:,:],MSE,state.ξ[nburn+1:nburn+nsamp,:,:]
 end
 
 

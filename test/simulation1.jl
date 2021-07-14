@@ -1,5 +1,5 @@
 using ArgParse,RCall,TickTock
-include("../src/BayesNet.jl")
+using BayesianNetworkRegression,StatsBase,DataFrames
 include("../src/plot_output.jl")
 
 
@@ -22,6 +22,10 @@ function main()
     parsed_CL_args = parse_CL_args()
     nburn = parsed_CL_args["nburn"]
     nsamp = parsed_CL_args["nsamp"]
+    run_samp(nburn,nsamp)
+end
+
+function run_samp(nburn,nsamp)
     γ₁,MSE₁,ξ₁ = sim_one_case(nburn,nsamp)
     @rput nburn
     @rput nsamp
@@ -34,7 +38,7 @@ function main()
     γ₂ = @rget gamma
     MSE₂ = @rget MSE
     ξ₂ = @rget xis
-    output_results(γ₁[:,nburn+1:nburn+nsamp],MSE₁,mean(ξ₁[nburn+1:nburn+nsamp]),γ₂,MSE₂,ξ₂)
+    output_results(γ₁[:,:,1],MSE₁,mean(ξ₁,dims=1)[1,:,1],γ₂,MSE₂,ξ₂)
 end
 
 
@@ -59,13 +63,12 @@ function sim_one_case(nburn,nsamp)
 
     #region full run test
     tick()
-    τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(Z, y, R, nburn=nburn,nsamples=nsamp, V_in = 20, x_transform = false)
+    state = GenerateSamples!(Z, y, R, nburn=nburn,nsamples=nsamp, V = 20, x_transform = false)
     tock()
 
-    γ_n = hcat(γ...)
 
 
-    γ_n2 = mean(γ[nburn+1:10:nburn+nsamp])
+    γ_n2 = mean(state.γ[nburn+1:10:nburn+nsamp,:,:],dims=1)[1,:,1]
     γ₀ = B₀
     MSE = 0
     for i in 1:190
@@ -73,7 +76,7 @@ function sim_one_case(nburn,nsamp)
     end
     MSE = MSE * (2/(V*(V-1)))
 
-    return γ_n,MSE,ξ
+    return state.γ[nburn+1:nburn+nsamp,:,:],MSE,state.ξ[nburn+1:nburn+nsamp,:,:]
 
 end
 
