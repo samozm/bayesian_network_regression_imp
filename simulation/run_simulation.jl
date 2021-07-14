@@ -1,14 +1,20 @@
-using LinearAlgebra: Matrix
+using LinearAlgebra
 using Base: Bool, Float16, Int16
 using CSV,ArgParse,TickTock
 using ProfileView, Traceur
-using BayesianNetworkRegression
+#using BayesianNetworkRegression
+
+using DataFrames: Vector
+using Core: Typeof
+using Base: Float64
+using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
+using StaticArrays,TypedTables
+include("../../BayesianNetworkRegression.jl/src/gibbs.jl")
+include("../../BayesianNetworkRegression.jl/src/utils.jl")
 using Random, DataFrames, LinearAlgebra, StatsBase
 using Distributions
 using BenchmarkTools,ProfileView
-#include("../src/BayesNet.jl")
-include("../src/plot_output.jl")
-
+using DrWatson
 
 function parse_CL_args()
     args = ArgParseSettings()
@@ -17,7 +23,7 @@ function parse_CL_args()
         help="Number of burn-in Gibbs samples to take"
         arg_type = Int
         default = 30000
-    "--nsamp", "-s"
+    "--nsamp", "-a"
         help="Number of Gibbs samples to keep (after burn-in)"
         arg_type = Int
         default = 20000
@@ -44,11 +50,16 @@ function parse_CL_args()
     "--juliacon", "-j"
         help = "flag indicating output should go to juliacon folder"
         action = :store_true
+    "--seed", "-s"
+        help = "random seed to use for simulations"
+        arg_type = Int
+        default = 734
     end
     return parse_args(args)
 end
 
 function main()
+    @quickactivate
     parsed_CL_args = parse_CL_args()
     nburn = parsed_CL_args["nburn"]
     nsamp = parsed_CL_args["nsamp"]
@@ -58,17 +69,21 @@ function main()
     πₛ = parsed_CL_args["pi"]
     R = parsed_CL_args["r"]
     k = parsed_CL_args["samptaxa"]
+    seed = parsed_CL_args["seed"]
+    Random.seed!(seed)
 
     run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,jcon)
 end
 
 function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,jcon)
-    γ,MSE,ξ = sim_one_case(simnum,nburn,nsamp,μₛ,πₛ,k,jcon,R=R)
+    loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis")
+    γ,γ₀,MSE,ξ = sim_one_case(nburn,nsamp,loadinfo,jcon,R=R)
 
+    loadinfo["out"] = "xis"
     if jcon
-        ξ_in = DataFrame(CSV.File("juliacon/data/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_xis.csv"))
+        ξ_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
     else
-        ξ_in = DataFrame(CSV.File("data/simulation/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_xis.csv"))
+        ξ_in = DataFrame(CSV.File(datadir("simulation",savename(loadinfo,"csv",digits=1))))
 
         step = Int(floor(nsamp/100))
         if step==0
@@ -76,19 +91,23 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,jcon)
         end
     end
 
-    output_results(γ[1:nsamp],MSE,mean(ξ[1:nsamp]),ξ_in,simnum,πₛ,μₛ,R,k,jcon)
+    loadinfo["R"] = R
+    output_results(γ[:,:,1],γ₀,MSE,mean(ξ,dims=1)[1,:,1],ξ_in,loadinfo,jcon)
 end
 
-function sim_one_case(simnum,nburn,nsamp,μₛ,πₛ,k,jcon::Bool;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
+function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
+    loadinfo["out"] = "XYs"
     if jcon
-        data_in = DataFrame(CSV.File("juliacon/data/sim$(simnum)_pi$(πₛ)-mu$(μₛ)-$(k)microbes_XYs.csv"))
+        data_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
 
-        b_in = DataFrame(CSV.File("juliacon/data/sim$(simnum)_pi$(πₛ)-mu$(μₛ)-$(k)microbes_bs.csv"))
+        loadinfo["out"] = "bs"
+        b_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
     else
-        data_in = DataFrame(CSV.File("data/simulation/sim$(simnum)_pi$(πₛ)-mu$(μₛ)-$(k)microbes_XYs.csv"))
+        data_in = DataFrame(CSV.File(datadir("simulation",savename(loadinfo,"csv",digits=1))))
 
-        b_in = DataFrame(CSV.File("data/simulation/sim$(simnum)_pi$(πₛ)-mu$(μₛ)-$(k)microbes_bs.csv"))
+        loadinfo["out"] = "bs"
+        b_in = DataFrame(CSV.File(datadir("simulation",savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
     end
     #X = convert(Matrix,data_in[:,names(data_in,Not("y"))])
@@ -105,7 +124,7 @@ function sim_one_case(simnum,nburn,nsamp,μₛ,πₛ,k,jcon::Bool;η=1.01,ζ=1.0
 
     #γ_n = hcat(result.Gammas...)
 
-    γ_n2 = mean(result.Gammas[1:nsamp])
+    γ_n2 = mean(result.γ[nburn+1:nburn+nsamp,:,:],dims=1)
     γ₀ = B₀
     MSE = 0
     for i in 1:190
@@ -113,58 +132,88 @@ function sim_one_case(simnum,nburn,nsamp,μₛ,πₛ,k,jcon::Bool;η=1.01,ζ=1.0
     end
     MSE = MSE * (2/(V*(V-1)))
 
-    return result.Gammas,MSE,result.Xis
+    return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,result.ξ[nburn+1:nburn+nsamp,:,:]
 end
 
-function output_results(γ::AbstractArray{T},MSE::AbstractFloat,ξ::AbstractArray{U},ξ⁰::DataFrame,simnum,πₛ,μₛ,R,k,jcon::Bool) where {T,U}
-    #q = size(γ[1],1)
-    #V = convert(Int,(1 + sqrt(1 + 8*q))/2)
+function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,ξ::AbstractArray{U},ξ⁰::DataFrame,saveinfo,jcon::Bool) where {S,T,U}
+    q = size(γ,2)
+    V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
-    #plot_γ_sim(γ, "Gamma", "simulation$(simnum)_case$(casenum)",jcon)
     show(stdout,"text/plain",DataFrame(MSE=MSE))
     println("")
 
-    nsamp = size(γ[1],1)
-    gam = DataFrame(mean=mean(γ))
+    nsamp = size(γ,1)
+    gam = DataFrame(mean=mean(γ,dims=1)[1,:])
 
-    γ_sorted = sort.(γ)
+    γ_sorted = sort(γ,dims=1)
     lw = convert(Int64, round(nsamp * 0.05))
     hi = convert(Int64, round(nsamp * 0.95))
-    gam[:,"0.05"] = γ_sorted[lw]
-    gam[:,"0.95"] = γ_sorted[hi]
+    if lw == 0
+        lw = 1
+    end
+    gam[:,"0.05"] = γ_sorted[lw,:,1]
+    gam[:,"0.95"] = γ_sorted[hi,:,1]
 
     lw = convert(Int64, round(nsamp * 0.025))
     hi = convert(Int64, round(nsamp * 0.975))
-    gam[:,"0.025"] = γ_sorted[lw]
-    gam[:,"0.975"] = γ_sorted[hi]
+    if lw == 0
+        lw = 1
+    end
+    gam[:,"0.025"] = γ_sorted[lw,:,1]
+    gam[:,"0.975"] = γ_sorted[hi,:,1]
     
-    gam[:,"pi"] .= πₛ
-    gam[:,"mu"] .= μₛ
-    gam[:,"R"] .= R
+    gam[:,"pi"] .= saveinfo["pi"]
+    gam[:,"mu"] .= saveinfo["mu"]
+    gam[:,"R"] .= saveinfo["R"]
+    gam[:,"true_B"] = γ₀
+    gam[:,"n_microbes"] .= saveinfo["n_microbes"]
+
+    gam[:,"y_microbe"] .= 0
+    gam[:,"x_microbe"] .= 0
+    
+    l = 1
+    for i in 1:V
+        for j in i+1:V
+            gam[l,"y_microbe"] = i
+            gam[l,"x_microbe"] = j
+            l += 1
+        end
+    end
 
     output = DataFrame(ξ⁰)
     output[:,"Xi posterior"] = ξ
-    output[:,"pi"] .= πₛ
-    output[:,"mu"] .= μₛ
-    output[:,"R"] .= R
-    #output[!,"MSE"] = MSE
+    output[:,"pi"] .= saveinfo["pi"]
+    output[:,"mu"] .= saveinfo["mu"]
+    output[:,"R"] .= saveinfo["R"]
+    output[:,"n_microbes"] .= saveinfo["n_microbes"]
+
     mse_df = DataFrame(MSE=MSE)
-    mse_df[:,"pi"] .= πₛ
-    mse_df[:,"mu"] .= μₛ
-    mse_df[:,"R"] .= R
+    output[:,"pi"] .= saveinfo["pi"]
+    output[:,"mu"] .= saveinfo["mu"]
+    output[:,"R"] .= saveinfo["R"]
+    output[:,"n_microbes"] .= saveinfo["n_microbes"]
 
     if jcon
-        CSV.write("juliacon/results/sim$(simnum)_pi$(πₛ)-mu$(μₛ)-R$(R)-$(k)microbes_nodes.csv",output)
-        CSV.write("juliacon/results/sim$(simnum)_pi$(πₛ)-mu$(μₛ)-R$(R)-$(k)microbes_edges.csv",gam)
-        CSV.write("juliacon/results/simu$(simnum)_pi$(πₛ)-mu$(μₛ)-R$(R)-$(k)microbes_MSE.csv",mse_df)
+        #TODO better way of adding suffix
+        saveinfo["out"] = "nodes"
+        CSV.write(projectdir("juliacon","results",savename(saveinfo,"csv",digits=1)),output)
+        saveinfo["out"] = "edges"
+        CSV.write(projectdir("juliacon","results",savename(saveinfo,"csv",digits=1)),gam)
+        saveinfo["out"] = "MSE"
+        CSV.write(projectdir("juliacon","results",savename(saveinfo,"csv",digits=1)),mse_df)
     else
-        CSV.write("results/simulation/sim$(simnum)_pi$(πₛ)-mu$(μₛ)-R$(R)-$(k)microbes_nodes.csv",output)
-        CSV.write("results/simulation/sim$(simnum)_pi$(πₛ)-mu$(μₛ)-R$(R)-$(k)microbes_edges.csv",gam)
-        CSV.write("results/simulation/simu$(simnum)_pi$(πₛ)-mu$(μₛ)-R$(R)-$(k)microbes_MSE.csv",mse_df)
+        saveinfo["out"] = "nodes"
+        CSV.write(projectdir("results","simulation",savename(saveinfo,"csv",digits=1)),output)
+        saveinfo["out"] = "edges"
+        CSV.write(projectdir("results","simulation",savename(saveinfo,"csv",digits=1)),gam)
+        saveinfo["out"] = "MSE"
+        CSV.write(projectdir("results","simulation",savename(saveinfo,"csv",digits=1)),mse_df)
     end
 end
 
-#run_case_and_output(3,3,1,0.8,0.1,5,20,false)
+#cd("bayesian_network_regression_imp")
+#@quickactivate
+#run_case_and_output(3,3,1,0.8,0.1,5,8,true)
 #@trace run_case_and_output(10,10,1,1,false)
-#@profview run_case_and_output(10,10,1,1,false)
+#@profview run_case_and_output(3,3,1,0.8,0.1,5,20,false)
 main()
