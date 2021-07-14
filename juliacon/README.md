@@ -2,7 +2,7 @@ This folder contains scripts and output for JuliaCon 2021.
 
 ALL SCRIPTS SHOULD BE RUN FROM THE BASE FOLDER (`bayesian_network_regression_imp/`). FAILURE TO DO SO COULD CAUSE UNEXPECTED BEHAVIOR.
 
-The simulations in the `data/` folder are obtained similarly to those described [here](/data/simulation/ReadMe.md), but only 30 total microbes are used, with t=8 and t=15 in each sample. Also, sparsity parameter (for the coefficient matrix) πₛ=0.3 is not used, only πₛ=0.1 and πₛ=0.8 are used.
+The simulations in the `data/` folder are obtained similarly to those described [here](/data/simulation/ReadMe.md), but only 30 total microbes are used, with t=8 and t=15 in each sample. Also, sparsity parameter (for the coefficient matrix) πₛ=0.3 is not used, only πₛ=0.1 and πₛ=0.8 are used. For generating the data, seed 3343 was used.
 
 Results are obtained by first running
 ```
