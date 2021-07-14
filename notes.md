@@ -42,3 +42,27 @@ For each of these settings, we will choose the effects (b_i) and Interaction in 
 The effect of microbial taxa on phenotypes could be functionally redundant. That is, individually, each taxa can have an effect on the phenotype, but when put together, one of them stops having any effect on the phenotype.
 
 One holy grail goal from machine-learning approaches could be to know which of the microbial taxa are functionally redundant from observational data (not experimental data).
+
+
+# Follow-up meeting with Rick on simulations
+
+Our process begins with a phylogenetic tree with 100 microbes, and then we take n samples from this tree with k microbes each. Each sample is one community.
+
+The sampling process can be simple or complex depending on different factors:
+- gradient (environmental filter): if all environments are expected to be similar, then all communities can be expected to be similar. If environments are expected to differ (in ph e.g.), then communities would be different and there would be biases on the microbes we observe on certain communities
+- presence of other microbes: this affects mainly how the response is computed. For example, you have your pruned tree and you can check if it is overdispersed (species are less related than by chance: this is the case when you sample only one representative per clade) or underdispersed (species are more related than by chance: you have whole parts of the tree not included in the sample)
+    - overdisperse case: species do not co-exist well, so you do not expect to see many interactions
+    - underdisperse case: missing big chunks of the tree; trait filtering (you only observe microbes with certain trait) and interaction is very important
+
+Sampling scheme:
+1. Assume environments are similar, so we expect variation on communities only due to randon noise: it is ok to uniformly at random sample the microbes
+2. Assume environments are different: in this case, some microbes will have a higher probability of appearing in certain environments
+
+Computation of the response:
+1. Phylogenetically informed microbe effects vs randomly chosen microbe effects
+2. Additive model (ignore interactions) vs functional redundancy (there is a maximum value of the response) vs superadditive (some species together have a positive interaction)
+
+
+## Things to keep in mind
+- In real life, usually samples have a few common species very abundant, and many uncommon species (not as abundant)
+- Note that we are not including any information on abundances on samples (because we do not include this in the model). This could be an extension of the model
