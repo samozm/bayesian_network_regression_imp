@@ -1,5 +1,5 @@
-using ArgParse,Distributions,Random,CSV,RCall
-include("../src/BayesNet.jl")
+using ArgParse,Distributions,Random,CSV,RCall,DrWatson
+using LinearAlgebra,BayesianNetworkRegression,DataFrames
 
 function parse_CL_args()
     args = ArgParseSettings()
@@ -37,61 +37,69 @@ end
 
 
 function main()
+    @quickactivate
     args_in = parse_CL_args()
-    intxn = 0
     t = args_in["tottaxa"]
     k = args_in["samptaxa"]
     n = args_in["nsamp"]
-    s = args_in["seed"]
+    seed = args_in["seed"]
     μₛ = args_in["mean"]
     πₛ = args_in["pi"]
     jcon = args_in["juliacon"]
     q = floor(Int,t*(t-1)/2)
 
+    Random.seed!(seed)
     B,ξ = generate_Bs(t,μₛ=μₛ,πₛ=πₛ)
 
-    y,A,m = generate_unrealistic_data(B,t,k,n,s)#,0,0.25)
+    y,A,m = generate_unrealistic_data(B,t,k,n)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
-        X[i,:] = upper_triangle(A[i])
+        X[i,:] = BayesianNetworkRegression.upper_triangle(A[i])
     end
 
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
+    saveinfo = Dict("simnum"=>"1","pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k)
+
     if jcon
-        CSV.write("juliacon/data/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_XYs.csv",out_df)
-        CSV.write("juliacon/data/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_bs.csv",DataFrame(B=upper_triangle(B)))
-        CSV.write("juliacon/data/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
-        CSV.write("juliacon/data/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_xis.csv",DataFrame(TrueXi=ξ))
+        saveinfo["out"] = "XYs"
+        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),out_df)
+
+        saveinfo["out"] = "bs"
+        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.upper_triangle(B)))
+
+        saveinfo["out"] = "ms"
+        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),DataFrame(transpose(hcat(m...)),:auto))
+
+        saveinfo["out"] = "xis"
+        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),DataFrame(TrueXi=ξ))
         return
     end
-    CSV.write("data/simulation/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_XYs.csv",out_df)
-    CSV.write("data/simulation/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_bs.csv",DataFrame(B=upper_triangle(B)))
-    CSV.write("data/simulation/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_ms.csv",DataFrame(transpose(hcat(m...)),:auto))
-    CSV.write("data/simulation/sim1_pi$(πₛ)-mu$(μₛ)-$(k)microbes_xis.csv",DataFrame(TrueXi=ξ))
+    saveinfo["out"] = "XYs"
+    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),out_df)
+    
+    saveinfo["out"] = "bs"
+    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.upper_triangle(B)))
+   
+    saveinfo["out"] = "ms"
+    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),DataFrame(transpose(hcat(m...)),:auto))
+    
+    saveinfo["out"] = "xis"
+    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),DataFrame(TrueXi=ξ))
 
-    #println("y")
-    #show(stdout,"text/plain",y)
-    #println("")
-    #println("A[1]")
-    #show(stdout,"text/plain",A[1])
-    #println("")
-    #println("m")
-    #show(stdout,"text/plain",m)
-    #println("")
 end
 
 function generate_Bs(t; μₛ=0.8,σₛ=1,πₛ=0.1)
 
-    ξ = rand(Bernoulli(πₛ),t)#map(i -> rand(Normal(μₘ,σₘ)),1:t)
+    ξ = rand(Bernoulli(πₛ),t)
     B = zeros(t,t)
 
     for i in 1:t
         for j in (i+1):t
             if (ξ[i] == 1 && ξ[j] == 1)
-                B[i,j] = B[j,i] = -abs(rand(Normal(μₛ,σₛ)))
+                B[i,j] = B[j,i] = rand(Normal(μₛ,σₛ))
             end
         end
     end
@@ -101,9 +109,7 @@ end
 
 
 
-function generate_unrealistic_data(B,t,k,n,seed)#,μₐ,σₐ)
-
-    Random.seed!(seed)
+function generate_unrealistic_data(B,t,k,n)
     y = zeros(n)
     m = [zeros(t)]
     A = [zeros(t,t)]
