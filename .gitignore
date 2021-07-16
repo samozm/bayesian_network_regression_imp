@@ -43,6 +43,7 @@ src/plot_distrs.R
 Project.toml
 test/run_my_sim1_case1.R
 plots/profiling/*
+plots/test/*
 
 # VS code files
 .vscode/*
