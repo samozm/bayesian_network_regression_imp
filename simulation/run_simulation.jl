@@ -9,8 +9,7 @@ using Core: Typeof
 using Base: Float64
 using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
 using StaticArrays,TypedTables
-include("../../BayesianNetworkRegression.jl/src/gibbs.jl")
-include("../../BayesianNetworkRegression.jl/src/utils.jl")
+using BayesianNetworkRegression
 using Random, DataFrames, LinearAlgebra, StatsBase
 using Distributions
 using BenchmarkTools,ProfileView
@@ -44,7 +43,7 @@ function parse_CL_args()
         arg_type = Float64
         default = 0.1
     "-r"
-        help = "r value, the dimension of the latent space (relates to filename)"
+        help = "R value, the dimension of the latent space (relates to filename)"
         arg_type = Int
         default = 5
     "--juliacon", "-j"
@@ -112,11 +111,14 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool;η=1.01,ζ=1.0,ι=1.0,R=5,
     end
     #X = convert(Matrix,data_in[:,names(data_in,Not("y"))])
     X = Matrix(data_in[:,names(data_in,Not("y"))])
-    y = data_in[:,:y]
+    y = SVector{size(X,1)}(data_in[:,:y])
 
     q = size(X,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
+    if ν < R
+        ν = R
+    end
     tick()
     #τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
     result = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
@@ -161,7 +163,7 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     end
     gam[:,"0.025"] = γ_sorted[lw,:,1]
     gam[:,"0.975"] = γ_sorted[hi,:,1]
-    
+
     gam[:,"pi"] .= saveinfo["pi"]
     gam[:,"mu"] .= saveinfo["mu"]
     gam[:,"R"] .= saveinfo["R"]
@@ -170,7 +172,7 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
 
     gam[:,"y_microbe"] .= 0
     gam[:,"x_microbe"] .= 0
-    
+
     l = 1
     for i in 1:V
         for j in i+1:V
@@ -188,10 +190,10 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     output[:,"n_microbes"] .= saveinfo["n_microbes"]
 
     mse_df = DataFrame(MSE=MSE)
-    output[:,"pi"] .= saveinfo["pi"]
-    output[:,"mu"] .= saveinfo["mu"]
-    output[:,"R"] .= saveinfo["R"]
-    output[:,"n_microbes"] .= saveinfo["n_microbes"]
+    mse_df[:,"pi"] .= saveinfo["pi"]
+    mse_df[:,"mu"] .= saveinfo["mu"]
+    mse_df[:,"R"] .= saveinfo["R"]
+    mse_df[:,"n_microbes"] .= saveinfo["n_microbes"]
 
     if jcon
         #TODO better way of adding suffix
@@ -213,7 +215,7 @@ end
 
 #cd("bayesian_network_regression_imp")
 #@quickactivate
-#run_case_and_output(3,3,1,0.8,0.1,5,8,true)
+#run_case_and_output(3,3,1,0.8,0.3,5,15,false)
 #@trace run_case_and_output(10,10,1,1,false)
 #@profview run_case_and_output(3,3,1,0.8,0.1,5,20,false)
 main()
