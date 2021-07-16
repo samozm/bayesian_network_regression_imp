@@ -1,38 +1,38 @@
 
 echo "unrealistic simulations (sim 1)"
 
-echo "case 1: mean = 0.8, pi = 0.1, samptaxa=20"
-julia simulation/unrealistic_sim.jl -s 734
+echo "mean = 0.8, pi = 0.3, samptaxa=8"
+julia simulation/unrealistic_sim.jl -s 734 -m 0.8 -p 0.3 -t 30 -k 8 --nsamp 100
 
-echo "case 2: mean = 0.8, pi = 0.3, samptaxa=20"
-julia simulation/unrealistic_sim.jl -s 734 -p 0.3
+echo "mean = 0.8, pi = 0.3, samptaxa=15"
+julia simulation/unrealistic_sim.jl -s 734 -m 0.8 -p 0.3 -t 30 -k 15 --nsamp 100
 
-echo "case 3: mean = 0.8, pi = 0.8, samptaxa=20"
-julia simulation/unrealistic_sim.jl -s 734 -p 0.8
+echo "mean = 0.8, pi = 0.3, samptaxa=22"
+julia simulation/unrealistic_sim.jl -s 734 -m 0.8 -p 0.3 -t 30 -k 22 --nsamp 100
 
-echo "case 4: mean = 1.6, pi = 0.1, samptaxa=20"
-julia simulation/unrealistic_sim.jl -s 734 -m 1.6
+echo "mean = 0.8, pi = 0.8, samptaxa=8"
+julia simulation/unrealistic_sim.jl -s 734 -m 0.8 -p 0.8 -t 30 -k 8 --nsamp 100
 
-echo "case 5: mean = 1.6, pi = 0.3, samptaxa=20"
-julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.3
+echo "mean = 0.8, pi = 0.8, samptaxa=15"
+julia simulation/unrealistic_sim.jl -s 734 -m 0.8 -p 0.8 -t 30 -k 15 --nsamp 100
 
-echo "case 6: mean = 1.6, pi = 0.8, samptaxa=20"
-julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.8
+echo "mean = 0.8, pi = 0.8, samptaxa=22"
+julia simulation/unrealistic_sim.jl -s 734 -m 0.8 -p 0.8 -t 30 -k 22 --nsamp 100
 
-echo "case 7: mean = 0.8, pi = 0.1, samptaxa=50"
-julia simulation/unrealistic_sim.jl -s 734 -k 50
+echo "mean = 1.6, pi = 0.3, samptaxa=8"
+julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.3 -t 30 -k 8 --nsamp 100
 
-echo "case 8: mean = 0.8, pi = 0.3, samptaxa=50"
-julia simulation/unrealistic_sim.jl -s 734 -p 0.3 -k 50
+echo "mean = 1.6, pi = 0.3, samptaxa=15"
+julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.3 -t 30 -k 15 --nsamp 100
 
-echo "case 9: mean = 0.8, pi = 0.8, samptaxa=50"
-julia simulation/unrealistic_sim.jl -s 734 -p 0.8 -k 50
+echo "mean = 1.6, pi = 0.3, samptaxa=22"
+julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.3 -t 30 -k 22 --nsamp 100
 
-echo "case 10: mean = 1.6, pi = 0.1, samptaxa=50"
-julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -k 50
+echo "mean = 1.6, pi = 0.8, samptaxa=8"
+julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.8 -t 30 -k 8 --nsamp 100
 
-echo "case 11: mean = 1.6, pi = 0.3, samptaxa=50"
-julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.3 -k 50
+echo "mean = 1.6, pi = 0.8, samptaxa=15"
+julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.8 -t 30 -k 15 --nsamp 100
 
-echo "case 12: mean = 1.6, pi = 0.8, samptaxa=50"
-julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.8 -k 50
+echo "mean = 1.6, pi = 0.8, samptaxa=22"
+julia simulation/unrealistic_sim.jl -s 734 -m 1.6 -p 0.8 -t 30 -k 22 --nsamp 100
