@@ -55,7 +55,7 @@ function main()
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
-        X[i,:] = BayesianNetworkRegression.upper_triangle(A[i])
+        X[i,:] = BayesianNetworkRegression.lower_triangle(A[i])
     end
 
     out_df = DataFrame(X,:auto)
@@ -68,7 +68,7 @@ function main()
         CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),out_df)
 
         saveinfo["out"] = "bs"
-        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.upper_triangle(B)))
+        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.lower_triangle(B)[:,1]))
 
         saveinfo["out"] = "ms"
         CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),DataFrame(transpose(hcat(m...)),:auto))
@@ -81,7 +81,7 @@ function main()
     CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),out_df)
     
     saveinfo["out"] = "bs"
-    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.upper_triangle(B)))
+    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.lower_triangle(B)[:,1]))
    
     saveinfo["out"] = "ms"
     CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),DataFrame(transpose(hcat(m...)),:auto))
