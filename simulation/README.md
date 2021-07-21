@@ -24,22 +24,21 @@ y<sub>i</sub> = μ<sub>0</sub> + <**A**<sub>i</sub>,**B**<sub>0</sub>><sub>F</su
 
 To generate **A**<sub>i</sub>:
 
-    1. using ape, simulate 1 phylogenetic tree with 100 total microbes
+    1. using ape, simulate 1 phylogenetic tree with 30 total microbes
     2. calculate the phylogenetic distance between each pair of microbes (again using ape)
-    3. for each sample (70 total) randomly (uniform) select t microbes
-        - t = 20, 50
+    3. for each sample (100 total) randomly (uniform) select t microbes
+        - t = 8,15,22
         - for A[k,l] if k and l are both chosen A[k,l] is the inverse of the phylogenetic distance between microbes k and l. Otherwise A[k,l] = 0
 
 
 To generate **B**<sub>0</sub>:
 
     1. Generate 100 binary indicators ξ₁⁰,..., ξₜ⁰ independently from Ber(πₛ) (indicator of influential node)
-        - πₛ = 0.1, 0.3, 0.8
+        - πₛ = 0.3, 0.8
     2. If ξₖ⁰ = ξₗ⁰ = 1$ generate the edge coefficient between k and l from N(μₛ,1)
         - μₛ = 0.8,1.6
        Else set the edge coefficient between k and l to 0
 
-
-Questions:
-1. For realistic: should the B-matrices for interaction actually be strictly positive/negative, or should they just be positive/negative definite?
-
+## Results
+We will run each of the simulated datasets through the model twice, once using R=5 and once using R=10
+For the model run, we will use 2358 as the random seed.
