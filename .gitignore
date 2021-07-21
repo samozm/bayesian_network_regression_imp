@@ -31,7 +31,7 @@ Manifest.toml
 # data
 data/*
 juliacon/data/*
-
+results/*
 
 # R files
 *.Rproj
@@ -44,6 +44,7 @@ Project.toml
 test/run_my_sim1_case1.R
 plots/profiling/*
 plots/test/*
+plots/inv_gaus_tst/*
 
 # VS code files
 .vscode/*
