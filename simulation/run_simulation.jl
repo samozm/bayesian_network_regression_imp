@@ -53,6 +53,10 @@ function parse_CL_args()
         help = "random seed to use for simulations"
         arg_type = Int
         default = 734
+    "--nu", "-u"
+        help = "nu value (hyperparameter)"
+        arg_type = Int
+        default = 10
     end
     return parse_args(args)
 end
@@ -68,15 +72,16 @@ function main()
     πₛ = parsed_CL_args["pi"]
     R = parsed_CL_args["r"]
     k = parsed_CL_args["samptaxa"]
+    ν = parsed_CL_args["nu"]
     seed = parsed_CL_args["seed"]
     Random.seed!(seed)
 
-    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,jcon)
+    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon)
 end
 
-function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,jcon)
+function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon)
     loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis")
-    γ,γ₀,MSE,ξ = sim_one_case(nburn,nsamp,loadinfo,jcon,R=R)
+    γ,γ₀,MSE,ξ = sim_one_case(nburn,nsamp,loadinfo,jcon,R=R,ν=ν)
 
     loadinfo["out"] = "xis"
     if jcon
@@ -91,6 +96,7 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,jcon)
     end
 
     loadinfo["R"] = R
+    loadinfo["nu"] = ν
     output_results(γ[:,:,1],γ₀,MSE,mean(ξ,dims=1)[1,:,1],ξ_in,loadinfo,jcon)
 end
 
@@ -115,10 +121,7 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool;η=1.01,ζ=1.0,ι=1.0,R=5,
 
     q = size(X,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
-
-    if ν < R
-        ν = R
-    end
+    
     tick()
     #τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
     result = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
@@ -170,6 +173,8 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     gam[:,"true_B"] = γ₀
     gam[:,"n_microbes"] .= saveinfo["n_microbes"]
 
+    gam[:,"nu"] .= saveinfo["nu"]
+
     gam[:,"y_microbe"] .= 0
     gam[:,"x_microbe"] .= 0
 
@@ -188,12 +193,14 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     output[:,"mu"] .= saveinfo["mu"]
     output[:,"R"] .= saveinfo["R"]
     output[:,"n_microbes"] .= saveinfo["n_microbes"]
+    output[:,"nu"] .= saveinfo["nu"]
 
     mse_df = DataFrame(MSE=MSE)
     mse_df[:,"pi"] .= saveinfo["pi"]
     mse_df[:,"mu"] .= saveinfo["mu"]
     mse_df[:,"R"] .= saveinfo["R"]
     mse_df[:,"n_microbes"] .= saveinfo["n_microbes"]
+    mse_df[:,"nu"] .= saveinfo["nu"]
 
     if jcon
         #TODO better way of adding suffix
