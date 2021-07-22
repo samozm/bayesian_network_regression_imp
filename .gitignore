@@ -33,6 +33,7 @@ data/*
 juliacon/data/*
 results/*
 juliacon/results/*
+plots/*
 
 # R files
 *.Rproj
@@ -43,9 +44,6 @@ juliacon/results/*
 src/plot_distrs.R
 Project.toml
 test/run_my_sim1_case1.R
-plots/profiling/*
-plots/test/*
-plots/inv_gaus_tst/*
 juliacon/plots/*
 
 # VS code files
