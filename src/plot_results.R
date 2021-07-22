@@ -3,10 +3,10 @@ library(ggplot2)
 library(dplyr)
 library(RColorBrewer)
 
-make.filename <- function(path,simnum,pi,mu,R,n_microbes,type)
+make.filename <- function(path,simnum,pi,mu,R,nu,n_microbes,type)
 {
-  return(sprintf("%sR=%s_mu=%s_n_microbes=%s_out=%s_pi=%s_simnum=%s.csv",
-                 path,R,mu,n_microbes,type,pi,simnum))
+  return(sprintf("%sR=%s_mu=%s_n_microbes=%s_nu=%s_out=%s_pi=%s_simnum=%s.csv",
+                 path,R,mu,n_microbes,nu,type,pi,simnum))
 }
 
 plot_CIs <- function(edges)
@@ -21,7 +21,7 @@ plot_CIs <- function(edges)
 }
 
 #pis and mus should be vectors of all the pi or mu values for this plot
-create_edge_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
+create_edge_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath)
 {
   edges <- data.frame()
   
@@ -29,7 +29,7 @@ create_edge_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
   {
     for(j.mu in mus)
     {
-      flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,n_microbes,"edges")
+      flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,n_microbes,"edges")
       edges <- rbind(edges, read.csv(flnm))
     }
   }
@@ -53,7 +53,8 @@ create_edge_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
                  pi = c(`0.3` = "pi=0.3", `0.8` = "pi=0.8")
                ),
                as.table = FALSE)
-  ggsave(sprintf("%s%sR=%s_n_microbes=%s_posterior_edges.png",outpath,"edges/",R,n_microbes),plot=plt1,width=11,height=9.5)
+  ggsave(sprintf("%s%sR=%s_n_microbes=%s_nu=%s_posterior_edges.png",outpath,"edges/",
+                 R,n_microbes,nu),plot=plt1,width=11,height=9.5)
   
   plt2 <- ggplot(edges, aes(x_microbe,y_microbe,fill=abs(true_B))) + geom_tile() + 
     scale_y_reverse(breaks=1:(n-1), labels=1:(n-1), minor_breaks = seq(0.5,n-0.5),
@@ -73,10 +74,11 @@ create_edge_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
                ),
                as.table = FALSE)
   
-  ggsave(sprintf("%s%sR=%s_n_microbes=%s_true_edges.png",outpath,"edges/",R,n_microbes),plot=plt2,width=11,height=9.5)
+  ggsave(sprintf("%s%sR=%s_n_microbes=%s_nu=%s_true_edges.png",outpath,"edges/",
+                 R,n_microbes,nu),plot=plt2,width=11,height=9.5)
 }
 
-create_MSE_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
+create_MSE_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath)
 {
   mse <- data.frame()
   for(i.pi in pis)
@@ -85,7 +87,7 @@ create_MSE_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
     {
       for(k.n in n_microbes)
       {
-        flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,k.n,"MSE")
+        flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,k.n,"MSE")
         mse <- rbind(mse,read.csv(flnm))
       }
     }
@@ -95,17 +97,17 @@ create_MSE_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
     geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value") +
     theme_bw() + scale_x_continuous(breaks=n_microbes) + 
     scale_y_continuous(limits=c(0,ceiling(max(mse$MSE))),breaks=seq(0,ceiling(max(mse$MSE)),ceiling(max(mse$MSE))/10))
-  ggsave(sprintf("%s%sR=%s_mse.png",outpath,"mse/",R),plot=plt1)
+  ggsave(sprintf("%s%sR=%s_nu=%s_mse.png",outpath,"mse/",R,nu),plot=plt1)
 }
 
-create_node_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
+create_node_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath)
 {
   nodes <- data.frame()
   for(i.pi in pis)
   {
     for(j.mu in mus)
     {
-      flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,n_microbes,"nodes")
+      flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,n_microbes,"nodes")
       nodes <- rbind(nodes, read.csv(flnm))
     }
   }
@@ -126,12 +128,13 @@ create_node_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
                 pi = c(`0.3` = "pi=0.3", `0.8` = "pi=0.8")
               ),
               as.table = FALSE)
-  ggsave(sprintf("%s%sR=%s_n_microbes=%s_nodes.png",outpath,"nodes/",R,n_microbes),plot=plt,width=11,height=9.5)
+  ggsave(sprintf("%s%sR=%s_n_microbes=%s_nu=%s_nodes.png",outpath,"nodes/",R,
+                 n_microbes,nu),plot=plt,width=11,height=9.5)
 }
 
-create_interval_plots <- function(simnum,pi,mu,R,n_microbes,inpath,outpath)
+create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath)
 {
-  flnm <- make.filename(inpath,simnum,pi,mu,R,n_microbes,"edges")
+  flnm <- make.filename(inpath,simnum,pi,mu,R,nu,n_microbes,"edges")
   edges <- read.csv(flnm)
   
   n <- length(edges$true_B)
@@ -146,8 +149,8 @@ create_interval_plots <- function(simnum,pi,mu,R,n_microbes,inpath,outpath)
           geom_hline(aes(yintercept=mu[1]),linetype="dashed",color="blue") + 
           geom_point(aes(x=edge,y=mean),shape=5) + ylab("Edge Effect")
   
-  ggsave(sprintf("%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nonzero_intervals.png",
-                 outpath,"intervals/",R,pi,mu,n_microbes),plot=plt1,width=11,height=13.5)
+  ggsave(sprintf("%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_nonzero_intervals.png",
+                 outpath,"intervals/",R,pi,mu,n_microbes,nu),plot=plt1,width=11,height=13.5)
   
   plt2 <- edges %>% filter(true_B == 0) %>% ggplot() + geom_errorbar(aes(x=edge,ymin=X0.025,
                                                                          ymax=X0.975,
@@ -157,28 +160,28 @@ create_interval_plots <- function(simnum,pi,mu,R,n_microbes,inpath,outpath)
     geom_hline(aes(yintercept=0),linetype="dashed",color="blue") + 
     ylab("Edge Effect")
   
-  ggsave(sprintf("%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_zero_intervals.png",
-                 outpath,"intervals/",R,pi,mu,n_microbes),plot=plt2,width=11,height=13.5)
+  ggsave(sprintf("%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_zero_intervals.png",
+                 outpath,"intervals/",R,pi,mu,n_microbes,nu),plot=plt2,width=11,height=13.5)
 }
 
-create_plots <- function(simnum,pis,mus,R,n_microbes,inpath,outpath)
+create_plots <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath)
 {
-  for(r in R)
+  for(r.i in 1:length(R))
   {
     for(n_m in n_microbes)
     {
-      create_edge_plots(simnum,pis,mus,r,n_m,inpath,outpath)
-      create_node_plots(simnum,pis,mus,r,n_m,inpath,outpath)
+      create_edge_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath)
+      create_node_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath)
       for(pi in pis)
       {
         for(mu in mus)
         {
-          create_interval_plots(simnum,pi,mu,r,n_m,inpath,outpath)
+          create_interval_plots(simnum,pi,mu,R[r.i],nus[r.i],n_m,inpath,outpath)
         }
       }
     }
-    create_MSE_plots(simnum,pis,mus,r,n_microbes,inpath,outpath)
+    create_MSE_plots(simnum,pis,mus,R[r.i],nus[r.i],n_microbes,inpath,outpath)
   }
 }
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10),c(8,15,22),"results/simulation/","plots/simulation/")
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),"results/simulation/","plots/simulation/")
 
