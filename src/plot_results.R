@@ -141,28 +141,27 @@ create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath)
   
   edges$edge <- 1:n
   edges <- transform(edges,rej=ifelse(X0.025 > 0 | X0.975 < 0,TRUE,FALSE))
-  plt1 <- edges %>% filter(true_B != 0) %>% ggplot() + geom_errorbar(aes(x=edge,ymin=X0.025,
+  edges <- transform(edges,nonzero_mean=ifelse(true_B != 0.0,TRUE,FALSE))
+  plt1 <- edges %>% ggplot() + geom_errorbar(aes(x=factor(edge),ymin=X0.025,
                                                                  ymax=X0.975,
                                                                  color=rej)) +
-          theme_bw() + labs(color="Edge Appears Influential") +
-          scale_x_continuous(limits=c(1,n),breaks=seq(25,n,25)) + coord_flip() +
+          theme_bw() + theme(panel.grid.major = element_blank()) + labs(color="Edge Appears Influential") +
+          #scale_x_continuous(limits=c(1,n)) + coord_flip() +
+          scale_y_continuous(limits=c(-15,15)) +
+          coord_flip() + scale_x_discrete(labels=NULL,expand=expansion(add=4)) +
           geom_hline(aes(yintercept=mu[1]),linetype="dashed",color="blue") + 
-          geom_point(aes(x=edge,y=mean),shape=5) + ylab("Edge Effect")
+          geom_point(aes(x=factor(edge),y=mean),shape=5) + ylab("Edge Effect") +
+          geom_hline(aes(yintercept=0),linetype="dashed",color="green") +
+          facet_grid(nonzero_mean ~.,scales="free_y",space="free_y", labeller = labeller(
+            nonzero_mean = c(`TRUE` = "True mean nonzero", `FALSE` = "True mean zero")
+          )) 
+  plt1
+  ggsave(sprintf("%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_intervals.png",
+                 outpath,"intervals/",R,pi,mu,n_microbes,nu),plot=plt1,width=11,height=18)
   
-  ggsave(sprintf("%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_nonzero_intervals.png",
-                 outpath,"intervals/",R,pi,mu,n_microbes,nu),plot=plt1,width=11,height=13.5)
-  
-  plt2 <- edges %>% filter(true_B == 0) %>% ggplot() + geom_errorbar(aes(x=edge,ymin=X0.025,
-                                                                         ymax=X0.975,
-                                                                         color=rej)) +
-    theme_bw() + labs(color="Edge Appears Influential") +
-    scale_x_continuous(limits=c(1,n),breaks=seq(25,n,25)) + coord_flip() +
-    geom_hline(aes(yintercept=0),linetype="dashed",color="blue") + 
-    ylab("Edge Effect")
-  
-  ggsave(sprintf("%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_zero_intervals.png",
-                 outpath,"intervals/",R,pi,mu,n_microbes,nu),plot=plt2,width=11,height=13.5)
 }
+#create_interval_plots(1,0.3,0.8,5,10,8,"results/simulation/","plots/simulation/")
+
 
 create_plots <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath)
 {
@@ -170,6 +169,7 @@ create_plots <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath)
   {
     for(n_m in n_microbes)
     {
+      println(R[r.i])
       create_edge_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath)
       create_node_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath)
       for(pi in pis)
