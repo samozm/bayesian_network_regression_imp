@@ -169,7 +169,6 @@ create_plots <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath)
   {
     for(n_m in n_microbes)
     {
-      println(R[r.i])
       create_edge_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath)
       create_node_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath)
       for(pi in pis)
@@ -184,4 +183,5 @@ create_plots <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath)
   }
 }
 create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),"results/simulation/","plots/simulation/")
-
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(15,15,25),c(16,17,30),c(8,15,22),"results/simulation/","plots/simulation/")
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5),c(7),c(8,15,22),"results/simulation/","plots/simulation/")
