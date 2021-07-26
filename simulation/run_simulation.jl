@@ -81,13 +81,14 @@ end
 
 function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon)
     loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis")
-    γ,γ₀,MSE,ξ = sim_one_case(nburn,nsamp,loadinfo,jcon,R=R,ν=ν)
+    simtypes = Dict(1 => "unrealistic", 2 => "realistic")
+    γ,γ₀,MSE,ξ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,R=R,ν=ν)
 
     loadinfo["out"] = "xis"
     if jcon
         ξ_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
     else
-        ξ_in = DataFrame(CSV.File(datadir("simulation",savename(loadinfo,"csv",digits=1))))
+        ξ_in = DataFrame(CSV.File(datadir(joinpath(simtypes[simnum],"simulation"),savename(loadinfo,"csv",digits=1))))
 
         step = Int(floor(nsamp/100))
         if step==0
@@ -97,10 +98,10 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon)
 
     loadinfo["R"] = R
     loadinfo["nu"] = ν
-    output_results(γ[:,:,1],γ₀,MSE,mean(ξ,dims=1)[1,:,1],ξ_in,loadinfo,jcon)
+    output_results(γ[:,:,1],γ₀,MSE,mean(ξ,dims=1)[1,:,1],ξ_in,loadinfo,jcon,simtypes)
 end
 
-function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
+function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
     loadinfo["out"] = "XYs"
     if jcon
         data_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
@@ -109,10 +110,10 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool;η=1.01,ζ=1.0,ι=1.0,R=5,
         b_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
     else
-        data_in = DataFrame(CSV.File(datadir("simulation",savename(loadinfo,"csv",digits=1))))
+        data_in = DataFrame(CSV.File(datadir(joinpath(simtypes[simnum],"simulation"),savename(loadinfo,"csv",digits=1))))
 
         loadinfo["out"] = "bs"
-        b_in = DataFrame(CSV.File(datadir("simulation",savename(loadinfo,"csv",digits=1))))
+        b_in = DataFrame(CSV.File(datadir(joinpath(simtypes[simnum],"simulation"),savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
     end
     #X = convert(Matrix,data_in[:,names(data_in,Not("y"))])
@@ -140,7 +141,7 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool;η=1.01,ζ=1.0,ι=1.0,R=5,
     return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,result.ξ[nburn+1:nburn+nsamp,:,:]
 end
 
-function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,ξ::AbstractArray{U},ξ⁰::DataFrame,saveinfo,jcon::Bool) where {S,T,U}
+function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,ξ::AbstractArray{U},ξ⁰::DataFrame,saveinfo,jcon::Bool,simtypes) where {S,T,U}
     q = size(γ,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
@@ -212,11 +213,11 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
         CSV.write(projectdir("juliacon","results",savename(saveinfo,"csv",digits=1)),mse_df)
     else
         saveinfo["out"] = "nodes"
-        CSV.write(projectdir("results","simulation",savename(saveinfo,"csv",digits=1)),output)
+        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),output)
         saveinfo["out"] = "edges"
-        CSV.write(projectdir("results","simulation",savename(saveinfo,"csv",digits=1)),gam)
+        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),gam)
         saveinfo["out"] = "MSE"
-        CSV.write(projectdir("results","simulation",savename(saveinfo,"csv",digits=1)),mse_df)
+        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),mse_df)
     end
 end
 

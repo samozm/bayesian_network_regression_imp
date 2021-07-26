@@ -1,5 +1,6 @@
 using ArgParse,Distributions,Random,CSV,RCall,DrWatson
 using LinearAlgebra,BayesianNetworkRegression,DataFrames
+include("sim_utils.jl")
 
 function parse_CL_args()
     args = ArgParseSettings()
@@ -62,32 +63,7 @@ function main()
     out_df[!,:y] = y
 
     saveinfo = Dict("simnum"=>"1","pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k)
-
-    if jcon
-        saveinfo["out"] = "XYs"
-        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),out_df)
-
-        saveinfo["out"] = "bs"
-        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.lower_triangle(B)[:,1]))
-
-        saveinfo["out"] = "ms"
-        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),DataFrame(transpose(hcat(m...)),:auto))
-
-        saveinfo["out"] = "xis"
-        CSV.write(projectdir("juliacon","data",savename(saveinfo,"csv",digits=1)),DataFrame(TrueXi=ξ))
-        return
-    end
-    saveinfo["out"] = "XYs"
-    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),out_df)
-    
-    saveinfo["out"] = "bs"
-    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.lower_triangle(B)[:,1]))
-   
-    saveinfo["out"] = "ms"
-    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),DataFrame(transpose(hcat(m...)),:auto))
-    
-    saveinfo["out"] = "xis"
-    CSV.write(datadir("simulation",savename(saveinfo,"csv",digits=1)),DataFrame(TrueXi=ξ))
+    output_data(saveinfo,out_df,B,m,ξ,jcon,"unrealistic")
 
 end
 
@@ -96,18 +72,10 @@ function generate_Bs(t; μₛ=0.8,σₛ=1,πₛ=0.1)
     ξ = rand(Bernoulli(πₛ),t)
     B = zeros(t,t)
 
-    for i in 1:t
-        for j in (i+1):t
-            if (ξ[i] == 1 && ξ[j] == 1)
-                B[i,j] = B[j,i] = rand(Normal(μₛ,σₛ))
-            end
-        end
-    end
+    fill_B(B,ξ,t,μₛ,σₛ)
 
     return B,ξ
 end
-
-
 
 function generate_unrealistic_data(B,t,k,n)
     y = zeros(n)
@@ -118,22 +86,9 @@ function generate_unrealistic_data(B,t,k,n)
     R"source('src/sim_trees.R');inv_dist <- sim_tree_dists(t)"
     A_base = @rget inv_dist
     ϵ = rand(Normal(0,1),n)
-    #for i in 1:t
-        #for j in (i+1):t
-        #    rnd = abs(rand(Normal(μₐ,σₐ)))
-        #    while rnd == 0
-        #        rnd = abs(rand(Normal(μₐ,σₐ)))
-        #    end
-        #    if rnd != 0
-        #        rnd = 1/rnd #TODO: confirm we're gonna want to invert
-        #    end
-        #    A_base[i,j] = A_base[j,i] = rnd
-        #end
-    #end
 
     for i in 1:n
         chosen = sort(sample(1:t,k,replace=false))
-        ind = zeros(n,n)
         for j in chosen
             for l in chosen
                 A[i][j,l] = A[i][l,j] = A_base[j,l]
