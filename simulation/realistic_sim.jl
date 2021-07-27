@@ -81,8 +81,8 @@ end
 function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type;L=1)
 
     @rput t
-    R"source('src/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree)"
-    tree = @rget tree
+    R"source('src/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree$tree); tree_str <- tree$tree_str"
+    tree = @rget tree_str
     A_base = @rget A
 
     ξ = rand(Bernoulli(πₑ),t)
@@ -91,7 +91,8 @@ function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type;L=1)
 
     if type_arr[2] == "phylo"
         # generate C (main effects)
-        Σₑ = Matrix(vcv(tree))
+        Σdf = vcv(readTopology(tree))
+        Σₑ = Matrix(sort(select(Σdf, vcat("Row",string.(sort(parse.(Int64,names(Σdf[:,Not(:Row)]))))...)),[:Row])[:,Not(:Row)])
         C = rand(MultivariateNormal(μₑ*ones(t),Σₑ))
         B = diagm(C)
 
