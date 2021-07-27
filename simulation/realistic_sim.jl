@@ -34,9 +34,11 @@ function parse_CL_args()
         help = "flag indicating output should go to juliacon folder"
         action = :store_true
     "--simtype", "-y"
-        help = "type of simulation to run: additive_phylo, additive_random, interaction_phylo, interaction_random, or redundant"
+        help = "type of simulation to run: additive_phylo, additive_random, interaction_phylo, interaction_random, redundant_phylo, or redundant_random"
         arg_type = String
         default = "additive_phylo"
+    "--maxresponse", "-l"
+        help = "maximum value for the response for functional redundancy simulations. ignored if type is not redundant_phylo or redundant_random"
     end
     return parse_args(args)
 end
@@ -53,6 +55,7 @@ function main()
     πₛ = args_in["pi"]
     jcon = args_in["juliacon"]
     type = args_in["simtype"]
+    L = args_in["maxresponse"]
     q = floor(Int,t*(t-1)/2)
 
     Random.seed!(seed)
@@ -60,7 +63,7 @@ function main()
     μₛ = 0.4
     σₛ = 1.0
 
-    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₛ,πₛ,μₛ,σₛ,type)#,0,0.25)
+    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₛ,πₛ,μₛ,σₛ,type,L=L)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
@@ -158,3 +161,5 @@ function generate_yAm(ξ,B,t,k,n,A_base,redundant=false;L=1)
 
     return y,A,m
 end
+
+main()
