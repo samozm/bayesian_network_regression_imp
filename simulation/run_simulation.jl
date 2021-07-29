@@ -57,6 +57,10 @@ function parse_CL_args()
         help = "nu value (hyperparameter)"
         arg_type = Int
         default = 10
+    "--simtype", "-y"
+        help = "type of simulation (for realistic sims): additive_phylo, additive_random, interaction_phylo, interaction_random, redundant_phylo, or redundant_random"
+        arg_type = String
+        default = ""
     end
     return parse_args(args)
 end
@@ -74,21 +78,25 @@ function main()
     k = parsed_CL_args["samptaxa"]
     ν = parsed_CL_args["nu"]
     seed = parsed_CL_args["seed"]
+    type = parsed_CL_args["simtype"]
     Random.seed!(seed)
 
-    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon)
+    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type)
 end
 
-function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon)
+function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="")
     loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis")
     simtypes = Dict(1 => "unrealistic", 2 => "realistic")
-    γ,γ₀,MSE,ξ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,R=R,ν=ν)
+    if simtypes[simnum] == "realistic"
+        loadinfo["type"] = type
+    end
+    γ,γ₀,MSE,ξ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,R=R,ν=ν)
 
     loadinfo["out"] = "xis"
     if jcon
         ξ_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
     else
-        ξ_in = DataFrame(CSV.File(datadir(joinpath(simtypes[simnum],"simulation"),savename(loadinfo,"csv",digits=1))))
+        ξ_in = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
 
         step = Int(floor(nsamp/100))
         if step==0
@@ -98,10 +106,10 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon)
 
     loadinfo["R"] = R
     loadinfo["nu"] = ν
-    output_results(γ[:,:,1],γ₀,MSE,mean(ξ,dims=1)[1,:,1],ξ_in,loadinfo,jcon,simtypes)
+    output_results(γ[:,:,1],γ₀,MSE,mean(ξ,dims=1)[1,:,1],ξ_in,loadinfo,jcon,simtypes,simnum)
 end
 
-function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
+function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
     loadinfo["out"] = "XYs"
     if jcon
         data_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
@@ -110,10 +118,10 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,;η=1.01,ζ=1.0,�
         b_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
     else
-        data_in = DataFrame(CSV.File(datadir(joinpath(simtypes[simnum],"simulation"),savename(loadinfo,"csv",digits=1))))
+        data_in = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
 
         loadinfo["out"] = "bs"
-        b_in = DataFrame(CSV.File(datadir(joinpath(simtypes[simnum],"simulation"),savename(loadinfo,"csv",digits=1))))
+        b_in = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
     end
     #X = convert(Matrix,data_in[:,names(data_in,Not("y"))])
@@ -141,7 +149,7 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,;η=1.01,ζ=1.0,�
     return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,result.ξ[nburn+1:nburn+nsamp,:,:]
 end
 
-function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,ξ::AbstractArray{U},ξ⁰::DataFrame,saveinfo,jcon::Bool,simtypes) where {S,T,U}
+function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,ξ::AbstractArray{U},ξ⁰::DataFrame,saveinfo,jcon::Bool,simtypes,simnum,realistic_type="") where {S,T,U}
     q = size(γ,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
@@ -202,6 +210,12 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     mse_df[:,"R"] .= saveinfo["R"]
     mse_df[:,"n_microbes"] .= saveinfo["n_microbes"]
     mse_df[:,"nu"] .= saveinfo["nu"]
+
+    if simtypes[simnum] == "realistic"
+        gam[:,"type"] .= realistic_type
+        output[:,"type"] .= realistic_type
+        mse_df[:,"type"] .= realistic_type
+    end
 
     if jcon
         #TODO better way of adding suffix

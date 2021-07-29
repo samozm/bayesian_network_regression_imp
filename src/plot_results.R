@@ -117,10 +117,11 @@ create_node_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath)
   nodes$microbe <- rep(1:n,length(pis)*length(mus))
   plt <- ggplot(data=nodes,aes(x=microbe,y=Xi.posterior,fill=TrueXi)) + 
     geom_bar(stat="Identity") + xlab("Microbe") + ylab("Probability of influence") + 
-    theme_minimal() + scale_fill_manual(values=c("#FF0000","#0000FF")) + 
-    guides(fill=FALSE) +
+    theme_minimal() +
+    scale_fill_manual(values=c("#FF0000","#0000FF")) + 
+    guides(fill="none") +
     scale_x_continuous(breaks=1:n,labels=1:n,position="top") + 
-    theme(plot.title=element_text(hjust=0.5)) +
+    theme(plot.title=element_text(hjust=0.5), panel.background = element_rect(fill="#FFFFFF")) +
     scale_y_continuous(position="right") + 
     facet_grid(pi ~ mu, switch="both",
               labeller = labeller(
@@ -182,6 +183,8 @@ create_plots <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath)
     create_MSE_plots(simnum,pis,mus,R[r.i],nus[r.i],n_microbes,inpath,outpath)
   }
 }
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),"results/simulation/","plots/simulation/")
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(15,15,25),c(16,17,30),c(8,15,22),"results/simulation/","plots/simulation/")
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5),c(7),c(8,15,22),"results/simulation/","plots/simulation/")
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),"results/simulation/unrealistic/","plots/simulation/unrealistic/")
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(15,15,25),c(16,17,30),c(8,15,22),"results/simulation/unrealistic/","plots/simulation/unrealistic/")
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5),c(7),c(8,15,22),"results/simulation/unrealistic/","plots/simulation/unrealistic/")
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),"results/simulation/unrealistic/","plots/simulation/unrealistic/")
+

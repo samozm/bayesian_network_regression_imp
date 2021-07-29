@@ -27,15 +27,15 @@ function output_data(saveinfo,out_df,B,m,ξ,jcon,simtype)
         return
     end
     saveinfo["out"] = "XYs"
-    CSV.write(datadir(joinpath(simtypes[simnum],"simulation"),savename(saveinfo,"csv",digits=1)),out_df)
+    CSV.write(datadir(joinpath("simulation",simtype),savename(saveinfo,"csv",digits=1)),out_df)
     
     saveinfo["out"] = "bs"
-    CSV.write(datadir(joinpath(simtypes[simnum],"simulation"),savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.lower_triangle(B)[:,1]))
+    CSV.write(datadir(joinpath("simulation",simtype),savename(saveinfo,"csv",digits=1)),DataFrame(B=BayesianNetworkRegression.lower_triangle(B)[:,1]))
    
     saveinfo["out"] = "ms"
-    CSV.write(datadir(joinpath(simtypes[simnum],"simulation"),savename(saveinfo,"csv",digits=1)),DataFrame(transpose(hcat(m...)),:auto))
+    CSV.write(datadir(joinpath("simulation",simtype),savename(saveinfo,"csv",digits=1)),DataFrame(transpose(hcat(m...)),:auto))
     
     saveinfo["out"] = "xis"
-    CSV.write(datadir(joinpath(simtypes[simnum],"simulation"),savename(saveinfo,"csv",digits=1)),DataFrame(TrueXi=ξ))
+    CSV.write(datadir(joinpath("simulation",simtype),savename(saveinfo,"csv",digits=1)),DataFrame(TrueXi=ξ))
 
 end

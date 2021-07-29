@@ -1,3 +1,4 @@
+#!/bin/bash
 
 echo "realistic simulations (sim 2)"
 
@@ -13,14 +14,8 @@ bash simulation/generate_realistic_onetype.sh "interaction_phylo"
 echo "Interaction Random"
 bash simulation/generate_realistic_onetype.sh "interaction_random"
 
-echo "Functional Redundancy Phylogenetic L=1"
-bash simulation/generate_realistic_onetype.sh "redundant_phylo" 1
+echo "Functional Redundancy Phylogenetic"
+bash simulation/generate_realistic_onetype.sh "redundant_phylo"
 
-echo "Functional Redundancy Random L=1"
-bash simulation/generate_realistic_onetype.sh "redundant_random" 1
-
-echo "Functional Redundancy Phylogenetic L=2"
-bash simulation/generate_realistic_onetype.sh "redundant_phylo" 2
-
-echo "Functional Redundancy Random L=2"
-bash simulation/generate_realistic_onetype.sh "redundant_random" 2
+echo "Functional Redundancy Random"
+bash simulation/generate_realistic_onetype.sh "redundant_random"

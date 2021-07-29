@@ -1,4 +1,4 @@
-using Base: String
+using Base: String, Int64, simd_outer_range
 using ArgParse,Distributions,Random,CSV,RCall,DrWatson
 using LinearAlgebra,BayesianNetworkRegression,DataFrames,PhyloNetworks
 include("sim_utils.jl")
@@ -37,8 +37,6 @@ function parse_CL_args()
         help = "type of simulation to run: additive_phylo, additive_random, interaction_phylo, interaction_random, redundant_phylo, or redundant_random"
         arg_type = String
         default = "additive_phylo"
-    "--maxresponse", "-l"
-        help = "maximum value for the response for functional redundancy simulations. ignored if type is not redundant_phylo or redundant_random"
     end
     return parse_args(args)
 end
@@ -51,11 +49,10 @@ function main()
     k = args_in["samptaxa"]
     n = args_in["nsamp"]
     seed = args_in["seed"]
-    μₛ = args_in["mean"]
-    πₛ = args_in["pi"]
+    μₑ = args_in["mean"]
+    πₑ = args_in["pi"]
     jcon = args_in["juliacon"]
     type = args_in["simtype"]
-    L = args_in["maxresponse"]
     q = floor(Int,t*(t-1)/2)
 
     Random.seed!(seed)
@@ -63,7 +60,7 @@ function main()
     μₛ = 0.4
     σₛ = 1.0
 
-    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₛ,πₛ,μₛ,σₛ,type,L=L)#,0,0.25)
+    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
@@ -73,15 +70,15 @@ function main()
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
-    saveinfo = Dict("simnum"=>"2","pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k)
+    saveinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type)
     output_data(saveinfo,out_df,B,m,ξ,jcon,"realistic")
 
     saveinfo["out"] = "main-effects"
-    CSV.write(datadir(joinpath("realistic","simulation"),savename(saveinfo,"csv",digits=1)),DataFrame(me=diag(B)))
+    CSV.write(datadir(joinpath("simulation","realistic"),savename(saveinfo,"csv",digits=1)),DataFrame(me=diag(B)))
 
 end
 
-function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type;L=1)
+function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type)
 
     @rput t
     R"source('src/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree$tree); tree_str <- tree$tree_str"
@@ -92,40 +89,43 @@ function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type;L=1)
 
     type_arr = split(type,"_")
 
+    L_dict = Dict(0.8 => 1, 1.6 => 2)
+
     if type_arr[2] == "phylo"
         # generate C (main effects)
-        Σdf = vcv(readTopology(tree))
-        Σₑ = Matrix(sort(select(Σdf, vcat("Row",string.(sort(parse.(Int64,names(Σdf[:,Not(:Row)]))))...)),[:Row])[:,Not(:Row)])
-        C = rand(MultivariateNormal(μₑ*ones(t),Σₑ))
+        tree_obj = readTopology(tree)
+        trait_params = ParamsBM(μₛ,σₛ)
+        tree_sim = simulate(tree_obj, trait_params)
+        C = tree_sim[:Tips]
         B = diagm(C)
 
         if type_arr[1] == "additive"
-            return ξ,B,generate_yAm(ξ,B,t,k,n,A_base)
+            return generate_yAm(ξ,B,t,k,n,A_base)
         end
 
         fill_B(B,ξ,t,μₛ,σₛ)
 
         if type_arr[1] == "interaction"
-            return ξ,B,generate_yAm(ξ,B,t,k,n,A_base)
+            return generate_yAm(ξ,B,t,k,n,A_base)
         elseif type_arr[1] == "redundant" 
-            return ξ,B,generate_yAm(ξ,B,t,k,n,A_base,true,L=L)
+            return generate_yAm(ξ,B,t,k,n,A_base,true,L=L_dict[μₑ])
         end
 
     elseif type_arr[2] == "random"
         # generate C (main effects)
-        C = rand(Normal(μₑ,1))
+        C = rand(Normal(μₑ,1),t)
         B = diagm(C)
 
         if type_arr[1] == "additive"
-            return ξ,B,generate_yAm(ξ,B,t,k,n,A_base)
+            return generate_yAm(ξ,B,t,k,n,A_base)
         end
 
         fill_B(B,ξ,t,μₛ,σₛ)
 
         if type_arr[1] == "interaction" 
-            return ξ,B,generate_yAm(ξ,B,t,k,n,A_base)
+            return generate_yAm(ξ,B,t,k,n,A_base)
         elseif type_arr[1] == "redundant" 
-            return ξ,B,generate_yAm(ξ,B,t,k,n,A_base,true,L=L)
+            return generate_yAm(ξ,B,t,k,n,A_base,true,L=L_dict[μₑ])
         end
     end
 end
@@ -159,7 +159,7 @@ function generate_yAm(ξ,B,t,k,n,A_base,redundant=false;L=1)
         end
     end
 
-    return y,A,m
+    return ξ,B,y,A,m
 end
 
 main()
