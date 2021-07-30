@@ -60,7 +60,8 @@ function parse_CL_args()
     "--simtype", "-y"
         help = "type of simulation (for realistic sims): additive_phylo, additive_random, interaction_phylo, interaction_random, redundant_phylo, or redundant_random"
         arg_type = String
-        default = ""
+        default = nothing
+        required = false
     end
     return parse_args(args)
 end
@@ -226,6 +227,8 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
         saveinfo["out"] = "MSE"
         CSV.write(projectdir("juliacon","results",savename(saveinfo,"csv",digits=1)),mse_df)
     else
+        print("out to ")
+        println(projectdir("results","simulation",simtypes[simnum]))
         saveinfo["out"] = "nodes"
         CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),output)
         saveinfo["out"] = "edges"
