@@ -9,7 +9,7 @@ BNSPfunc <- function(Xmat = Xmat, y = y, V = 20, R = 5, niter = 50000, a.wish = 
     pkgs <- c("pscl","LaplacesDemon","MASS","gdata","GIGrvg","mvtnorm","MCMCpack","gtools")
     for (pkg in pkgs)
     {
-      if(!require(pkg,character.only = TRUE,quietly = TRUE)) quiet(install.packages(pkg),all=TRUE)
+      if(!require(pkg,character.only = TRUE,quietly = TRUE)) install.packages(pkg)
     }
     
     #### Set Some Values 
@@ -120,14 +120,6 @@ BNSPfunc <- function(Xmat = Xmat, y = y, V = 20, R = 5, niter = 50000, a.wish = 
           mns[j,] <- mean.uj
           cov[j,,] <- cov.uj
         }
-	      if(i == 32010 || i == 32200 || i == 32400)
-	      {
-	        #print(i)
-	        #print("mu")
-	        #print(mns)
-	        #print("cov")
-	        #print(cov)
-	      }
     	
       #### 3. Update beta (the parameter 'gamma' in the paper is called 'beta' in this code)
   	  UpU <- ulist[[i]]%*%Byatha%*%t(ulist[[i]])
