@@ -18,7 +18,7 @@ function parse_CL_args()
         help = "number of taxa to actually use in each sample"
         arg_type = Int
         default = 20
-    "--nsamp", "-n"
+    "--samplesize", "-z"
         help = "number of samples to generate"
         arg_type = Int
         default = 70
@@ -47,7 +47,7 @@ function main()
     args_in = parse_CL_args()
     t = args_in["tottaxa"]
     k = args_in["samptaxa"]
-    n = args_in["nsamp"]
+    n = args_in["samplesize"]
     seed = args_in["seed"]
     μₑ = args_in["mean"]
     πₑ = args_in["pi"]
@@ -70,8 +70,8 @@ function main()
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
-    saveinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type)
-    output_data(saveinfo,out_df,B,m,ξ,jcon,"realistic")
+    saveinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type,"edge_mu"=>μₛ,"samplesize"=>n)
+    output_data(saveinfo,out_df,B,m,ξ,A,jcon,"realistic")
 
     saveinfo["out"] = "main-effects"
     CSV.write(datadir(joinpath("simulation","realistic"),savename(saveinfo,"csv",digits=1)),DataFrame(me=diag(B)))

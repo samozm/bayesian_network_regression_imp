@@ -10,7 +10,7 @@ function fill_B(B,ξ,t,μₛ,σₛ)
     end
 end
 
-function output_data(saveinfo,out_df,B,m,ξ,jcon,simtype)
+function output_data(saveinfo,out_df,B,m,ξ,A,jcon,simtype)
 
     if jcon
         saveinfo["out"] = "XYs"
@@ -37,5 +37,16 @@ function output_data(saveinfo,out_df,B,m,ξ,jcon,simtype)
     
     saveinfo["out"] = "xis"
     CSV.write(datadir(joinpath("simulation",simtype),savename(saveinfo,"csv",digits=1)),DataFrame(TrueXi=ξ))
+
+    V = size(A[1],1)
+    q = Int64(V*(V-1)/2)
+    n = size(A,1)
+    A_reshaped = Matrix{Float64}(undef, n, q)
+    for i in 1:n
+        A_reshaped[i,:] = BayesianNetworkRegression.lower_triangle(A[i])
+    end
+
+    saveinfo["out"] = "As"
+    CSV.write(datadir(joinpath("simulation",simtype),savename(saveinfo,"csv",digits=1)),DataFrame(A_reshaped,:auto))
 
 end

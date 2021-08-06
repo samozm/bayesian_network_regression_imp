@@ -17,10 +17,10 @@ function parse_CL_args()
         help = "number of taxa to actually use in each sample"
         arg_type = Int
         default = 20
-    "--nsamp", "-n"
+    "--samplesize", "-z"
         help = "number of samples to generate"
         arg_type = Int
-        default = 70
+        default = 100
     "--mean", "-m"
         help = "mean to use to draw edge coefficients"
         arg_type = Float64
@@ -42,7 +42,7 @@ function main()
     args_in = parse_CL_args()
     t = args_in["tottaxa"]
     k = args_in["samptaxa"]
-    n = args_in["nsamp"]
+    n = args_in["samplesize"]
     seed = args_in["seed"]
     μₛ = args_in["mean"]
     πₛ = args_in["pi"]
@@ -62,8 +62,8 @@ function main()
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
-    saveinfo = Dict("simnum"=>"1","pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k)
-    output_data(saveinfo,out_df,B,m,ξ,jcon,"unrealistic")
+    saveinfo = Dict("simnum"=>"1","pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"samplesize"=>n)
+    output_data(saveinfo,out_df,B,m,ξ,A,jcon,"unrealistic")
 
 end
 

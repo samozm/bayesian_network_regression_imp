@@ -33,9 +33,9 @@ function parse_CL_args()
     "--samptaxa","-k"
         help = "number of taxa actually used in each sample (relates to filename)"
         arg_type = Int
-        default = 20
+        default = 15
     "--mean", "-m"
-        help = "mean to use to draw edge coefficients (relates to filename)"
+        help = "mean to use to draw edge coefficients (in unrealistic sims) or node coefficients (in realistic sims) - relates to filename"
         arg_type = Float64
         default = 0.8
     "--pi", "-p"
@@ -62,6 +62,12 @@ function parse_CL_args()
         arg_type = String
         default = nothing
         required = false
+    "--edgemean", "-e"
+        help = "value of the mean of the normal distribution true edge coefficients were drawn from - only used in realistic simulations."
+    "--samplesize", "-z"
+        help = "sample size (relates to filename)"
+        arg_type = Int
+        default = 100
     end
     return parse_args(args)
 end
@@ -80,18 +86,21 @@ function main()
     ν = parsed_CL_args["nu"]
     seed = parsed_CL_args["seed"]
     type = parsed_CL_args["simtype"]
+    edge_μ = parsed_CL_args["edgemean"]
+    sampsize = parsed_CL_args["samplesize"]
     Random.seed!(seed)
 
-    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type)
+    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type,edge_μ,sampsize)
 end
 
-function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="")
-    loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis")
+function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="",edge_μ=0.0,sampsize=100)
+    loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis","samplesize"=>sampsize)
     simtypes = Dict(1 => "unrealistic", 2 => "realistic")
     if simtypes[simnum] == "realistic"
         loadinfo["type"] = type
+        loadinfo["edge_mu"] = edge_μ
     end
-    γ,γ₀,MSE,ξ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,R=R,ν=ν)
+    γ,γ₀,MSE,MSEy,ξ,μ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,R=R,ν=ν)
 
     loadinfo["out"] = "xis"
     if jcon
@@ -107,7 +116,7 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="")
 
     loadinfo["R"] = R
     loadinfo["nu"] = ν
-    output_results(γ[:,:,1],γ₀,MSE,mean(ξ,dims=1)[1,:,1],ξ_in,loadinfo,jcon,simtypes,simnum)
+    output_results(γ[:,:,1],γ₀,MSE,MSEy,mean(ξ,dims=1)[1,:,1],ξ_in,μ,loadinfo,jcon,simtypes,simnum)
 end
 
 function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
@@ -124,6 +133,9 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum;η=1.01,ζ
         loadinfo["out"] = "bs"
         b_in = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
+
+        loadinfo["out"] = "As"
+        A = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
     end
     #X = convert(Matrix,data_in[:,names(data_in,Not("y"))])
     X = Matrix(data_in[:,names(data_in,Not("y"))])
@@ -147,10 +159,18 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum;η=1.01,ζ
     end
     MSE = MSE * (2/(V*(V-1)))
 
-    return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,result.ξ[nburn+1:nburn+nsamp,:,:]
+    n = size(y)
+    y_pred = zeros(n)
+    μ_post = mean(μ)
+    for i in 1:n
+        y_pred[i] = μ_post + sum(result.γ .* A[i])
+    end
+    MSEy = sum((y - y_pred).^2)/n
+
+    return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,MSEy,result.ξ[nburn+1:nburn+nsamp,:,:],result.μ[nburn+1:nburn+nsamp,:,:]
 end
 
-function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,ξ::AbstractArray{U},ξ⁰::DataFrame,saveinfo,jcon::Bool,simtypes,simnum,realistic_type="") where {S,T,U}
+function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,MSEy,ξ::AbstractArray{U},ξ⁰::DataFrame,μ,saveinfo,jcon::Bool,simtypes,simnum,realistic_type="",μₛ=0.0) where {S,T,U}
     q = size(γ,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
@@ -206,16 +226,31 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     output[:,"nu"] .= saveinfo["nu"]
 
     mse_df = DataFrame(MSE=MSE)
+    mse_df[:,"MSEy"] .= MSEy
     mse_df[:,"pi"] .= saveinfo["pi"]
     mse_df[:,"mu"] .= saveinfo["mu"]
     mse_df[:,"R"] .= saveinfo["R"]
     mse_df[:,"n_microbes"] .= saveinfo["n_microbes"]
     mse_df[:,"nu"] .= saveinfo["nu"]
 
+    # this is posterior mu
+    μ_sorted = sort(μ,dims=1)
+    mu_df = DataFrame(mean=mean(μ))
+    mu_df[:,"0.025"] .= μ_sorted[lw,1,1]
+    mu_df[:,"0.975"] .= μ_sorted[hi,1,1]
+
+    mu_df[:,"pi"] .= saveinfo["pi"]
+    mu_df[:,"mu"] .= saveinfo["mu"]
+    mu_df[:,"R"] .= saveinfo["R"]
+    mu_df[:,"n_microbes"] .= saveinfo["n_microbes"]
+    mu_df[:,"nu"] .= saveinfo["nu"]
+
     if simtypes[simnum] == "realistic"
         gam[:,"type"] .= realistic_type
         output[:,"type"] .= realistic_type
         mse_df[:,"type"] .= realistic_type
+        mu_df[:,"type"] .= realistic_type
+        gam[:,"edge_mu"] .= μₛ
     end
 
     if jcon
@@ -235,6 +270,8 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
         CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),gam)
         saveinfo["out"] = "MSE"
         CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),mse_df)
+        aveinfo["out"] = "mu"
+        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),mu_df)
     end
 end
 
@@ -242,5 +279,5 @@ end
 #@quickactivate
 #run_case_and_output(3,3,1,0.8,0.3,5,15,false)
 #@trace run_case_and_output(10,10,1,1,false)
-#@profview run_case_and_output(3,3,1,0.8,0.1,5,20,false)
+#@profview run_case_and_output(100,100,1,0.8,0.3,5,22,10,false,"",0.0,500)
 main()

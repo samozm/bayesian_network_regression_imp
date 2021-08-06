@@ -15,3 +15,7 @@ bash simulation/run_unrealistic.sh 10 15 100
 sleep 4s
 
 bash simulation/run_unrealistic.sh 15 20 100
+
+sleep 4s 
+
+bash simulation/run_pow_unrealistic.sh 9 10 100
