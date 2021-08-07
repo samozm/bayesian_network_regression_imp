@@ -133,9 +133,6 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum;η=1.01,ζ
         loadinfo["out"] = "bs"
         b_in = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
-
-        loadinfo["out"] = "As"
-        A = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
     end
     #X = convert(Matrix,data_in[:,names(data_in,Not("y"))])
     X = Matrix(data_in[:,names(data_in,Not("y"))])
@@ -159,15 +156,15 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum;η=1.01,ζ
     end
     MSE = MSE * (2/(V*(V-1)))
 
-    n = size(y)
+    n = size(y,1)
     y_pred = zeros(n)
-    μ_post = mean(μ)
+    μ_post = mean(result.μ[nburn+1:nburn+nsamp,1,1])
     for i in 1:n
-        y_pred[i] = μ_post + sum(result.γ .* A[i])
+        y_pred[i] = μ_post + sum(γ_n2[1,:,1] .* X[i,:])
     end
     MSEy = sum((y - y_pred).^2)/n
 
-    return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,MSEy,result.ξ[nburn+1:nburn+nsamp,:,:],result.μ[nburn+1:nburn+nsamp,:,:]
+    return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,MSEy,result.ξ[nburn+1:nburn+nsamp,:,:],result.μ[nburn+1:nburn+nsamp,1,1]
 end
 
 function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,MSEy,ξ::AbstractArray{U},ξ⁰::DataFrame,μ,saveinfo,jcon::Bool,simtypes,simnum,realistic_type="",μₛ=0.0) where {S,T,U}
@@ -234,7 +231,7 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     mse_df[:,"nu"] .= saveinfo["nu"]
 
     # this is posterior mu
-    μ_sorted = sort(μ,dims=1)
+    μ_sorted = sort(μ)
     mu_df = DataFrame(mean=mean(μ))
     mu_df[:,"0.025"] .= μ_sorted[lw,1,1]
     mu_df[:,"0.975"] .= μ_sorted[hi,1,1]
@@ -270,7 +267,7 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
         CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),gam)
         saveinfo["out"] = "MSE"
         CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),mse_df)
-        aveinfo["out"] = "mu"
+        saveinfo["out"] = "mu"
         CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),mu_df)
     end
 end
