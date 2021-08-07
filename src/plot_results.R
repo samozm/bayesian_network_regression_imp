@@ -2,16 +2,17 @@
 library(ggplot2)
 library(dplyr)
 library(RColorBrewer)
+library(stringr)
 
-make.filename <- function(path,simnum,pi,mu,R,nu,n_microbes,type,samplesize,simtype=NULL)
+make.filename <- function(path,simnum,pi,mu,R,nu,n_microbes,type,samplesize,simtype=NULL,edge_mu=NULL)
 {
   if(is.null(simtype))
   {
     return(sprintf("%sR=%s_mu=%s_n_microbes=%s_nu=%s_out=%s_pi=%s_samplesize=%s_simnum=%s.csv",
                    path,R,mu,n_microbes,nu,type,pi,samplesize,simnum))
   }
-  return(sprintf("%sR=%s_mu=%s_n_microbes=%s_nu=%s_out=%s_pi=%s_samplesize=%s_simnum=%s_type=%s.csv",
-                path,R,mu,n_microbes,nu,type,pi,samplesize,simnum,simtype))
+  return(sprintf("%sR=%s_edge_mu=%s_mu=%s_n_microbes=%s_nu=%s_out=%s_pi=%s_samplesize=%s_simnum=%s_type=%s.csv",
+                path,R,edge_mu,mu,n_microbes,nu,type,pi,samplesize,simnum,simtype))
   
 }
 
@@ -27,7 +28,7 @@ plot_CIs <- function(edges)
 }
 
 #pis and mus should be vectors of all the pi or mu values for this plot
-create_edge_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="")
+create_edge_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="",edge_mu=NULL)
 {
   edges <- data.frame()
   
@@ -35,7 +36,7 @@ create_edge_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samp
   {
     for(j.mu in mus)
     {
-      flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,n_microbes,"edges",samplesize,simtype)
+      flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,n_microbes,"edges",samplesize,simtype,edge_mu)
       print(flnm)
       edges <- rbind(edges, read.csv(flnm))
     }
@@ -69,10 +70,11 @@ create_edge_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samp
                       R,n_microbes,nu,samplesize)
   }
   else {
-    out_fl <- sprintf("%s%s%sR=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_posterior_edges.png",
-                      outpath,"edges/",pref,R,n_microbes,nu,samplesize,simtype)
+    out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_posterior_edges.png",
+                      outpath,"edges/",pref,R,edge_mu,
+                      n_microbes,nu,samplesize,simtype)
   }
-  
+  print(out_fl)
   ggsave(out_fl,plot=plt1,width=11,height=9.5)
   
   plt2 <- ggplot(edges, aes(x_microbe,y_microbe,fill=abs(true_B))) + geom_tile() + 
@@ -100,14 +102,15 @@ create_edge_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samp
                       "edges/",pref,
                       R,n_microbes,nu,samplesize)
   } else {
-    out_fl <- sprintf("%s%s%sR=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_true_edges.png",
+    out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_true_edges.png",
                       outpath,"edges/",pref,
-                      R,n_microbes,nu,samplesize,simtype)
+                      R,edge_mu,n_microbes,
+                      nu,samplesize,simtype)
   }
   ggsave(out_fl,plot=plt2,width=11,height=9.5)
 }
 
-create_MSE_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="")
+create_MSE_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="",edge_mu=NULL)
 {
   mse <- data.frame()
   for(i.pi in pis)
@@ -116,7 +119,8 @@ create_MSE_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,sampl
     {
       for(k.n in n_microbes)
       {
-        flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,k.n,"MSE",samplesize,simtype)
+        flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,k.n,"MSE",samplesize,
+                              simtype,edge_mu)
         mse <- rbind(mse,read.csv(flnm))
       }
     }
@@ -135,20 +139,40 @@ create_MSE_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,sampl
     out_fl <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_mse.png",outpath,"mse/",
                       pref,R,nu,samplesize)
   } else {
-    out_fl <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_type=%s_mse.png",outpath,
-                      "mse/",pref,R,nu,samplesize,simtype)
+    out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_mse.png",outpath,
+                      "mse/",pref,R,edge_mu,nu,samplesize,simtype)
   }
   ggsave(out_fl,plot=plt1)
+  
+  plt2 <- ggplot(mse, aes(x=n_microbes, y=MSEy, group=interaction(pi,mu),color=factor(pi), 
+                          linetype=factor(mu)))  + 
+    geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value",
+                       title="MSE - Ys") +
+    theme_bw() + scale_x_continuous(breaks=n_microbes) + 
+    scale_y_continuous(limits=c(0,ceiling(max(mse$MSEy))),
+                       breaks=seq(0,ceiling(max(mse$MSEy)),
+                                  ceiling(max(mse$MSEy))/10))
+  
+  if(is.null(simtype))
+  {
+    out_fl <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_mse-y.png",outpath,"mse/",
+                      pref,R,nu,samplesize)
+  } else {
+    out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_mse-y.png",outpath,
+                      "mse/",pref,R,edge_mu,nu,samplesize,simtype)
+  }
+  ggsave(out_fl,plot=plt2)
 }
 
-create_node_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="")
+create_node_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="",edge_mu=NULL)
 {
   nodes <- data.frame()
   for(i.pi in pis)
   {
     for(j.mu in mus)
     {
-      flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,n_microbes,"nodes",samplesize,simtype)
+      flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,n_microbes,"nodes",
+                            samplesize,simtype,edge_mu)
       nodes <- rbind(nodes, read.csv(flnm))
     }
   }
@@ -176,16 +200,16 @@ create_node_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samp
                       "nodes/",pref,R,
                       n_microbes,nu,samplesize)
   } else {
-    out_fl <- sprintf("%s%s%sR=%s_n_microbes=%s_nu=%s_type=%s_samplesize=%s_nodes.png",
-                      outpath,"nodes/",pref,R,
+    out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_n_microbes=%s_nu=%s_type=%s_samplesize=%s_nodes.png",
+                      outpath,"nodes/",pref,R,edge_mu,
                       n_microbes,nu,samplesize,simtype)
   }
   ggsave(out_fl,plot=plt,width=11,height=9.5)
 }
 
-create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="")
+create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="",edge_mu=NULL)
 {
-  flnm <- make.filename(inpath,simnum,pi,mu,R,nu,n_microbes,"edges",samplesize,simtype)
+  flnm <- make.filename(inpath,simnum,pi,mu,R,nu,n_microbes,"edges",samplesize,simtype,edge_mu)
   edges <- read.csv(flnm)
   
   n <- length(edges$true_B)
@@ -210,8 +234,8 @@ create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath,sa
     out_fl <- sprintf("%s%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_intervals.png",
                       outpath,"intervals/",pref,R,pi,mu,n_microbes,nu,samplesize)
   } else {
-    out_fl <- sprintf("%s%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_intervals.png",
-                      outpath,"intervals/",pref,R,pi,mu,n_microbes,nu,samplesize,simtype)
+    out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_intervals.png",
+                      outpath,"intervals/",pref,R,edge_mu,pi,mu,n_microbes,nu,samplesize,simtype)
   }
   ggsave(out_fl,plot=plt1,width=11,height=18)
   
@@ -219,67 +243,67 @@ create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath,sa
 #create_interval_plots(1,0.3,0.8,5,10,8,"results/simulation/","plots/simulation/")
 
 
-create_plots <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize,simtypes=c(NULL),pref="")
+create_plots <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize,simtypes=c(NULL),pref="",edge_mu=NULL)
 {
   if(!is.null(simtypes)){
     for(s in simtypes)
     { 
-      plot_loops(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize,s,pref)
+      plot_loops(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize,s,pref,edge_mu)
     }
   }else{
-    plot_loops(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize,NULL,pref)
+    plot_loops(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize,NULL,pref,edge_mu)
   }
 }
-plot_loops <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesizes,simtype=NULL,pref=""){
+plot_loops <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesizes,simtype=NULL,pref="",edge_mu=NULL){
   for(samplesize in samplesizes)
     {
     for(r.i in 1:length(R))
     {
       for(n_m in n_microbes)
       {
-        create_edge_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath,samplesize,simtype,pref)
-        create_node_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath,samplesize,simtype,pref)
+        create_edge_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath,samplesize,simtype,pref,edge_mu)
+        create_node_plots(simnum,pis,mus,R[r.i],nus[r.i],n_m,inpath,outpath,samplesize,simtype,pref,edge_mu)
         for(pi in pis)
         {
           for(mu in mus)
           {
-            create_interval_plots(simnum,pi,mu,R[r.i],nus[r.i],n_m,inpath,outpath,samplesize,simtype,pref)
+            create_interval_plots(simnum,pi,mu,R[r.i],nus[r.i],n_m,inpath,outpath,samplesize,simtype,pref,edge_mu)
           }
         }
       }
-      create_MSE_plots(simnum,pis,mus,R[r.i],nus[r.i],n_microbes,inpath,outpath,samplesize,simtype,pref)
+      create_MSE_plots(simnum,pis,mus,R[r.i],nus[r.i],n_microbes,inpath,outpath,samplesize,simtype,pref,edge_mu)
     }
   }
 }
 
 # unrealistic, power, 100 samples
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-             c(100))
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(15,15,25),c(16,17,30),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-             c(100))
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5),c(7),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-             c(100))
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-             c(100))
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(100))
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(15,15,25),c(16,17,30),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(100))
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5),c(7),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(100))
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(100))
 
 # unrealistic, null, 100 samples
-create_plots(1,c("0.0"),c(0.8,1.6),c(9),c(10),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/nullsim/",
-             c(100),NULL,"nullsim_")
+#create_plots(1,c("0.0"),c(0.8,1.6),c(9),c(10),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/nullsim/",
+#             c(100),NULL,"nullsim_")
 
 
 # unrealistic, power, 500 samples
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-             c(500))
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(500))
 
 
-#create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
-#             "plots/simulation/realistic/",
-#             c("additive_phylo", "additive_random", "interaction_phylo", 
-#               "interaction_random", "redundant_phylo", "redundant_random"))
+create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
+             "plots/simulation/realistic/",c(100),
+             c("additive_phylo", "additive_random", "interaction_phylo", 
+               "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
 
