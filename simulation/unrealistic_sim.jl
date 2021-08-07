@@ -63,7 +63,7 @@ function main()
     out_df[!,:y] = y
 
     saveinfo = Dict("simnum"=>"1","pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"samplesize"=>n)
-    output_data(saveinfo,out_df,B,m,ξ,A,jcon,"unrealistic")
+    output_data(saveinfo,out_df,B,m,ξ,jcon,"unrealistic")
 
 end
 

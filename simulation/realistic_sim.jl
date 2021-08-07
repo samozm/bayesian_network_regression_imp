@@ -71,7 +71,7 @@ function main()
     out_df[!,:y] = y
 
     saveinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type,"edge_mu"=>μₛ,"samplesize"=>n)
-    output_data(saveinfo,out_df,B,m,ξ,A,jcon,"realistic")
+    output_data(saveinfo,out_df,B,m,ξ,jcon,"realistic")
 
     saveinfo["out"] = "main-effects"
     CSV.write(datadir(joinpath("simulation","realistic"),savename(saveinfo,"csv",digits=1)),DataFrame(me=diag(B)))
