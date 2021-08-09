@@ -200,7 +200,7 @@ create_node_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samp
                       "nodes/",pref,R,
                       n_microbes,nu,samplesize)
   } else {
-    out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_n_microbes=%s_nu=%s_type=%s_samplesize=%s_nodes.png",
+    out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_nodes.png",
                       outpath,"nodes/",pref,R,edge_mu,
                       n_microbes,nu,samplesize,simtype)
   }
@@ -277,29 +277,29 @@ plot_loops <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize
 }
 
 # unrealistic, power, 100 samples
-#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),
-#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-#             c(100))
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),
+             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+             c(100))
 #create_plots(1,c(0.3,0.8),c(0.8,1.6),c(15,15,25),c(16,17,30),c(8,15,22),
 #             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
 #             c(100))
 #create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5),c(7),c(8,15,22),
 #             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
 #             c(100))
-#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
-#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-#             c(100))
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+             c(100))
 
 # unrealistic, null, 100 samples
-#create_plots(1,c("0.0"),c(0.8,1.6),c(9),c(10),c(8,15,22),
-#             "results/simulation/unrealistic/","plots/simulation/unrealistic/nullsim/",
-#             c(100),NULL,"nullsim_")
+create_plots(1,c("0.0"),c(0.8,1.6),c(9),c(10),c(8,15,22),
+             "results/simulation/unrealistic/","plots/simulation/unrealistic/nullsim/",
+             c(100),NULL,"nullsim_")
 
 
 # unrealistic, power, 500 samples
-#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
-#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-#             c(500))
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+             c(500))
 
 
 create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
