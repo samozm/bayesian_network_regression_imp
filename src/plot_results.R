@@ -224,7 +224,6 @@ create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath,sa
           #scale_x_continuous(limits=c(1,n)) + coord_flip() +
           scale_y_continuous(limits=c(-15,15)) +
           coord_flip() + scale_x_discrete(labels=NULL,expand=expansion(add=4)) +
-          geom_hline(aes(yintercept=mu[1]),linetype="dashed",color="blue") + 
           geom_point(aes(x=factor(edge),y=mean),shape=5) + ylab("Edge Effect") +
           geom_hline(aes(yintercept=0),linetype="dashed",color="green") +
           facet_grid(nonzero_mean ~.,scales="free_y",space="free_y", labeller = labeller(
@@ -233,14 +232,97 @@ create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath,sa
   if(is.null(simtype)){
     out_fl <- sprintf("%s%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_intervals.png",
                       outpath,"intervals/",pref,R,pi,mu,n_microbes,nu,samplesize)
+    plt1 <- plt1 + geom_hline(aes(yintercept=mu[1]),linetype="dashed",color="blue")
   } else {
     out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_intervals.png",
                       outpath,"intervals/",pref,R,edge_mu,pi,mu,n_microbes,nu,samplesize,simtype)
+    plt1 <- plt1 + geom_hline(aes(yintercept=edge_mu),linetype="dashed",color="blue")
   }
   ggsave(out_fl,plot=plt1,width=11,height=18)
   
 }
-#create_interval_plots(1,0.3,0.8,5,10,8,"results/simulation/","plots/simulation/")
+
+create_fdr_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="",edge_mu=NULL)
+{
+  
+  n <- length(n_microbes) * length(pis) * length(mus)
+  fdr.e <- data.frame(n_microbes=n_microbes,fdr_edges=rep(0,n), fdr_nodes=rep(0,n),
+                      pi=rep(0,n),mu=rep(0,n))
+  l <- 1
+  
+  for(i.pi in pis)
+  {
+    for(j.mu in mus)
+    {
+      for(k.n in n_microbes)
+      {
+        
+        flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,k.n,"edges",samplesize,
+                              simtype,edge_mu)
+        edges <- read.csv(flnm)
+        
+        o <- length(edges$true_B)
+        edges$edge <- 1:o
+        edges <- transform(edges,rej=ifelse(X0.025 > 0 | X0.975 < 0,1,0))
+        edges <- transform(edges,nonzero_mean=ifelse(true_B != 0.0,TRUE,FALSE))
+        edges <- transform(edges,fp=ifelse(rej==1 & nonzero_mean==FALSE,1,0))
+        
+        fdr.e$fdr_edges[l] <- sum(edges$fp) / sum(edges$rej)
+        fdr.e$pi[l] <- i.pi
+        fdr.e$mu[l] <- j.mu
+        fdr.e$n_microbes[l] <- k.n
+        
+        flnm2 <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,k.n,"nodes",samplesize,
+                               simtype,edge_mu)
+        nodes <- read.csv(flnm2)
+        
+        m <- length(nodes$TrueXi)
+        nodes$node <- 1:m
+        nodes <- transform(nodes, rej=ifelse(Xi.posterior>=0.5,1,0))
+        nodes <- transform(nodes,fp=ifelse(rej==1 & TrueXi==FALSE,1,0))
+        
+        fdr.e$fdr_nodes[l] <- sum(nodes$fp) / sum(nodes$rej)
+        
+        l <- l+1
+      }
+    }
+  }
+  
+  plt1 <- ggplot(fdr.e, aes(x=n_microbes, y=fdr_edges, group=interaction(pi,mu),color=factor(pi), 
+                          linetype=factor(mu)))  + 
+  geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value",
+                     title="False Discovery Rate - Edges") +
+  theme_bw() + scale_x_continuous(breaks=n_microbes) + 
+  scale_y_continuous(limits=c(0,1),
+                     breaks=seq(0,1,
+                                1/10))
+  plt2 <- ggplot(fdr.e, aes(x=n_microbes, y=fdr_nodes, group=interaction(pi,mu),color=factor(pi), 
+                            linetype=factor(mu)))  + 
+    geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value",
+                       title="False Discovery Rate - Nodes") +
+    theme_bw() + scale_x_continuous(breaks=n_microbes) + 
+    scale_y_continuous(limits=c(0,1),
+                       breaks=seq(0,1,
+                                  1/10))
+  
+  if(is.null(simtype))
+  {
+    out_fl1 <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_edge_fdr.png",outpath,"fdr/",
+                      pref,R,nu,samplesize)
+    out_fl2 <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_node_fdr.png",outpath,"fdr/",
+                       pref,R,nu,samplesize)
+  } else {
+    out_fl1 <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_edge_fdr.png",outpath,
+                      "fdr/",pref,R,edge_mu,nu,samplesize,simtype)
+    out_fl2 <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_node_fdr.png",outpath,
+                       "fdr/",pref,R,edge_mu,nu,samplesize,simtype)
+  }
+  ggsave(out_fl1,plot=plt1)
+  ggsave(out_fl2,plot=plt2)
+}
+#create_fdr_plots(2,c(0.3,0.8),c(0.8,1.6),9,10,c(8,22),"results/simulation/realistic/",
+#                 "plots/simulation/realistic/",100,
+#                 "redundant_phylo","",0.4)
 
 
 create_plots <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize,simtypes=c(NULL),pref="",edge_mu=NULL)
@@ -272,6 +354,7 @@ plot_loops <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize
         }
       }
       create_MSE_plots(simnum,pis,mus,R[r.i],nus[r.i],n_microbes,inpath,outpath,samplesize,simtype,pref,edge_mu)
+      create_fdr_plots(simnum,pis,mus,R[r.i],nus[r.i],n_microbes,inpath,outpath,samplesize,simtype,pref,edge_mu)
     }
   }
 }
@@ -304,6 +387,12 @@ create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
 
 create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
              "plots/simulation/realistic/",c(100),
+             c("additive_phylo", "additive_random", "interaction_phylo", 
+               "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
+
+
+create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
+             "plots/simulation/realistic/",c(500),
              c("additive_phylo", "additive_random", "interaction_phylo", 
                "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
 
