@@ -52,7 +52,7 @@ function main()
     Random.seed!(seed)
     B,ξ = generate_Bs(t,μₛ=μₛ,πₛ=πₛ)
 
-    y,A,m = generate_unrealistic_data(B,t,k,n)#,0,0.25)
+    y,A,m = generate_unrealistic_data(B,t,k,n,seed)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
@@ -77,13 +77,14 @@ function generate_Bs(t; μₛ=0.8,σₛ=1,πₛ=0.1)
     return B,ξ
 end
 
-function generate_unrealistic_data(B,t,k,n)
+function generate_unrealistic_data(B,t,k,n,seed)
     y = zeros(n)
     m = [zeros(t)]
     A = [zeros(t,t)]
     A_base = zeros(t,t)
     @rput t
-    R"source('src/sim_trees.R');inv_dist <- sim_tree_dists(t)"
+    @rput seed
+    R"set.seed(seed);source('src/sim_trees.R');inv_dist <- sim_tree_dists(t)"
     A_base = @rget inv_dist
     ϵ = rand(Normal(0,1),n)
 
