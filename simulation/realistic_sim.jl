@@ -30,9 +30,6 @@ function parse_CL_args()
         help = "probability of any single node being influential on the response"
         arg_type = Float64
         default = 0.1
-    "--juliacon", "-j"
-        help = "flag indicating output should go to juliacon folder"
-        action = :store_true
     "--simtype", "-y"
         help = "type of simulation to run: additive_phylo, additive_random, interaction_phylo, interaction_random, redundant_phylo, or redundant_random"
         arg_type = String
@@ -51,7 +48,6 @@ function main()
     seed = args_in["seed"]
     μₑ = args_in["mean"]
     πₑ = args_in["pi"]
-    jcon = args_in["juliacon"]
     type = args_in["simtype"]
     q = floor(Int,t*(t-1)/2)
 
@@ -60,7 +56,7 @@ function main()
     μₛ = 0.4
     σₛ = 1.0
 
-    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type)#,0,0.25)
+    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
@@ -71,17 +67,18 @@ function main()
     out_df[!,:y] = y
 
     saveinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type,"edge_mu"=>μₛ,"samplesize"=>n)
-    output_data(saveinfo,out_df,B,m,ξ,jcon,"realistic")
+    output_data(saveinfo,out_df,B,m,ξ,false,"realistic")
 
     saveinfo["out"] = "main-effects"
     CSV.write(datadir(joinpath("simulation","realistic"),savename(saveinfo,"csv",digits=1)),DataFrame(me=diag(B)))
 
 end
 
-function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type)
+function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed)
 
     @rput t
-    R"source('src/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree$tree); tree_str <- tree$tree_str"
+    @rput seed
+    R"set.seed(seed);source('src/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree$tree); tree_str <- tree$tree_str"
     tree = @rget tree_str
     A_base = @rget A
 
@@ -146,12 +143,11 @@ function generate_yAm(ξ,B,t,k,n,A_base,redundant=false;L=1)
             end
         end
         m[i][chosen] .= 1
-        #TODO - make sure this is right (IND[i,j] should be 1 if m[i] and ξ[j] are 1, otherwise 0)
-        IND = m[i] * transpose(ξ)
+       
         if redundant
-            y[i] = max(tr(transpose(B) * IND) + ϵ[i],L)
+            y[i] = min(tr(transpose(B) * A[i]) + ϵ[i],L)
         else
-            y[i] = tr(transpose(B) * IND) + ϵ[i]
+            y[i] = tr(transpose(B) * A[i]) + ϵ[i]
         end
         if i != n
             append!(A,[zeros(t,t)])
