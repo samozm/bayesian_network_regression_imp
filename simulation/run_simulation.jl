@@ -100,7 +100,7 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="",
         loadinfo["type"] = type
         loadinfo["edge_mu"] = edge_μ
     end
-    γ,γ₀,MSE,MSEy,ξ,μ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,R=R,ν=ν,seed=seed)
+    γ,γ₀,MSE,MSEy,ξ,μ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,R=R,ν=ν)
 
     loadinfo["out"] = "xis"
     if jcon
