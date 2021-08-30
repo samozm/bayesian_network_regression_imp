@@ -21,11 +21,11 @@ function parse_CL_args()
     "--nburn", "-b"
         help="Number of burn-in Gibbs samples to take"
         arg_type = Int
-        default = 30000
+        default = 120000
     "--nsamp", "-a"
         help="Number of Gibbs samples to keep (after burn-in)"
         arg_type = Int
-        default = 20000
+        default = 40000
     "--simnum", "-n"
         help="which simulation to run"
         arg_type = Int
@@ -100,7 +100,7 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="",
         loadinfo["type"] = type
         loadinfo["edge_mu"] = edge_μ
     end
-    γ,γ₀,MSE,MSEy,ξ,μ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,R=R,ν=ν)
+    γ,γ₀,MSE,MSEy,ξ,μ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,R=R,ν=ν,seed=seed)
 
     loadinfo["out"] = "xis"
     if jcon
@@ -272,9 +272,5 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     end
 end
 
-#cd("bayesian_network_regression_imp")
-#@quickactivate
-#run_case_and_output(3,3,1,0.8,0.3,5,15,false)
-#@trace run_case_and_output(10,10,1,1,false)
-#@profview run_case_and_output(100,100,1,0.8,0.3,5,22,10,false,"",0.0,500)
+#@profview run_case_and_output(100,100,1,0.8,0.3,9,22,10,false,"",0.0,500)
 main()
