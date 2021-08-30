@@ -128,7 +128,7 @@ create_MSE_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,sampl
   plt1 <- ggplot(mse, aes(x=n_microbes, y=MSE, group=interaction(pi,mu),color=factor(pi), 
                   linetype=factor(mu)))  + 
     geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value",
-                       title="MSE - Bs") +
+                       title="MSE - Coefficients") +
     theme_bw() + scale_x_continuous(breaks=n_microbes) + 
     scale_y_continuous(limits=c(0,ceiling(max(mse$MSE))),
                        breaks=seq(0,ceiling(max(mse$MSE)),
@@ -147,7 +147,7 @@ create_MSE_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,sampl
   plt2 <- ggplot(mse, aes(x=n_microbes, y=MSEy, group=interaction(pi,mu),color=factor(pi), 
                           linetype=factor(mu)))  + 
     geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value",
-                       title="MSE - Ys") +
+                       title="MSE - Response") +
     theme_bw() + scale_x_continuous(breaks=n_microbes) + 
     scale_y_continuous(limits=c(0,ceiling(max(mse$MSEy))),
                        breaks=seq(0,ceiling(max(mse$MSEy)),
@@ -242,11 +242,12 @@ create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath,sa
   
 }
 
-create_fdr_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="",edge_mu=NULL)
+create_fr_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samplesize,simtype=NULL,pref="",edge_mu=NULL)
 {
   
   n <- length(n_microbes) * length(pis) * length(mus)
-  fdr.e <- data.frame(n_microbes=n_microbes,fdr_edges=rep(0,n), fdr_nodes=rep(0,n),
+  fr.e <- data.frame(n_microbes=n_microbes,fpr_edges=rep(0,n), fpr_nodes=rep(0,n),
+                      fnr_edges=rep(0,n), fnr_nodes=rep(0,n),
                       pi=rep(0,n),mu=rep(0,n))
   l <- 1
   
@@ -264,13 +265,16 @@ create_fdr_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,sampl
         o <- length(edges$true_B)
         edges$edge <- 1:o
         edges <- transform(edges,rej=ifelse(X0.025 > 0 | X0.975 < 0,1,0))
-        edges <- transform(edges,nonzero_mean=ifelse(true_B != 0.0,TRUE,FALSE))
-        edges <- transform(edges,fp=ifelse(rej==1 & nonzero_mean==FALSE,1,0))
+        edges <- transform(edges,nonzero_mean=ifelse(true_B != 0.0,1,0))
+        edges <- transform(edges,zero_mean=ifelse(true_B == 0.0,1,0))
+        edges <- transform(edges,fp=ifelse(rej==1 & nonzero_mean==0,1,0))
+        edges <- transform(edges,fn=ifelse(rej==0 & nonzero_mean==1,1,0))
         
-        fdr.e$fdr_edges[l] <- sum(edges$fp) / sum(edges$rej)
-        fdr.e$pi[l] <- i.pi
-        fdr.e$mu[l] <- j.mu
-        fdr.e$n_microbes[l] <- k.n
+        fr.e$fpr_edges[l] <- sum(edges$fp) / sum(1 - edges$nonzero_mean)
+        fr.e$fnr_edges[l] <- sum(edges$fn) / sum(edges$nonzero_mean)
+        fr.e$pi[l] <- i.pi
+        fr.e$mu[l] <- j.mu
+        fr.e$n_microbes[l] <- k.n
         
         flnm2 <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,k.n,"nodes",samplesize,
                                simtype,edge_mu)
@@ -279,27 +283,47 @@ create_fdr_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,sampl
         m <- length(nodes$TrueXi)
         nodes$node <- 1:m
         nodes <- transform(nodes, rej=ifelse(Xi.posterior>=0.5,1,0))
+        nodes <- transform(nodes, TrueXi=ifelse(TrueXi=='true',TRUE,FALSE))
         nodes <- transform(nodes,fp=ifelse(rej==1 & TrueXi==FALSE,1,0))
+        nodes <- transform(nodes,fn=ifelse(rej==0 & TrueXi==TRUE,1,0))
         
-        fdr.e$fdr_nodes[l] <- sum(nodes$fp) / sum(nodes$rej)
+        fr.e$fpr_nodes[l] <- sum(nodes$fp) / sum(1 - nodes$TrueXi)
+        fr.e$fnr_nodes[l] <- sum(nodes$fn) / sum(nodes$TrueXi)
         
         l <- l+1
       }
     }
   }
   
-  plt1 <- ggplot(fdr.e, aes(x=n_microbes, y=fdr_edges, group=interaction(pi,mu),color=factor(pi), 
+  plt1 <- ggplot(fr.e, aes(x=n_microbes, y=fpr_edges, group=interaction(pi,mu),color=factor(pi), 
                           linetype=factor(mu)))  + 
   geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value",
-                     title="False Discovery Rate - Edges") +
+                     title="False Positive Rate - Edges", y = "False Positive Rate") +
   theme_bw() + scale_x_continuous(breaks=n_microbes) + 
   scale_y_continuous(limits=c(0,1),
                      breaks=seq(0,1,
                                 1/10))
-  plt2 <- ggplot(fdr.e, aes(x=n_microbes, y=fdr_nodes, group=interaction(pi,mu),color=factor(pi), 
+  plt2 <- ggplot(fr.e, aes(x=n_microbes, y=fpr_nodes, group=interaction(pi,mu),color=factor(pi), 
                             linetype=factor(mu)))  + 
     geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value",
-                       title="False Discovery Rate - Nodes") +
+                       title="False Positive Rate - Nodes",  y = "False Positive Rate") +
+    theme_bw() + scale_x_continuous(breaks=n_microbes) + 
+    scale_y_continuous(limits=c(0,1),
+                       breaks=seq(0,1,
+                                  1/10))
+  
+  plt3 <- ggplot(fr.e, aes(x=n_microbes, y=fnr_edges, group=interaction(pi,mu),color=factor(pi), 
+                            linetype=factor(mu)))  + 
+    geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value",
+                       title="False Negative Rate - Edges", y = "False Negative Rate") +
+    theme_bw() + scale_x_continuous(breaks=n_microbes) + 
+    scale_y_continuous(limits=c(0,1),
+                       breaks=seq(0,1,
+                                  1/10))
+  plt4 <- ggplot(fr.e, aes(x=n_microbes, y=fnr_nodes, group=interaction(pi,mu),color=factor(pi), 
+                            linetype=factor(mu)))  + 
+    geom_line() + labs(x="Number of Microbes",color="pi value",linetype="mu value",
+                       title="False Negative Rate - Nodes",  y = "False Negative Rate") +
     theme_bw() + scale_x_continuous(breaks=n_microbes) + 
     scale_y_continuous(limits=c(0,1),
                        breaks=seq(0,1,
@@ -307,18 +331,28 @@ create_fdr_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,sampl
   
   if(is.null(simtype))
   {
-    out_fl1 <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_edge_fdr.png",outpath,"fdr/",
+    out_fl1 <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_edge_fpr.png",outpath,"fr/",
                       pref,R,nu,samplesize)
-    out_fl2 <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_node_fdr.png",outpath,"fdr/",
+    out_fl2 <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_node_fpr.png",outpath,"fr/",
+                       pref,R,nu,samplesize)
+    out_fl3 <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_edge_fnr.png",outpath,"fr/",
+                       pref,R,nu,samplesize)
+    out_fl4 <- sprintf("%s%s%sR=%s_nu=%s_samplesize=%s_node_fnr.png",outpath,"fr/",
                        pref,R,nu,samplesize)
   } else {
-    out_fl1 <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_edge_fdr.png",outpath,
-                      "fdr/",pref,R,edge_mu,nu,samplesize,simtype)
-    out_fl2 <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_node_fdr.png",outpath,
-                       "fdr/",pref,R,edge_mu,nu,samplesize,simtype)
+    out_fl1 <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_edge_fpr.png",outpath,
+                      "fr/",pref,R,edge_mu,nu,samplesize,simtype)
+    out_fl2 <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_node_fpr.png",outpath,
+                       "fr/",pref,R,edge_mu,nu,samplesize,simtype)
+    out_fl3 <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_edge_fnr.png",outpath,
+                       "fr/",pref,R,edge_mu,nu,samplesize,simtype)
+    out_fl4 <- sprintf("%s%s%sR=%s_edge_mu=%s_nu=%s_samplesize=%s_type=%s_node_fnr.png",outpath,
+                       "fr/",pref,R,edge_mu,nu,samplesize,simtype)
   }
   ggsave(out_fl1,plot=plt1)
   ggsave(out_fl2,plot=plt2)
+  ggsave(out_fl3,plot=plt3)
+  ggsave(out_fl4,plot=plt4)
 }
 #create_fdr_plots(2,c(0.3,0.8),c(0.8,1.6),9,10,c(8,22),"results/simulation/realistic/",
 #                 "plots/simulation/realistic/",100,
@@ -354,7 +388,7 @@ plot_loops <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize
         }
       }
       create_MSE_plots(simnum,pis,mus,R[r.i],nus[r.i],n_microbes,inpath,outpath,samplesize,simtype,pref,edge_mu)
-      create_fdr_plots(simnum,pis,mus,R[r.i],nus[r.i],n_microbes,inpath,outpath,samplesize,simtype,pref,edge_mu)
+      create_fr_plots(simnum,pis,mus,R[r.i],nus[r.i],n_microbes,inpath,outpath,samplesize,simtype,pref,edge_mu)
     }
   }
 }
