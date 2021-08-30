@@ -36,9 +36,9 @@ bash run_pow_unrealistic.sh [R] [NU] [SAMPLESIZE]
 (to be run from the main folder `bayesian_network_regression_imp/`) takes as input R value, nu value, and number of samples where R is the dimension of the latent variable u used in the model. It runs the model on all combinations of mu=0.8,1.6 (magnitude of edge coefficients), and microbes per sample=8,15,22 (density of adjacency matrix) with pi=0 (resulting in B=**0**). 
 
 ```
-bash run_500samp_sim1.sh
+bash run_Xsamp_sim1.sh [SAMPLESIZE]
 ```
-(to be run from the main folder `bayesian_network_regression_imp/`) calls `simulation/run_unrealistic` with R=9 nu=10 and sample size 500.
+(to be run from the main folder `bayesian_network_regression_imp/`) calls `simulation/run_unrealistic` with R=9 nu=10 and sample size \[SAMPLESIZE\].
 
 ```
 bash run_sim2.sh
@@ -46,9 +46,9 @@ bash run_sim2.sh
 (to be run from the main folder `bayesian_network_regression_imp/`) calls `simulation/run_realistic` six times, with R=9 nu=10, once for each type of realistic simulation (listed above, more information in notes.md) 100 samples is used for all runs.
 
 ```
-bash run_500samp_sim2.sh
+bash run_Xsamp_sim2.sh [SAMPLESIZE]
 ```
-(to be run from the main folder `bayesian_network_regression_imp/`) calls `simulation/run_realistic` with R=9 nu=10 and sample size 500 for each type of realistic simulation.
+(to be run from the main folder `bayesian_network_regression_imp/`) calls `simulation/run_realistic` with R=9 nu=10 and sample size \[SAMPLESIZE\] for each type of realistic simulation.
 
 ```
 julia run_simulation.jl
