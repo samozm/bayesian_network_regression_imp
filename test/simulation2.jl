@@ -82,8 +82,9 @@ function sim_one_case(case,nburn,nsamp)
     println("")
 
     tick()
-    state = GenerateSamples!(X, y, R, nburn=nburn,nsamples=nsamp, V = 20, aΔ=1.0, bΔ=1.0,ν=10,ι=1.0,ζ=1.0,x_transform=false)
+    res = GenerateSamples!(X, y, R, nburn=nburn,nsamples=nsamp, V = 20, aΔ=1.0, bΔ=1.0,ν=10,ι=1.0,ζ=1.0,x_transform=false)
     tock()
+    state = res.state
 
     γ_n2 = mean(state.γ[nburn+1:nburn+nsamp,:,:],dims=1)[1,:,1]
     γ₀ = B₀
