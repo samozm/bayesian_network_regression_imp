@@ -1,19 +1,23 @@
-using LinearAlgebra
-using Base: Bool, Float16, Int16
-using CSV,ArgParse,TickTock
-using ProfileView, Traceur
-#using BayesianNetworkRegression
+using Distributed
+@everywhere using DrWatson
+@everywhere begin 
+    @quickactivate
+    using LinearAlgebra
+    using Base: Bool, Float16, Int16
+    using CSV,ArgParse,TickTock
+    using ProfileView, Traceur
+    #using BayesianNetworkRegression
 
-using DataFrames: Vector
-using Core: Typeof
-using Base: Float64
-using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
-using StaticArrays,TypedTables
-using BayesianNetworkRegression
-using Random, DataFrames, LinearAlgebra, StatsBase
-using Distributions
-using BenchmarkTools,ProfileView
-using DrWatson
+    using DataFrames: Vector
+    using Core: Typeof
+    using Base: Float64
+    using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
+    using StaticArrays,TypedTables
+    using BayesianNetworkRegression
+    using Random, DataFrames, LinearAlgebra, StatsBase
+    using Distributions
+    using BenchmarkTools,ProfileView
+end
 
 function parse_CL_args()
     args = ArgParseSettings()
@@ -21,11 +25,11 @@ function parse_CL_args()
     "--nburn", "-b"
         help="Number of burn-in Gibbs samples to take"
         arg_type = Int
-        default = 120000
+        default = 30000 #120000
     "--nsamp", "-a"
         help="Number of Gibbs samples to keep (after burn-in)"
         arg_type = Int
-        default = 40000
+        default = 20000 #40000
     "--simnum", "-n"
         help="which simulation to run"
         arg_type = Int
@@ -73,7 +77,6 @@ function parse_CL_args()
 end
 
 function main()
-    @quickactivate
     parsed_CL_args = parse_CL_args()
     nburn = parsed_CL_args["nburn"]
     nsamp = parsed_CL_args["nsamp"]
@@ -90,17 +93,17 @@ function main()
     sampsize = parsed_CL_args["samplesize"]
     Random.seed!(seed)
 
-    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type,edge_μ,sampsize)
+    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type,edge_μ,sampsize,seed)
 end
 
-function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="",edge_μ=0.0,sampsize=100)
+function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="",edge_μ=0.0,sampsize=100,seed=nothing)
     loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis","samplesize"=>sampsize)
     simtypes = Dict(1 => "unrealistic", 2 => "realistic")
     if simtypes[simnum] == "realistic"
         loadinfo["type"] = type
         loadinfo["edge_mu"] = edge_μ
     end
-    γ,γ₀,MSE,MSEy,ξ,μ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,R=R,ν=ν)
+    γ,γ₀,MSE,MSEy,ξ,μ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,seed,R=R,ν=ν)
 
     loadinfo["out"] = "xis"
     if jcon
@@ -119,7 +122,7 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="",
     output_results(γ[:,:,1],γ₀,MSE,MSEy,mean(ξ,dims=1)[1,:,1],ξ_in,μ,loadinfo,jcon,simtypes,simnum)
 end
 
-function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
+function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
     loadinfo["out"] = "XYs"
     if jcon
         data_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
@@ -143,9 +146,10 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum;η=1.01,ζ
     
     tick()
     #τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
-    result = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
+    res = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=4,seed=seed)
     tock()
 
+    result = res.states[1]
     #γ_n = hcat(result.Gammas...)
 
     γ_n2 = mean(result.γ[nburn+1:nburn+nsamp,:,:],dims=1)
@@ -163,6 +167,19 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum;η=1.01,ζ
         y_pred[i] = μ_post + sum(γ_n2[1,:,1] .* X[i,:])
     end
     MSEy = sum((y - y_pred).^2)/n
+
+    result2 = res.states[2]
+    #γ_n = hcat(result.Gammas...)
+
+    γ_n22 = mean(result2.γ[nburn+1:nburn+nsamp,:,:],dims=1)
+    γ2₀ = B₀
+    MSE2 = 0
+    for i in 1:190
+        MSE2 = MSE2 + (γ_n22[i] - γ2₀[i])^2
+    end
+    MSE2 = MSE2 * (2/(V*(V-1)))
+    show(stdout,"text/plain",DataFrame(MSE2=MSE2))
+    println("")
 
     return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,MSEy,result.ξ[nburn+1:nburn+nsamp,:,:],result.μ[nburn+1:nburn+nsamp,1,1]
 end
