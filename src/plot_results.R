@@ -229,16 +229,42 @@ create_interval_plots <- function(simnum,pi,mu,R,nu,n_microbes,inpath,outpath,sa
           facet_grid(nonzero_mean ~.,scales="free_y",space="free_y", labeller = labeller(
             nonzero_mean = c(`TRUE` = "True mean nonzero", `FALSE` = "True mean zero")
           )) 
+  
+  plt2 <- ggplot(edges, aes(x_microbe,y_microbe,fill=factor(rej),width=0.98,height=0.98)) + geom_tile() + 
+    scale_y_reverse(breaks=1:(n-1), labels=1:(n-1), minor_breaks = seq(0.5,n-0.5),
+                    position="right") + 
+    scale_x_continuous(breaks=2:n, labels=2:n, position="top", 
+                       minor_breaks = seq(1.5,n + 0.5)) +
+    scale_fill_discrete(type=c("#FFFFFF","#FF0000"),labels=c("","Influential")) +
+    labs(fill="Influential Edge") + xlab("") + ylab("") +
+    theme(panel.background=element_rect(fill="#FFFFFF"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_line(size=0.15,linetype='solid',
+                                          color='black'),
+          plot.title = element_text(hjust = 0.5))+
+    ggtitle("Posterior Edge Coefficients")+
+    facet_grid(pi ~ mu, switch="both",
+               labeller = labeller(
+                 mu = c(`0.8` = "mu=0.8", `1.6` = "mu=1.6"),
+                 pi = c(`0` = "pi=0.0", `0.3` = "pi=0.3", `0.8` = "pi=0.8")
+               ),
+               as.table = FALSE)
+  
   if(is.null(simtype)){
     out_fl <- sprintf("%s%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_intervals.png",
                       outpath,"intervals/",pref,R,pi,mu,n_microbes,nu,samplesize)
     plt1 <- plt1 + geom_hline(aes(yintercept=mu[1]),linetype="dashed",color="blue")
+    out_fl2 <- sprintf("%s%s%sR=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_edge_grid.png",
+                      outpath,"intervals/",pref,R,pi,mu,n_microbes,nu,samplesize)
   } else {
     out_fl <- sprintf("%s%s%sR=%s_edge_mu=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_intervals.png",
                       outpath,"intervals/",pref,R,edge_mu,pi,mu,n_microbes,nu,samplesize,simtype)
     plt1 <- plt1 + geom_hline(aes(yintercept=edge_mu),linetype="dashed",color="blue")
+    out_fl2 <- sprintf("%s%s%sR=%s_edge_mu=%s_pi=%s_mu=%s_n_microbes=%s_nu=%s_samplesize=%s_type=%s_edge_grid.png",
+                      outpath,"intervals/",pref,R,edge_mu,pi,mu,n_microbes,nu,samplesize,simtype)
   }
   ggsave(out_fl,plot=plt1,width=11,height=18)
+  ggsave(out_fl2,plot=plt2,width=11,height=9.5)
   
 }
 
@@ -418,6 +444,14 @@ create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
              "results/simulation/unrealistic/","plots/simulation/unrealistic/",
              c(500))
 
+#create_plots(1,c(0.8),c("2.0"),c(9),c(10),c(8),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(500))
+
+# unrealistic, power, 1000 samples
+create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+             c(1000))
 
 create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
              "plots/simulation/realistic/",c(100),
