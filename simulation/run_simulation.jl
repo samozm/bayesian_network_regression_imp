@@ -1,7 +1,7 @@
 using Distributed
 @everywhere using DrWatson
 @everywhere begin 
-    @quickactivate
+#    @quickactivate
     using LinearAlgebra
     using Base: Bool, Float16, Int16
     using CSV,ArgParse,TickTock
@@ -11,12 +11,12 @@ using Distributed
     using DataFrames: Vector
     using Core: Typeof
     using Base: Float64
-    using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
+    using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter
     using StaticArrays,TypedTables
     using BayesianNetworkRegression
-    using Random, DataFrames, LinearAlgebra, StatsBase
+    using Random, LinearAlgebra
     using Distributions
-    using BenchmarkTools,ProfileView
+    using BenchmarkTools
 end
 
 function parse_CL_args()

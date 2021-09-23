@@ -1,7 +1,7 @@
 #cd("bayesian_network_regression_imp")
 using DrWatson;@quickactivate
-using Distributed
-addprocs(2)
+using Distributed,ProfileView
+#addprocs(2)
 include("simulation/run_simulation.jl")
 simnum = 1
 πₛ = 0.8
@@ -20,6 +20,11 @@ y = SVector{size(X,1)}(data_in[:,:y])
 q = size(X,2)
 V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 aΔ=1.0;bΔ=1.0;ν=10;R=9;ι=1.0;ζ=1.0;η=1.01
-nburn=3000;nsamp=2000
+nburn=30000;nsamp=20000
 
+#### in parallel
 GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
+
+
+### in sequence
+GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,in_seq=true)
