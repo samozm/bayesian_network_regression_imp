@@ -78,99 +78,45 @@ function gelman_rubin(X::AbstractArray{T,2}, y::AbstractVector{U}, nburn, nsampl
                 Δ = Array{Float64,3}(undef,(total,1,1)), M = Array{Float64,3}(undef,(total,R,R)),
                 μ = Array{Float64,3}(undef,(total,1,1)), λ = Array{Float64,3}(undef,(total,R,1)),
                 πᵥ= Array{Float64,3}(undef,(total,R,3)))
-    #state4 = Table(τ² = Array{Float64,3}(undef,(total,1,1)), u = Array{Float64,3}(undef,(total,R,V)),
-    #            ξ = Array{Float64,3}(undef,(total,V,1)), γ = Array{Float64,3}(undef,(total,q,1)),
-    #            S = Array{Float64,3}(undef,(total,q,1)), θ = Array{Float64,3}(undef,(total,1,1)),
-    #            Δ = Array{Float64,3}(undef,(total,1,1)), M = Array{Float64,3}(undef,(total,R,R)),
-    #            μ = Array{Float64,3}(undef,(total,1,1)), λ = Array{Float64,3}(undef,(total,R,1)),
-    #            πᵥ= Array{Float64,3}(undef,(total,R,3)))
-    #state5 = Table(τ² = Array{Float64,3}(undef,(total,1,1)), u = Array{Float64,3}(undef,(total,R,V)),
-    #            ξ = Array{Float64,3}(undef,(total,V,1)), γ = Array{Float64,3}(undef,(total,q,1)),
-    #            S = Array{Float64,3}(undef,(total,q,1)), θ = Array{Float64,3}(undef,(total,1,1)),
-    #            Δ = Array{Float64,3}(undef,(total,1,1)), M = Array{Float64,3}(undef,(total,R,R)),
-    #            μ = Array{Float64,3}(undef,(total,1,1)), λ = Array{Float64,3}(undef,(total,R,1)),
-    #            πᵥ= Array{Float64,3}(undef,(total,R,3)))
 
     X_new = Matrix{eltype(T)}(undef, n, q)
-    #BayesianNetworkRegression.initialize_variables!(state1,X_new,X,1.01,1,0.1,9,1,1,10,V,false)
-    #BayesianNetworkRegression.initialize_variables!(state2,X_new,X,1.01,1,0.1,9,1,12,14,V,false)
-    #BayesianNetworkRegression.initialize_variables!(state3,X_new,X,1.01,1,0.6,9,8,1,20,V,false)
-    #BayesianNetworkRegression.initialize_variables!(state4,X_new,X,1.01,1,0.6,9,8,12,26,V,false)
 
     BayesianNetworkRegression.initialize_variables!(state1,X_new,X,1.01,1,1,9,1,1,10,V,false)
     BayesianNetworkRegression.initialize_variables!(state2,X_new,X,1.01,1,1,9,1,1,10,V,false)
     BayesianNetworkRegression.initialize_variables!(state3,X_new,X,1.01,1,1,9,1,1,10,V,false)
-    #BayesianNetworkRegression.initialize_variables!(state4,X_new,X,1.01,1,1,9,1,1,10,V,false)
-    #BayesianNetworkRegression.initialize_variables!(state5,X_new,X,1.01,1,1,9,1,1,10,V,false)
-    for i in 1:q
-        state1.γ[1,i,1] = rand(Normal(0,8))
-        state2.γ[1,i,1] = rand(Normal(0,8))
-        state3.γ[1,i,1] = rand(Normal(0,8))
-        #state4.γ[1,i,1] = rand(Normal(0,3))
-        #tate5.γ[1,i,1] = rand(Normal(0,3))
-    end
+
+    #for i in 1:q
+    #    state1.γ[1,i,1] = rand(Normal(0,8))
+    #    state2.γ[1,i,1] = rand(Normal(0,8))
+    #    state3.γ[1,i,1] = rand(Normal(0,8))
+    #end
     
-    state1.ξ[1,:,1] = vcat(repeat([0],Int64(V)))
-    state2.ξ[1,:,1] = vcat(repeat([1],Int64(V)))
-    state3.ξ[1,:,1] = repeat([0,1],Int64(V/2))
-    #state4.ξ[1,:,1] = repeat([1,0,0,0,1,0,0,0,1,0,0,0,1,0,0],2)
-    #state5.ξ[1,:,1] = repeat([0,1,1,1,0,1,1,1,0,1,1,1,0,1,1],2)
+    #state1.ξ[1,:,1] = vcat(repeat([0],Int64(V)))
+    #state2.ξ[1,:,1] = vcat(repeat([1],Int64(V)))
+    #state3.ξ[1,:,1] = repeat([0,1],Int64(V/2))
 
     p = Progress(total-1,1)
     for i in 2:total
         BayesianNetworkRegression.GibbsSample!(state1, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10)
         BayesianNetworkRegression.GibbsSample!(state2, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10)
         BayesianNetworkRegression.GibbsSample!(state3, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10)
-        #BayesianNetworkRegression.GibbsSample!(state4, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10)
-        #BayesianNetworkRegression.GibbsSample!(state5, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10)
         next!(p)
     end
 
+    #TODO: should we use all samples or just a post burn-in
     all_γs = Array{Float64,3}(undef,(nsamples,q,nstate))
     all_γs[:,:,1] = state1.γ[nburn+2:total,:,1]
     all_γs[:,:,2] = state2.γ[nburn+2:total,:,1]
     all_γs[:,:,3] = state3.γ[nburn+2:total,:,1]
-    #all_γs[:,:,4] = state4.γ[:,:,1]
-    #all_γs[:,:,5] = state5.γ[:,:,1]
 
     all_ξs = Array{Float64,3}(undef,(nsamples,V,nstate))
     all_ξs[:,:,1] = state1.ξ[nburn+2:total,:,1]
     all_ξs[:,:,2] = state2.ξ[nburn+2:total,:,1]
     all_ξs[:,:,3] = state3.ξ[nburn+2:total,:,1]
-    #all_ξs[:,:,4] = state4.ξ[:,:,1]
-    #all_ξs[:,:,5] = state5.ξ[:,:,1]
     
     #return MCMCChains.gelmandiag_multivariate(all_γs)
     return MCMCChains.gelmandiag(all_γs),MCMCChains.gelmandiag(all_ξs)
 
-end
-
-function gelman_rubin_intialize_values(τ²,u,ξ,γ,S,θ,Δ,M,μ,λ,πᵥ,R,total,V,q)
-    state = Table(τ² = Array{Float64,3}(undef,(total,1,1)), u = Array{Float64,3}(undef,(total,R,V)),
-                ξ = Array{Float64,3}(undef,(total,V,1)), γ = Array{Float64,3}(undef,(total,q,1)),
-                S = Array{Float64,3}(undef,(total,q,1)), θ = Array{Float64,3}(undef,(total,1,1)),
-                Δ = Array{Float64,3}(undef,(total,1,1)), M = Array{Float64,3}(undef,(total,R,R)),
-                μ = Array{Float64,3}(undef,(total,1,1)), λ = Array{Float64,3}(undef,(total,R,1)),
-                πᵥ= Array{Float64,3}(undef,(total,R,3)))
-
-    state.θ[1] = θ
-
-    state.S[1,:] = S
-    state.πᵥ[1,:,:] = πᵥ
-    
-    state.λ[1,:] = λ
-    state.Δ[1] = Δ
-
-    state.ξ[1,:] = ξ
-    state.M[1,:,:] = M
-    
-    state.u[1,:,:] = u
-    state.μ[1] = μ
-
-    state.τ²[1] = τ²
-    state.γ[1,:] = γ
-    
-    return state
 end
 
 
