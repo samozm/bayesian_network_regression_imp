@@ -1,7 +1,7 @@
 using Distributed
 @everywhere using DrWatson
 @everywhere begin 
-#    @quickactivate
+    @quickactivate
     using LinearAlgebra
     using Base: Bool, Float16, Int16
     using CSV,ArgParse,TickTock
@@ -144,9 +144,12 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.
     q = size(X,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
     
+    num_chains = 2
+
+    add_procs(num_chains)
     tick()
     #τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
-    res = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=4,seed=seed)
+    res = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=num_chains,seed=seed)
     tock()
 
     result = res.states[1]
