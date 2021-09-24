@@ -1,7 +1,7 @@
 #cd("bayesian_network_regression_imp")
 using DrWatson;@quickactivate
 using Distributed,ProfileView
-#addprocs(2)
+addprocs(2)
 include("simulation/run_simulation.jl")
 simnum = 1
 πₛ = 0.8
