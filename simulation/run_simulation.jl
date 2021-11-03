@@ -5,7 +5,7 @@ using Distributed
     using LinearAlgebra
     using Base: Bool, Float16, Int16
     using CSV,ArgParse,TickTock
-    using ProfileView, Traceur
+    #using ProfileView, Traceur
     #using BayesianNetworkRegression
 
     using DataFrames: Vector
