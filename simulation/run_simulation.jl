@@ -17,6 +17,7 @@ using Distributed
     using Random, LinearAlgebra
     using Distributions
     using BenchmarkTools
+    using Distributed
 end
 
 function parse_CL_args()
@@ -146,13 +147,13 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.
     
     num_chains = 2
 
-    add_procs(num_chains)
+    #add_procs(num_chains)
     tick()
     #τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
-    res = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=num_chains,seed=seed)
+    res = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=num_chains,seed=seed,in_seq=true)
     tock()
 
-    result = res.states[1]
+    result = res.state
     #γ_n = hcat(result.Gammas...)
 
     γ_n2 = mean(result.γ[nburn+1:nburn+nsamp,:,:],dims=1)
@@ -171,17 +172,18 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.
     end
     MSEy = sum((y - y_pred).^2)/n
 
-    result2 = res.states[2]
+    @show DataFrame(res.psrf)
+    #result2 = res.states[2]
     #γ_n = hcat(result.Gammas...)
 
-    γ_n22 = mean(result2.γ[nburn+1:nburn+nsamp,:,:],dims=1)
-    γ2₀ = B₀
-    MSE2 = 0
-    for i in 1:190
-        MSE2 = MSE2 + (γ_n22[i] - γ2₀[i])^2
-    end
-    MSE2 = MSE2 * (2/(V*(V-1)))
-    show(stdout,"text/plain",DataFrame(MSE2=MSE2))
+    #γ_n22 = mean(result2.γ[nburn+1:nburn+nsamp,:,:],dims=1)
+    #γ2₀ = B₀
+    #MSE2 = 0
+    #for i in 1:190
+    #    MSE2 = MSE2 + (γ_n22[i] - γ2₀[i])^2
+    #end
+    #MSE2 = MSE2 * (2/(V*(V-1)))
+    #show(stdout,"text/plain",DataFrame(MSE2=MSE2))
     println("")
 
     return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,MSEy,result.ξ[nburn+1:nburn+nsamp,:,:],result.μ[nburn+1:nburn+nsamp,1,1]
