@@ -1,0 +1,559 @@
+# Final plots
+
+- We will base the plots on the existing functions in [plot_result.R](https://github.com/samozm/bayesian_network_regression_imp/blob/main/src/plot_results.R).
+- The result files are in the [Google Drive](https://drive.google.com/drive/u/2/folders/1obkVu6qJfC6tdNAnLFHhsSSn9SUwTxE2) which we downloaded and put in the github repo (but gitignored).
+
+```{r}
+source("src/plot_results.R")
+```
+
+## Unrealistic simulations
+
+Four types of plots:
+
+### 1. Grid plot (x=effect size, y=sparsity) for posterior probability of influential nodes
+
+Function to create the plot:
+```{r}
+plot.nodes = function(pi,mu,path,simnum,R,nu,k,n,yaxis=TRUE){
+## Reading csv output files and appending
+nodes <- data.frame()
+for(i.pi in pi)
+{
+  for(j.mu in mu)
+  {
+    flnm <- make.filename(path,simnum,i.pi,j.mu,R,nu,k,"nodes",n,NULL,NULL)
+    print(flnm)
+    nodes <- rbind(nodes, read.csv(flnm))
+  }
+}
+
+## Labelling the nodes:
+nn <- length(nodes$TrueXi) / (length(pi)*length(mu))
+nodes$microbe <- rep(1:nn,length(pi)*length(mu))
+
+if(yaxis){
+  ylabel = "PP of influential node"
+  axisTextY = element_text(colour="grey", size=rel(1.5), angle=0, hjust=.5, vjust=.5, face="plain")
+}else{
+  ylabel = ""
+  axisTextY = element_blank()
+}
+
+## Plot:
+plt <- ggplot(data=nodes,aes(x=microbe,y=Xi.posterior,fill=TrueXi)) + 
+    geom_bar(stat="Identity") + xlab("") + ylab(ylabel) + 
+    ggtitle(paste0("k=",k,", n=",n))+
+    theme(
+        plot.title = element_text(hjust=0.5, size=rel(2)),
+        axis.title.x = element_text(size=rel(1.2)),
+        axis.title.y = element_text(size=rel(1.9), angle=90, vjust=0.5, hjust=0.5),
+        axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = axisTextY,
+        panel.background = element_rect(fill = NA, color = "black"),
+        axis.line = element_line(colour = "grey"),
+        strip.text = element_text(size = rel(2))
+        ) +
+    ##scale_fill_manual(values=c("#FF0000","#0000FF")) + 
+    scale_fill_manual(values=c("#FF1493","#0000CD")) + 
+    guides(fill="none") +
+    scale_y_continuous(position="right",breaks = c(0,0.5,1),limits=c(0,1)) + 
+    facet_grid(pi ~ mu, 
+               switch="both",
+              labeller = labeller(
+                mu = c(`0.8` = "mu=0.8", `1.2` = "mu=1.2", `1.4` = "mu=1.4", `1.6` = "mu=1.6"),
+                pi = c(`0` = "pi=0.0", `0.3` = "pi=0.3", `0.5` = "pi=0.5", `0.7` = "pi=0.7", `0.8` = "pi=0.8")
+              ),
+              as.table = FALSE)
+
+  return(plt)
+}
+```
+
+Fixed parameters for all plots:
+```{r}
+path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+mu = c(0.8,1.6)
+pi = c(0.3,0.8)
+nu=10
+simnum = 1
+```
+
+Main text:
+- n=100, k=8, R=9
+- n=100, k=22, R=9
+- n=500, k=8, R=9
+- n=500, k=22, R=9
+
+```{r}
+n=500
+k=8
+R=9
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=500
+k=22
+R=9
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+## missing:
+n=100
+k=8
+R=9
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,yaxis=FALSE)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=100
+k=22
+R=9
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, yaxis=FALSE)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+```
+
+
+Supp mat (missing):
+- n=100, k=8, R=5
+- n=100, k=22, R=5
+- n=500, k=8, R=5
+- n=500, k=22, R=5
+
+- n=100, k=8, R=10
+- n=100, k=22, R=10
+- n=500, k=8, R=10
+- n=500, k=22, R=10
+
+- n=100, k=15, R=5
+- n=100, k=15, R=9
+- n=100, k=15, R=10
+- n=500, k=15, R=5
+- n=500, k=15, R=9
+- n=500, k=15, R=10
+
+
+### 2. Credible intervals for edge effects
+
+Plotting function:
+```{r}
+## lim=limits for Y axis
+plot.intervals <- function(simnum,pi,mu,R,nu,k,path,n,lim)
+{
+  flnm <- make.filename(path,simnum,pi,mu,R,nu,k,"edges",n,NULL,NULL)
+  edges <- read.csv(flnm)
+  
+  nn <- length(edges$true_B)
+  edges$edge <- 1:nn
+  edges <- transform(edges,rej=ifelse(X0.025 > 0 | X0.975 < 0,TRUE,FALSE))
+  edges <- transform(edges,nonzero_mean=ifelse(true_B != 0.0,TRUE,FALSE))
+  
+  if(pi>0.5){
+    label = "True influential edges"
+  }else{
+    label = "True \n inf."
+  }
+  
+  plt <- edges %>% ggplot() + geom_errorbar(aes(x=factor(edge),ymin=X0.025,
+                                                                 ymax=X0.975,
+                                                                 color=rej)) +
+        xlab("") + ylab("")+ ggtitle(paste0("pi=",pi,", mu=",mu))+
+        scale_color_manual(values=c("#FF1493","#0000CD")) + 
+        theme(
+          plot.title = element_text(hjust=0.5, size=rel(2)),
+          axis.title.x = element_text(size=rel(1.2)),
+          axis.title.y = element_text(size=rel(1.9), angle=90, vjust=0.5, hjust=0.5),
+          axis.text.x = element_text(colour="grey", size=rel(1.8), hjust=.5, vjust=.5, face="plain"),
+          axis.ticks.y = element_blank(),
+          panel.background = element_rect(fill = NA, color = "black"),
+          axis.line = element_line(colour = "grey"),
+          strip.text = element_text(size = rel(1.5)),
+          legend.position = "none"
+        ) +
+          #scale_x_continuous(limits=c(1,n)) + coord_flip() +
+          scale_y_continuous(limits=lim) +
+          coord_flip() + scale_x_discrete(labels=NULL,expand=expansion(add=4)) +
+          geom_point(aes(x=factor(edge),y=mean, color=rej),shape=18, size=2) +
+          geom_hline(aes(yintercept=0),linetype="solid",color="#696969", size=1) +
+          ##geom_hline(aes(yintercept=mu),linetype="dashed",color="blue") +
+          facet_grid(nonzero_mean ~.,scales="free_y",space="free_y", labeller = labeller(
+            nonzero_mean = c(`TRUE` = label, `FALSE` = "True non-influential edges")
+          )) 
+  return(plt)
+}
+```
+
+Fixed parameters for all plots:
+```{r}
+path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+nu=10
+simnum = 1
+```
+
+Main text:
+- n=100, k=8, R=9, pi=0.3, mu=0.8
+- n=100, k=8, R=9, pi=0.3, mu=1.6
+- n=100, k=8, R=9, pi=0.8, mu=0.8
+- n=100, k=8, R=9, pi=0.8, mu=1.6
+(missing)
+
+- n=500, k=8, R=9, pi=0.3, mu=0.8
+- n=500, k=8, R=9, pi=0.3, mu=1.6
+- n=500, k=8, R=9, pi=0.8, mu=0.8
+- n=500, k=8, R=9, pi=0.8, mu=1.6
+
+```{r}
+n=500
+k=8
+R=9
+pi=0.3
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,7))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=500
+k=8
+R=9
+pi=0.3
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,8))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=500
+k=8
+R=9
+pi=0.8
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=500
+k=8
+R=9
+pi=0.8
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,9))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+```
+
+
+- n=100, k=22, R=9, pi=0.3, mu=0.8
+- n=100, k=22, R=9, pi=0.3, mu=1.6
+- n=100, k=22, R=9, pi=0.8, mu=0.8
+- n=100, k=22, R=9, pi=0.8, mu=1.6
+(missing)
+
+
+- n=500, k=22, R=9, pi=0.3, mu=0.8
+- n=500, k=22, R=9, pi=0.3, mu=1.6
+- n=500, k=22, R=9, pi=0.8, mu=0.8
+- n=500, k=22, R=9, pi=0.8, mu=1.6
+
+```{r}
+n=500
+k=22
+R=9
+pi=0.3
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=500
+k=22
+R=9
+pi=0.3
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,10))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=500
+k=22
+R=9
+pi=0.8
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=500
+k=22
+R=9
+pi=0.8
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,9))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+```
+
+
+### 3. MSE plot: x=number of microbes, y=MSE, lines/colors for sparsity/effect size
+
+Plotting function:
+```{r}
+library(tidyr)
+plot.MSE <- function(simnum,pi,mu,R,nu,k,path,n)
+{
+  mse <- data.frame()
+  for(i.pi in pi)
+  {
+    for(j.mu in mu)
+    {
+      for(k.n in k)
+      {
+        flnm <- make.filename(path,simnum,i.pi,j.mu,R,nu,k.n,"MSE",n,
+                              NULL,NULL)
+        mse <- rbind(mse,read.csv(flnm))
+      }
+    }
+  }
+  
+  ## Manipulate mse df
+  df = gather(mse,"type","value",1:2)
+  df = within(df, type <- factor(type, labels=c("Coefficients", "Response")))
+  
+  plt <- ggplot(df, aes(x=n_microbes, y=value, group=interaction(pi,mu),color=factor(pi), 
+                  linetype=factor(mu)))  + 
+    geom_line(size=1.7) + labs(x="Number of sampled nodes (microbes)", y = "MSE", color="pi",linetype="mu") +
+    theme(
+          plot.title = element_text(hjust=0.5, size=rel(2)),
+          axis.title.x = element_text(size=rel(1.9)),
+          axis.title.y = element_text(size=rel(1.9), angle=90, vjust=0.5, hjust=0.5),
+          axis.text = element_text(colour="grey", size=rel(1.8), hjust=.5, vjust=.5, face="plain"),
+          panel.background = element_rect(fill = NA, color = "black"),
+          axis.line = element_line(colour = "grey"),
+          strip.text = element_text(size = rel(1.5)),
+          legend.text=element_text(size=rel(1.2)),
+          legend.title=element_text(size=rel(1.2))
+        ) +
+    scale_color_manual(values=c("#3CB371","#FF8C00")) + 
+    scale_x_continuous(breaks=mse$n_microbes) + 
+    scale_y_continuous(limits=c(0,ceiling(max(mse$MSE))),
+                       breaks=seq(0,ceiling(max(mse$MSE)),
+                                  ceiling(max(mse$MSE))/10))+
+        facet_grid(. ~ type, 
+              as.table = FALSE)
+  return(plt)
+}
+```
+
+Fixed parameters for all plots:
+```{r}
+path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+mu = c(0.8,1.6)
+pi = c(0.3,0.8)
+k = c(8,15,22)
+R = 9
+nu=10
+simnum = 1
+```
+
+Main text:
+- n=100
+- n=500
+(missing: change function so that it create grid for n by type)
+
+```{r}
+n = 500
+plt = plot.MSE(simnum,pi,mu,R,nu,k,path,n)
+
+plotname = paste0("plots/plot-mse-n",n,"-R",R,".pdf")
+
+pdf(plotname,height=5, width=7)
+plt
+dev.off()
+```
+
+### 4. Grid plot (x=effect size, y=sparsity) for MAP for B
+
+Plotting function:
+```{r}
+plot.heatmap <- function(simnum,pi,mu,R,nu,k,path,n)
+{
+  edges <- data.frame()
+  
+  for(i.pi in pi)
+  {
+    for(j.mu in mu)
+    {
+      flnm <- make.filename(path,simnum,i.pi,j.mu,R,nu,k,"edges",n,NULL,NULL)
+      print(flnm)
+      edges <- rbind(edges, read.csv(flnm))
+    }
+  }
+  
+  nn <- length(edges$mean) / (length(pi)*length(mu))
+  
+  plt <- ggplot(edges, aes(x_microbe,y_microbe,fill=abs(mean))) + geom_tile() + 
+    scale_y_reverse(breaks=1:(nn-1), labels=1:(nn-1), minor_breaks = seq(0.5,nn-0.5),
+                    position="right") + 
+    scale_x_continuous(breaks=2:nn, labels=2:nn, position="top", 
+                       minor_breaks = seq(1.5,nn + 0.5)) +
+    scale_fill_gradient(low="#FFFFFF", high="#4B0082") +
+    labs(fill="MAP") + xlab("") + ylab("") +
+    ggtitle(paste0("k=",k,", n=",n))+
+        theme(
+          plot.title = element_text(hjust=0.5, size=rel(2)),
+          axis.title.x = element_text(size=rel(1.9)),
+          axis.title.y = element_text(size=rel(1.9), angle=90, vjust=0.5, hjust=0.5),
+          panel.background = element_rect(fill = NA, color = "black"),
+          axis.line = element_line(colour = "grey"),
+          strip.text = element_text(size = rel(2)),
+          legend.text=element_text(size=rel(1.2)),
+          legend.title=element_text(size=rel(1.2)),
+          axis.text = element_blank(), axis.ticks = element_blank(),
+        ) +
+    facet_grid(pi ~ mu, switch="both",
+               labeller = labeller(
+                 mu = c(`0.8` = "mu=0.8", `1.6` = "mu=1.6"),
+                 pi = c(`0` = "pi=0.0", `0.3` = "pi=0.3", `0.8` = "pi=0.8")
+               ),
+               as.table = FALSE)
+  return(plt)
+}
+
+## true B values
+plot.heatmap.true <- function(simnum,pi,mu,R,nu,k,path,n)
+{
+  edges <- data.frame()
+  
+  for(i.pi in pi)
+  {
+    for(j.mu in mu)
+    {
+      flnm <- make.filename(path,simnum,i.pi,j.mu,R,nu,k,"edges",n,NULL,NULL)
+      print(flnm)
+      edges <- rbind(edges, read.csv(flnm))
+    }
+  }
+  
+  nn <- length(edges$mean) / (length(pi)*length(mu))
+  
+  plt <- ggplot(edges, aes(x_microbe,y_microbe,fill=abs(true_B))) + geom_tile() + 
+    scale_y_reverse(breaks=1:(nn-1), labels=1:(nn-1), minor_breaks = seq(0.5,nn-0.5),
+                    position="right") + 
+    scale_x_continuous(breaks=2:nn, labels=2:nn, position="top", 
+                       minor_breaks = seq(1.5,nn + 0.5)) +
+    scale_fill_gradient(low="#FFFFFF", high="#191970") +
+    labs(fill="True B") + xlab("") + ylab("") +
+    ggtitle("True B matrix")+
+        theme(
+          plot.title = element_text(hjust=0.5, size=rel(2)),
+          axis.title.x = element_text(size=rel(1.9)),
+          axis.title.y = element_text(size=rel(1.9), angle=90, vjust=0.5, hjust=0.5),
+          panel.background = element_rect(fill = NA, color = "black"),
+          axis.line = element_line(colour = "grey"),
+          strip.text = element_text(size = rel(2)),
+          legend.text=element_text(size=rel(1.2)),
+          legend.title=element_text(size=rel(1.2)),
+          axis.text = element_blank(), axis.ticks = element_blank(),
+        ) +
+    facet_grid(pi ~ mu, switch="both",
+               labeller = labeller(
+                 mu = c(`0.8` = "mu=0.8", `1.6` = "mu=1.6"),
+                 pi = c(`0` = "pi=0.0", `0.3` = "pi=0.3", `0.8` = "pi=0.8")
+               ),
+               as.table = FALSE)
+  return(plt)
+}
+```
+
+Fixed parameters for all plots:
+```{r}
+path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+mu = c(0.8,1.6)
+pi = c(0.3,0.8)
+R = 9
+nu=10
+simnum = 1
+```
+
+Main text:
+- true B values
+- n=100, k=8
+- n=100, k=22
+(missing)
+- n=500, k=8
+- n=500, k=22
+
+```{r}
+plt = plot.heatmap.true(simnum,pi,mu,R,nu,k,path,n)
+
+plotname = paste0("plots/plot-B-R",R,"-true.pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=500
+k=8
+plt = plot.heatmap(simnum,pi,mu,R,nu,k,path,n)
+
+plotname = paste0("plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=500
+k=22
+plt = plot.heatmap(simnum,pi,mu,R,nu,k,path,n)
+
+plotname = paste0("plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+```
