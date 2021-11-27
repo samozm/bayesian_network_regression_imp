@@ -9,7 +9,7 @@ source("src/plot_results.R")
 
 ## Unrealistic simulations
 
-Four types of plots:
+Five types of plots:
 
 ### 1. Grid plot (x=effect size, y=sparsity) for posterior probability of influential nodes
 
@@ -107,7 +107,6 @@ pdf(plotname,height=6, width=7)
 plt
 dev.off()
 
-## missing:
 n=100
 k=8
 R=9
@@ -130,24 +129,97 @@ dev.off()
 ```
 
 
-Supp mat (missing):
+Supp mat:
 - n=100, k=8, R=5
 - n=100, k=22, R=5
 - n=500, k=8, R=5
 - n=500, k=22, R=5
 
-- n=100, k=8, R=10
-- n=100, k=22, R=10
-- n=500, k=8, R=10
-- n=500, k=22, R=10
+```{r}
+R = 5
+
+n=500
+k=8
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=500
+k=22
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=100
+k=8
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,yaxis=FALSE)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=100
+k=22
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, yaxis=FALSE)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+```
+
 
 - n=100, k=15, R=5
-- n=100, k=15, R=9
-- n=100, k=15, R=10
 - n=500, k=15, R=5
+- n=100, k=15, R=9
 - n=500, k=15, R=9
-- n=500, k=15, R=10
 
+```{r}
+k=15
+
+n=500
+R = 5
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=500
+R=9
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=100
+R=5
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,yaxis=FALSE)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=100
+R=9
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, yaxis=FALSE)
+plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+```
 
 ### 2. Credible intervals for edge effects
 
@@ -211,7 +283,60 @@ Main text:
 - n=100, k=8, R=9, pi=0.3, mu=1.6
 - n=100, k=8, R=9, pi=0.8, mu=0.8
 - n=100, k=8, R=9, pi=0.8, mu=1.6
-(missing)
+
+```{r}
+n=100
+k=8
+R=9
+pi=0.3
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,7))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=100
+k=8
+R=9
+pi=0.3
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,8))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=100
+k=8
+R=9
+pi=0.8
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=100
+k=8
+R=9
+pi=0.8
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,9))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+```
 
 - n=500, k=8, R=9, pi=0.3, mu=0.8
 - n=500, k=8, R=9, pi=0.3, mu=1.6
@@ -277,7 +402,60 @@ dev.off()
 - n=100, k=22, R=9, pi=0.3, mu=1.6
 - n=100, k=22, R=9, pi=0.8, mu=0.8
 - n=100, k=22, R=9, pi=0.8, mu=1.6
-(missing)
+
+```{r}
+n=100
+k=22
+R=9
+pi=0.3
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=100
+k=22
+R=9
+pi=0.3
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,10))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=100
+k=22
+R=9
+pi=0.8
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+n=100
+k=22
+R=9
+pi=0.8
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,9))
+
+plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+```
 
 
 - n=500, k=22, R=9, pi=0.3, mu=0.8
@@ -345,7 +523,7 @@ dev.off()
 Plotting function:
 ```{r}
 library(tidyr)
-plot.MSE <- function(simnum,pi,mu,R,nu,k,path,n)
+plot.MSE <- function(simnum,pi,mu,R,nu,k,path,n, leg=TRUE)
 {
   mse <- data.frame()
   for(i.pi in pi)
@@ -368,6 +546,7 @@ plot.MSE <- function(simnum,pi,mu,R,nu,k,path,n)
   plt <- ggplot(df, aes(x=n_microbes, y=value, group=interaction(pi,mu),color=factor(pi), 
                   linetype=factor(mu)))  + 
     geom_line(size=1.7) + labs(x="Number of sampled nodes (microbes)", y = "MSE", color="pi",linetype="mu") +
+    ggtitle(paste0("n = ",n))+
     theme(
           plot.title = element_text(hjust=0.5, size=rel(2)),
           axis.title.x = element_text(size=rel(1.9)),
@@ -387,6 +566,9 @@ plot.MSE <- function(simnum,pi,mu,R,nu,k,path,n)
                                   ceiling(max(mse$MSE))/10))+
         facet_grid(. ~ type, 
               as.table = FALSE)
+  if(!leg){
+    plt <- plt + theme(legend.position = "none")
+  }
   return(plt)
 }
 ```
@@ -405,15 +587,21 @@ simnum = 1
 Main text:
 - n=100
 - n=500
-(missing: change function so that it create grid for n by type)
 
 ```{r}
 n = 500
-plt = plot.MSE(simnum,pi,mu,R,nu,k,path,n)
-
+plt = plot.MSE(simnum,pi,mu,R,nu,k,path,n, leg=TRUE)
 plotname = paste0("plots/plot-mse-n",n,"-R",R,".pdf")
 
 pdf(plotname,height=5, width=7)
+plt
+dev.off()
+
+n = 100
+plt = plot.MSE(simnum,pi,mu,R,nu,k,path,n, leg=FALSE)
+plotname = paste0("plots/plot-mse-n",n,"-R",R,".pdf")
+
+pdf(plotname,height=5, width=6.5)
 plt
 dev.off()
 ```
@@ -526,7 +714,29 @@ Main text:
 - true B values
 - n=100, k=8
 - n=100, k=22
-(missing)
+
+```{r}
+n=100
+k=8
+plt = plot.heatmap(simnum,pi,mu,R,nu,k,path,n)
+
+plotname = paste0("plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=100
+k=22
+plt = plot.heatmap(simnum,pi,mu,R,nu,k,path,n)
+
+plotname = paste0("plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+```
+
 - n=500, k=8
 - n=500, k=22
 
@@ -558,4 +768,141 @@ plotname = paste0("plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
 pdf(plotname,height=6, width=7)
 plt
 dev.off()
+```
+
+### 5. False positive/negative rates
+
+```{r}
+plot.false.pos.neg <- function(simnum,pi,mu,R,nu,k,path,n, xaxis=FALSE)
+{
+  
+  nn <- length(k) * length(pi) * length(mu)
+  fr.e <- data.frame(k=k,fpr_edges=rep(0,nn), fpr_nodes=rep(0,nn),
+                      fnr_edges=rep(0,nn), fnr_nodes=rep(0,nn),
+                      pi=rep(0,nn),mu=rep(0,nn))
+  l <- 1
+  
+  for(i.pi in pi)
+  {
+    for(j.mu in mu)
+    {
+      for(k.n in k)
+      {
+        
+        flnm <- make.filename(path,simnum,i.pi,j.mu,R,nu,k.n,"edges",n,
+                              NULL,NULL)
+        edges <- read.csv(flnm)
+        
+        o <- length(edges$true_B)
+        edges$edge <- 1:o
+        edges <- transform(edges,rej=ifelse(X0.025 > 0 | X0.975 < 0,1,0))
+        edges <- transform(edges,nonzero_mean=ifelse(true_B != 0.0,1,0))
+        edges <- transform(edges,zero_mean=ifelse(true_B == 0.0,1,0))
+        edges <- transform(edges,fp=ifelse(rej==1 & nonzero_mean==0,1,0))
+        edges <- transform(edges,fn=ifelse(rej==0 & nonzero_mean==1,1,0))
+        
+        fr.e$fpr_edges[l] <- sum(edges$fp) / sum(1 - edges$nonzero_mean)
+        fr.e$fnr_edges[l] <- sum(edges$fn) / sum(edges$nonzero_mean)
+        fr.e$pi[l] <- i.pi
+        fr.e$mu[l] <- j.mu
+        fr.e$n_microbes[l] <- k.n
+        
+        flnm2 <- make.filename(path,simnum,i.pi,j.mu,R,nu,k.n,"nodes",n,
+                               NULL,NULL)
+        nodes <- read.csv(flnm2)
+        
+        m <- length(nodes$TrueXi)
+        nodes$node <- 1:m
+        nodes <- transform(nodes, rej=ifelse(Xi.posterior>=0.5,1,0))
+        nodes <- transform(nodes, TrueXi=ifelse(TrueXi=='true',TRUE,FALSE))
+        nodes <- transform(nodes,fp=ifelse(rej==1 & TrueXi==FALSE,1,0))
+        nodes <- transform(nodes,fn=ifelse(rej==0 & TrueXi==TRUE,1,0))
+        
+        fr.e$fpr_nodes[l] <- sum(nodes$fp) / sum(1 - nodes$TrueXi)
+        fr.e$fnr_nodes[l] <- sum(nodes$fn) / sum(nodes$TrueXi)
+        
+        l <- l+1
+      }
+    }
+  }
+  
+  ## Manipulate df
+  df = gather(fr.e,"type","value",2:5)
+  df = within(df, type <- factor(type))
+  
+  ## added something so that bars appear even with 0.0
+  df$value[df$value == 0.0] = 0.005
+  
+  if(xaxis){
+  xlabel = "Number of sampled nodes"
+  }else{
+  xlabel = ""
+  }
+  
+  plt <- ggplot(data=df,aes(x=k,y=value,fill=type)) + 
+    geom_bar(position="dodge", stat="identity") +
+    ggtitle(paste0("n = ",n))+ ylab("")+xlab(xlabel)+
+    theme(
+        plot.title = element_text(hjust=0.5, size=rel(2)),
+        axis.title.x = element_text(size=rel(1.8)),
+        axis.title.y = element_text(size=rel(1.9), angle=90, vjust=0.5, hjust=0.5),
+        axis.text.x = element_text(colour="grey", size=rel(1.7), angle=0, hjust=.5, vjust=.5, face="plain"), 
+        axis.text.y = element_text(colour="grey", size=rel(1.7), angle=0, hjust=.5, vjust=.5, face="plain"),
+        panel.background = element_rect(fill = NA, color = "black"),
+        axis.line = element_line(colour = "grey"),
+        strip.text = element_text(size = rel(2)),
+        legend.title = element_blank(),
+        legend.position = "top",
+        legend.text = element_text(size = rel(1.5))
+        ) +
+    scale_fill_manual(values=c("#82AFBC", "#9999CC", "#0E4B87", "#4C0099")) + 
+    scale_x_continuous(breaks=k) +
+    #guides(fill="none") +
+    scale_y_continuous(position="right",breaks = c(0,0.5,1),limits=c(0,1)) + 
+    facet_grid(pi ~ mu, 
+               switch="both",
+              labeller = labeller(
+                mu = c(`0.8` = "mu=0.8", `1.2` = "mu=1.2", `1.4` = "mu=1.4", `1.6` = "mu=1.6"),
+                pi = c(`0` = "pi=0.0", `0.3` = "pi=0.3", `0.5` = "pi=0.5", `0.7` = "pi=0.7", `0.8` = "pi=0.8")
+              ),
+              as.table = FALSE)
+  return(plt)
+}
+```
+
+Fixed parameters for all plots:
+```{r}
+path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+mu = c(0.8,1.6)
+pi = c(0.3,0.8)
+k = c(8,15,22)
+R = 9
+nu=10
+simnum = 1
+```
+
+Main text:
+- n=100
+- n=500
+
+```{r}
+n = 500
+plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, xaxis=TRUE)
+plotname = paste0("plots/plot-rates-n",n,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n = 100
+plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, xaxis=TRUE)
+plotname = paste0("plots/plot-rates-n",n,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+```
+
+```{r}
+
 ```
