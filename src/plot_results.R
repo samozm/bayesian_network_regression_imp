@@ -441,9 +441,8 @@ plot_loops <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize
 
 # CHTC unrealistic, null, 500 samples
 create_plots(1,c("0.0"),c(0.8,1.6),c(9),c(10),c(8,15,22),
-             "results/simulation/chtc-unrealistic/","plots/simulation/chtc-unrealistic/nullsim/",
+             "results/simulation/chtc-unrealistic/results/","plots/simulation/chtc-unrealistic/nullsim/",
              c(500),NULL,"nullsim_")
-
 
 ## CHTC UNREALISTIC 500,1000 samples
 create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
