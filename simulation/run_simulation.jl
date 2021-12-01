@@ -2,6 +2,7 @@ using Distributed
 @everywhere using DrWatson
 @everywhere begin 
     @quickactivate
+    using Distributed
     using LinearAlgebra
     using Base: Bool, Float16, Int16
     using CSV,ArgParse,TickTock
@@ -18,6 +19,7 @@ using Distributed
     using Distributions
     using BenchmarkTools
     using Distributed
+    using RCall
 end
 
 function parse_CL_args()
@@ -104,7 +106,14 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="",
         loadinfo["type"] = type
         loadinfo["edge_mu"] = edge_μ
     end
-    γ,γ₀,MSE,MSEy,ξ,μ = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,seed,R=R,ν=ν)
+    results = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,seed,R=R,ν=ν)
+    γ  = results[1]
+    γ₀ = results[2]
+    MSE = results[3] 
+    MSEy = results[4] 
+    ξ = results[5] 
+    μ = results[6] 
+    psrf = results[7]
 
     loadinfo["out"] = "xis"
     if jcon
@@ -120,7 +129,7 @@ function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="",
 
     loadinfo["R"] = R
     loadinfo["nu"] = ν
-    output_results(γ[:,:,1],γ₀,MSE,MSEy,mean(ξ,dims=1)[1,:,1],ξ_in,μ,loadinfo,jcon,simtypes,simnum)
+    output_results(γ[:,:,1],γ₀,MSE,MSEy,mean(ξ,dims=1)[1,:,1],ξ_in,μ,psrf,loadinfo,jcon,simtypes,simnum)
 end
 
 function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
@@ -145,9 +154,8 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.
     q = size(X,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
     
-    num_chains = 2
+    num_chains = 1
 
-    #add_procs(num_chains)
     tick()
     #τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
     res = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=num_chains,seed=seed,in_seq=true)
@@ -159,7 +167,7 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.
     γ_n2 = mean(result.γ[nburn+1:nburn+nsamp,:,:],dims=1)
     γ₀ = B₀
     MSE = 0
-    for i in 1:190
+    for i in 1:1:size(γ_n2,2)
         MSE = MSE + (γ_n2[i] - γ₀[i])^2
     end
     MSE = MSE * (2/(V*(V-1)))
@@ -172,7 +180,6 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.
     end
     MSEy = sum((y - y_pred).^2)/n
 
-    @show DataFrame(res.psrf)
     #result2 = res.states[2]
     #γ_n = hcat(result.Gammas...)
 
@@ -186,10 +193,10 @@ function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.
     #show(stdout,"text/plain",DataFrame(MSE2=MSE2))
     println("")
 
-    return result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,MSEy,result.ξ[nburn+1:nburn+nsamp,:,:],result.μ[nburn+1:nburn+nsamp,1,1]
+    return (result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,MSEy,result.ξ[nburn+1:nburn+nsamp,:,:],result.μ[nburn+1:nburn+nsamp,1,1],res.psrf)
 end
 
-function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,MSEy,ξ::AbstractArray{U},ξ⁰::DataFrame,μ,saveinfo,jcon::Bool,simtypes,simnum,realistic_type="",μₛ=0.0) where {S,T,U}
+function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,MSEy,ξ::AbstractArray{U},ξ⁰::DataFrame,μ,psrf,saveinfo,jcon::Bool,simtypes,simnum,realistic_type="",μₛ=0.0) where {S,T,U}
     q = size(γ,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
@@ -291,6 +298,8 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
         CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),mse_df)
         saveinfo["out"] = "mu"
         CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),mu_df)
+        saveinfo["out"] = "psrf"
+        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),psrf)
     end
 end
 
