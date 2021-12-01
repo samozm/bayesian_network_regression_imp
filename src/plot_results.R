@@ -445,15 +445,15 @@ create_plots(1,c("0.0"),c(0.8,1.6),c(9),c(10),c(8,15,22),
              c(500),NULL,"nullsim_")
 
 ## CHTC UNREALISTIC 500,1000 samples
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
-             "results/simulation/chtc-unrealistic/results/","plots/simulation/chtc-unrealistic/",
-             c(500,1000))
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+#            "results/simulation/chtc-unrealistic/results/","plots/simulation/chtc-unrealistic/",
+#             c(500,1000))
 
 ## CHTC REALISTIC 500,1000 samples
-create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),
-             "results/simulation/chtc-realistic/results/","plots/simulation/chtc-realistic/",
-             c(500,1000),c("additive_phylo", "additive_random", "interaction_phylo", 
-                          "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
+#create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),
+#             "results/simulation/chtc-realistic/results/","plots/simulation/chtc-realistic/",
+#             c(500,1000),c("additive_phylo", "additive_random", "interaction_phylo", 
+#                          "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
 
 #create_plots(1,c(0.8),c("2.0"),c(9),c(10),c(8),
 #             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
