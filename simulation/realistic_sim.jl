@@ -52,11 +52,12 @@ function main()
     q = floor(Int,t*(t-1)/2)
 
     Random.seed!(seed)
+    rng = MersenneTwister(seed)
 
     μₛ = 0.4
     σₛ = 1.0
 
-    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed)#,0,0.25)
+    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
@@ -74,7 +75,7 @@ function main()
 
 end
 
-function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed)
+function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng)
 
     @rput t
     @rput seed
@@ -82,11 +83,12 @@ function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed)
     tree = @rget tree_str
     A_base = @rget A
 
-    ξ = rand(Bernoulli(πₑ),t)
+    ξ = rand(rng,Bernoulli(πₑ),t)
 
     type_arr = split(type,"_")
 
-    L_dict = Dict(0.8 => 1, 1.6 => 2)
+    # μₑ + πₑ
+    L_dict = Dict(1.1 => 1,  1.6 => 14, 1.9 => 1.4, 2.4 => 15)
 
     if type_arr[2] == "phylo"
         # generate C (main effects)
@@ -97,46 +99,46 @@ function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed)
         B = diagm(C)
 
         if type_arr[1] == "additive"
-            return generate_yAm(ξ,B,t,k,n,A_base)
+            return generate_yAm(ξ,B,t,k,n,A_base,rng)
         end
 
-        fill_B(B,ξ,t,μₛ,σₛ)
+        fill_B(B,ξ,t,μₛ,σₛ,rng)
 
         if type_arr[1] == "interaction"
-            return generate_yAm(ξ,B,t,k,n,A_base)
+            return generate_yAm(ξ,B,t,k,n,A_base,rng)
         elseif type_arr[1] == "redundant" 
-            return generate_yAm(ξ,B,t,k,n,A_base,true,L=L_dict[μₑ])
+            return generate_yAm(ξ,B,t,k,n,A_base,rng,true,L=L_dict[round(μₑ+πₑ,digits=1)])
         end
 
     elseif type_arr[2] == "random"
         # generate C (main effects)
-        C = rand(Normal(μₑ,1),t)
+        C = rand(rng,Normal(μₑ,1),t)
         B = diagm(C)
 
         if type_arr[1] == "additive"
-            return generate_yAm(ξ,B,t,k,n,A_base)
+            return generate_yAm(ξ,B,t,k,n,A_base,rng)
         end
 
-        fill_B(B,ξ,t,μₛ,σₛ)
+        fill_B(B,ξ,t,μₛ,σₛ,rng)
 
         if type_arr[1] == "interaction" 
-            return generate_yAm(ξ,B,t,k,n,A_base)
+            return generate_yAm(ξ,B,t,k,n,A_base,rng)
         elseif type_arr[1] == "redundant" 
-            return generate_yAm(ξ,B,t,k,n,A_base,true,L=L_dict[μₑ])
+            return generate_yAm(ξ,B,t,k,n,A_base,rng,true,L=L_dict[round(μₑ+πₑ,digits=1)])
         end
     end
 end
 
 
-function generate_yAm(ξ,B,t,k,n,A_base,redundant=false;L=1)
+function generate_yAm(ξ,B,t,k,n,A_base,rng,redundant=false;L=1)
     y = zeros(n)
     m = [zeros(t)]
     A = [zeros(t,t)]
-    ϵ = rand(Normal(0,1),n)
+    #ϵ = rand(rng,Normal(0,1),n)
 
 
     for i in 1:n
-        chosen = sort(sample(1:t,k,replace=false))
+        chosen = sort(sample(rng,1:t,k,replace=false))
         for j in chosen
             for l in chosen
                 A[i][j,l] = A[i][l,j] = A_base[j,l]
@@ -145,9 +147,9 @@ function generate_yAm(ξ,B,t,k,n,A_base,redundant=false;L=1)
         m[i][chosen] .= 1
        
         if redundant
-            y[i] = min(tr(transpose(B) * A[i]) + ϵ[i],L)
+            y[i] = min(tr(transpose(B) * A[i]) + rand(rng,Normal(0,1)),L)
         else
-            y[i] = tr(transpose(B) * A[i]) + ϵ[i]
+            y[i] = tr(transpose(B) * A[i]) + rand(rng,Normal(0,1))
         end
         if i != n
             append!(A,[zeros(t,t)])
