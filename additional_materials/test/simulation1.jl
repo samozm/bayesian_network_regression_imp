@@ -63,7 +63,7 @@ function sim_one_case(nburn,nsamp)
 
     #region full run test
     tick()
-    res = GenerateSamples!(Z, y, R, nburn=nburn,nsamples=nsamp, V = 20, x_transform = false)
+    res = GenerateSamples!(Z, y, R, nburn=nburn,nsamples=nsamp, V = 20, x_transform = false,in_seq=true,num_chains=1)
     tock()
     state = res.state
 
