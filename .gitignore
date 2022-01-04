@@ -33,7 +33,7 @@ Manifest.toml
 # data
 data/*
 */juliacon/data/*
-*/results/*
+additional_materials/results/
 */juliacon/results/*
 */plots/*
 */juliacon/plots/*
