@@ -32,10 +32,11 @@ Manifest.toml
 
 # data
 data/*
-juliacon/data/*
-results/*
-juliacon/results/*
-plots/*
+*/juliacon/data/*
+*/results/*
+*/juliacon/results/*
+*/plots/*
+*/juliacon/plots/*
 
 # R files
 *.Rproj
@@ -43,10 +44,10 @@ plots/*
 *.Rhistory
 
 # Misc
-src/plot_distrs.R
+*/old-src/plot_distrs.R
 Project.toml
-test/run_my_sim1_case1.R
-juliacon/plots/*
+*/test/run_my_sim1_case1.R
+simulation/run_hihi_guha.R
 
 # VS code files
 .vscode/*
