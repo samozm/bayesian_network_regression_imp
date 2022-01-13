@@ -20,7 +20,7 @@ guha_sim1 <- function(nburn=30000,nsamp=20000)
   #### Run the model 
   ####################################################################################
   
-  source("test/BNSP-Function.R") #### loads function 'BNSPfunc'
+  source("additional_materials/test/BNSP-Function.R") #### loads function 'BNSPfunc'
   
   # i added this
   #library(timeR)

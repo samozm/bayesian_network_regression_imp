@@ -13,9 +13,7 @@ make.filename <- function(path,simnum,pi,mu,R,nu,n_microbes,type,samplesize,simt
 check_psrf <- function(simnum,pis,mus,R,nus,n_microbes,inpath,samplesizes,simtypes=c(NULL),pref="",edge_mu=NULL)
 {
   tot <- length(pis)*length(mus)*length(R)*length(nus)*length(n_microbes)*length(samplesizes)*length(simtypes)
-  mean_psrf_xi <- data.frame(psrf=0,pi=0,mu=0,R=0,nu=0,n_microbes=0,samplesize=0,simtype=0)
   max_psrf_xi <- data.frame(psrf=0,pi=0,mu=0,R=0,nu=0,n_microbes=0,samplesize=0,simtype=0)
-  mean_psrf_gamma <- data.frame(psrf=0,pi=0,mu=0,R=0,nu=0,n_microbes=0,samplesize=0,simtype=0)
   max_psrf_gamma <- data.frame(psrf=0,pi=0,mu=0,R=0,nu=0,n_microbes=0,samplesize=0,simtype=0)
   if(!is.null(simtypes)){
     for(s in simtypes)
@@ -35,14 +33,6 @@ check_psrf <- function(simnum,pis,mus,R,nus,n_microbes,inpath,samplesizes,simtyp
                   flnm <- make.filename(inpath,simnum,pi,mu,R[r.i],nu,n_m,"psrf",samplesize,s,edge_mu) 
                   if(!file.exists(flnm)){next}
                   psrf <- read.csv(flnm)
-                  if(psrf$mean_xi[1] > 1.2)
-                  {
-                    mean_psrf_xi <- rbind(mean_psrf_xi,data.frame(psrf=psrf$mean_xi[1],pi=pi,mu=mu,R=R[r.i],nu=nu,n_microbes=n_m,samplesize=samplesize,simtype=s))
-                  }
-                  if(psrf$mean_gamma[1] > 1.2)
-                  {
-                    mean_psrf_gamma <- rbind(mean_psrf_gamma,data.frame(psrf=psrf$mean_gamma[1],pi=pi,mu=mu,R=R[r.i],nu=nu,n_microbes=n_m,samplesize=samplesize,simtype=s))
-                  }
                   if(psrf$max_xi[1] > 1.2)
                   {
                     max_psrf_xi <- rbind(max_psrf_xi,data.frame(psrf=psrf$max_xi[1],pi=pi,mu=mu,R=R[r.i],nu=nu,n_microbes=n_m,samplesize=samplesize,simtype=s))
@@ -74,14 +64,6 @@ check_psrf <- function(simnum,pis,mus,R,nus,n_microbes,inpath,samplesizes,simtyp
                 flnm <- make.filename(inpath,simnum,pi,mu,R[r.i],nu,n_m,"psrf",samplesize) 
                 if(!file.exists(flnm)){next}
                 psrf <- read.csv(flnm)
-                if(psrf$mean_xi[1] > 1.2)
-                {
-                  mean_psrf_xi <- rbind(mean_psrf_xi,data.frame(psrf=psrf$mean_xi[1],pi=pi,mu=mu,R=R[r.i],nu=nu,n_microbes=n_m,samplesize=samplesize,simtype=0))
-                }
-                if(psrf$mean_gamma[1] > 1.2)
-                {
-                  mean_psrf_gamma <- rbind(mean_psrf_gamma,data.frame(psrf=psrf$mean_gamma[1],pi=pi,mu=mu,R=R[r.i],nu=nu,n_microbes=n_m,samplesize=samplesize,simtype=0))
-                }
                 if(psrf$max_xi[1] > 1.2)
                 {
                   max_psrf_xi <- rbind(max_psrf_xi,data.frame(psrf=psrf$max_xi[1],pi=pi,mu=mu,R=R[r.i],nu=nu,n_microbes=n_m,samplesize=samplesize,simtype=0))
@@ -97,7 +79,7 @@ check_psrf <- function(simnum,pis,mus,R,nus,n_microbes,inpath,samplesizes,simtyp
       }
     }
   }
-  return(list(mean_psrf_xi=mean_psrf_xi,mean_psrf_gamma=mean_psrf_gamma,max_psrf_xi=max_psrf_xi,max_psrf_gamma=max_psrf_gamma))
+  return(list(max_psrf_xi=max_psrf_xi,max_psrf_gamma=max_psrf_gamma))
 }
 
 

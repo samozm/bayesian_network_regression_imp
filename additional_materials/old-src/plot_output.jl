@@ -19,7 +19,7 @@ function plot_γs_test(γ₁, γ₂, γ₁_label, γ₂_label,save_append)
         plot!(intervals,[γ₂_sorted[lower_bound],γ₂_sorted[upper_bound]],[i,i],color="blue",legend=false)
     end
     #legend((γ₁_label,γ₂_label))
-    savefig(intervals,"plots/test/gamma_cis_$save_append")
+    savefig(intervals,"additional_materials/plots/test/gamma_cis_$save_append")
 end
 
 
@@ -40,9 +40,9 @@ function plot_γ_sim(γ,title,save_append,jcon)
     end
     #legend((γ₁_label,γ₂_label))
     if jcon
-        savefig(intervals,"juliacon/plots/gamma_cis_$save_append")
+        savefig(intervals,"additional_materials/juliacon/plots/gamma_cis_$save_append")
     else
-        savefig(intervals,"plots/simulation/gamma_cis_$save_append")
+        savefig(intervals,"additional_materials/plots/simulation/gamma_cis_$save_append")
     end
 end
 
@@ -77,7 +77,7 @@ function plot_sig_γ(γ,γ₀,simnum,casenum)
     hline!(plt,0.5:(V+0.5),c=:black)
     vline!(plt,0.5:(V+0.5),c=:black)
 
-    savefig(plt,"juliacon/plots/simulation$(simnum)_case$(casenum)_posterior_B")
+    savefig(plt,"additional_materials/juliacon/plots/simulation$(simnum)_case$(casenum)_posterior_B")
     #savefig(plot(sel_B_true,st=:heatmap),"juliacon/plots/simulation$(simnum)_case$(casenum)_true_B")
 
 end
@@ -85,5 +85,5 @@ end
 function plot_ξ_sim(ξ_df, simnum, casenum)
     plt = bar(ξ_df[:,"Xi posterior"],fillcolor=ξ_df[:,"Color"],legend=false,xlabel="Microbe",ylabel="Probability of influence")
 
-    savefig(plt,"juliacon/plots/simulation$(simnum)_case$(casenum)_posterior_xi")
+    savefig(plt,"additional_materials/juliacon/plots/simulation$(simnum)_case$(casenum)_posterior_xi")
 end

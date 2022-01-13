@@ -1,6 +1,6 @@
 using Distributions,Random,TickTock,CSV,ArgParse,Printf,RCall
 using BayesianNetworkRegression,DataFrames,StatsBase
-include("../src/plot_output.jl")
+include("../old-src/plot_output.jl")
 
 
 function parse_CL_args()
@@ -32,13 +32,13 @@ function main()
     @rput nburn
     @rput nsamp
     if (case == 1)
-        R"source('test/run_guha_sim2_case1.R')"
+        R"source('additional_materials/test/run_guha_sim2_case1.R')"
         println("Guha:")
         tick()
         R"retlist <- guha_sim2_case1(nburn,nsamp)"
         tock()
     else
-        R"source('test/run_guha_sim2_case2.R')"
+        R"source('additional_materials/test/run_guha_sim2_case2.R')"
         println("Guha:")
         tick()
         R"retlist <- guha_sim2_case2(nburn,nsamp)"
