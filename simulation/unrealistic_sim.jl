@@ -50,9 +50,10 @@ function main()
     q = floor(Int,t*(t-1)/2)
 
     Random.seed!(seed)
-    B,ξ = generate_Bs(t,μₛ=μₛ,πₛ=πₛ)
+    rng = MersenneTwister(seed)
+    B,ξ = generate_Bs(t,rng,μₛ=μₛ,πₛ=πₛ)
 
-    y,A,m = generate_unrealistic_data(B,t,k,n,seed)#,0,0.25)
+    y,A,m = generate_unrealistic_data(B,t,k,n,seed,rng)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
@@ -67,17 +68,17 @@ function main()
 
 end
 
-function generate_Bs(t; μₛ=0.8,σₛ=1,πₛ=0.1)
+function generate_Bs(t,rng; μₛ=0.8,σₛ=1,πₛ=0.1)
 
-    ξ = rand(Bernoulli(πₛ),t)
+    ξ = rand(rng,Bernoulli(πₛ),t)
     B = zeros(t,t)
 
-    fill_B(B,ξ,t,μₛ,σₛ)
+    fill_B(B,ξ,t,μₛ,σₛ,rng)
 
     return B,ξ
 end
 
-function generate_unrealistic_data(B,t,k,n,seed)
+function generate_unrealistic_data(B,t,k,n,seed,rng)
     y = zeros(n)
     m = [zeros(t)]
     A = [zeros(t,t)]
@@ -86,7 +87,7 @@ function generate_unrealistic_data(B,t,k,n,seed)
     @rput seed
     R"set.seed(seed);source('src/sim_trees.R');inv_dist <- sim_tree_dists(t)"
     A_base = @rget inv_dist
-    ϵ = rand(Normal(0,1),n)
+    ϵ = rand(rng,Normal(0,1),n)
 
     for i in 1:n
         chosen = sort(sample(1:t,k,replace=false))

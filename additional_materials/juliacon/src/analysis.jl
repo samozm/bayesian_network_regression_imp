@@ -1,7 +1,7 @@
 using DataFrames,CSV
 
-include("../../src/utils.jl")
-include("../../src/plot_output.jl")
+include("../../old-src/utils.jl")
+include("../../old-src/plot_output.jl")
 
 
 function analyze_γ(simnum,casenum)
