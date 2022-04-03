@@ -1,10 +1,10 @@
 # Final plots
 
-- We will base the plots on the existing functions in [plot_result.R](https://github.com/samozm/bayesian_network_regression_imp/blob/main/src/plot_results.R).
+- We will base the plots on the existing functions in [plot_result.R](https://github.com/samozm/bayesian_network_regression_imp/blob/main/additional_materials/old-src/plot_results.R).
 - The result files are in the [Google Drive](https://drive.google.com/drive/u/2/folders/1obkVu6qJfC6tdNAnLFHhsSSn9SUwTxE2) which we downloaded and put in the github repo (but gitignored).
 
 ```{r}
-source("src/plot_results.R")
+source("old-src/plot_results.R")
 ```
 
 ## Unrealistic simulations
@@ -73,7 +73,7 @@ plt <- ggplot(data=nodes,aes(x=microbe,y=Xi.posterior,fill=TrueXi)) +
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/unrealistic_simulations/results-R7/"
 mu = c(0.8,1.6)
 pi = c(0.3,0.8)
 nu=10
@@ -81,6 +81,55 @@ simnum = 1
 ```
 
 Main text:
+- n=100, k=8, R=7
+- n=100, k=22, R=7
+- n=500, k=8, R=7
+- n=500, k=22, R=7
+
+```{r}
+n=500
+k=8
+R=7
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=500
+k=22
+R=7
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=100
+k=8
+R=7
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,yaxis=FALSE)
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=100
+k=22
+R=7
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, yaxis=FALSE)
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+```
+
+
+Supp mat:
 - n=100, k=8, R=9
 - n=100, k=22, R=9
 - n=500, k=8, R=9
@@ -91,7 +140,7 @@ n=500
 k=8
 R=9
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -101,7 +150,7 @@ n=500
 k=22
 R=9
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -111,7 +160,7 @@ n=100
 k=8
 R=9
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -121,15 +170,13 @@ n=100
 k=22
 R=9
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
 dev.off()
 ```
 
-
-Supp mat:
 - n=100, k=8, R=5
 - n=100, k=22, R=5
 - n=500, k=8, R=5
@@ -141,7 +188,7 @@ R = 5
 n=500
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -150,7 +197,7 @@ dev.off()
 n=500
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -159,7 +206,7 @@ dev.off()
 n=100
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -168,7 +215,7 @@ dev.off()
 n=100
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -187,7 +234,7 @@ k=15
 n=500
 R = 5
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -196,7 +243,7 @@ dev.off()
 n=500
 R=9
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -205,7 +252,7 @@ dev.off()
 n=100
 R=5
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -214,7 +261,7 @@ dev.off()
 n=100
 R=9
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -273,26 +320,26 @@ plot.intervals <- function(simnum,pi,mu,R,nu,k,path,n,lim,simtype=NULL,edgemu=NU
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/unrealistic_simulations/results-R7/"
 nu=10
 simnum = 1
 ```
 
 Main text:
-- n=100, k=8, R=9, pi=0.3, mu=0.8
-- n=100, k=8, R=9, pi=0.3, mu=1.6
-- n=100, k=8, R=9, pi=0.8, mu=0.8
-- n=100, k=8, R=9, pi=0.8, mu=1.6
+- n=100, k=8, R=7, pi=0.3, mu=0.8
+- n=100, k=8, R=7, pi=0.3, mu=1.6
+- n=100, k=8, R=7, pi=0.8, mu=0.8
+- n=100, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
 n=100
 k=8
-R=9
+R=7
 pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,7))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -300,12 +347,12 @@ dev.off()
 
 n=100
 k=8
-R=9
+R=7
 pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,8))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -313,12 +360,12 @@ dev.off()
 
 n=100
 k=8
-R=9
+R=7
 pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -326,32 +373,32 @@ dev.off()
 
 n=100
 k=8
-R=9
+R=7
 pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,9))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
-- n=500, k=8, R=9, pi=0.3, mu=0.8
-- n=500, k=8, R=9, pi=0.3, mu=1.6
-- n=500, k=8, R=9, pi=0.8, mu=0.8
-- n=500, k=8, R=9, pi=0.8, mu=1.6
+- n=500, k=8, R=7, pi=0.3, mu=0.8
+- n=500, k=8, R=7, pi=0.3, mu=1.6
+- n=500, k=8, R=7, pi=0.8, mu=0.8
+- n=500, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
 n=500
 k=8
-R=9
+R=7
 pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,7))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -359,12 +406,12 @@ dev.off()
 
 n=500
 k=8
-R=9
+R=7
 pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,8))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -372,12 +419,12 @@ dev.off()
 
 n=500
 k=8
-R=9
+R=7
 pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -385,12 +432,12 @@ dev.off()
 
 n=500
 k=8
-R=9
+R=7
 pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,9))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -398,20 +445,20 @@ dev.off()
 ```
 
 
-- n=100, k=22, R=9, pi=0.3, mu=0.8
-- n=100, k=22, R=9, pi=0.3, mu=1.6
-- n=100, k=22, R=9, pi=0.8, mu=0.8
-- n=100, k=22, R=9, pi=0.8, mu=1.6
+- n=100, k=22, R=7, pi=0.3, mu=0.8
+- n=100, k=22, R=7, pi=0.3, mu=1.6
+- n=100, k=22, R=7, pi=0.8, mu=0.8
+- n=100, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
 n=100
 k=22
-R=9
+R=7
 pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -419,12 +466,12 @@ dev.off()
 
 n=100
 k=22
-R=9
+R=7
 pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,10))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -432,12 +479,12 @@ dev.off()
 
 n=100
 k=22
-R=9
+R=7
 pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -445,12 +492,12 @@ dev.off()
 
 n=100
 k=22
-R=9
+R=7
 pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,9))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -458,20 +505,20 @@ dev.off()
 ```
 
 
-- n=500, k=22, R=9, pi=0.3, mu=0.8
-- n=500, k=22, R=9, pi=0.3, mu=1.6
-- n=500, k=22, R=9, pi=0.8, mu=0.8
-- n=500, k=22, R=9, pi=0.8, mu=1.6
+- n=500, k=22, R=7, pi=0.3, mu=0.8
+- n=500, k=22, R=7, pi=0.3, mu=1.6
+- n=500, k=22, R=7, pi=0.8, mu=0.8
+- n=500, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
 n=500
 k=22
-R=9
+R=7
 pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -479,12 +526,12 @@ dev.off()
 
 n=500
 k=22
-R=9
+R=7
 pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,10))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -492,12 +539,12 @@ dev.off()
 
 n=500
 k=22
-R=9
+R=7
 pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,8))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -505,12 +552,12 @@ dev.off()
 
 n=500
 k=22
-R=9
+R=7
 pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,9))
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,".pdf")
 
 pdf(plotname,height=10, width=4)
 plt
@@ -575,11 +622,11 @@ plot.MSE <- function(simnum,pi,mu,R,nu,k,path,n, simtype=NULL,edgemu=NULL,leg=TR
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/unrealistic_simulations/results-R7/"
 mu = c(0.8,1.6)
 pi = c(0.3,0.8)
 k = c(8,15,22)
-R = 9
+R = 7
 nu=10
 simnum = 1
 ```
@@ -591,7 +638,7 @@ Main text:
 ```{r}
 n = 500
 plt = plot.MSE(simnum,pi,mu,R,nu,k,path,n, leg=TRUE)
-plotname = paste0("plots/plot-mse-n",n,"-R",R,".pdf")
+plotname = paste0("../plots/plot-mse-n",n,"-R",R,".pdf")
 
 pdf(plotname,height=5, width=7)
 plt
@@ -599,7 +646,7 @@ dev.off()
 
 n = 100
 plt = plot.MSE(simnum,pi,mu,R,nu,k,path,n, leg=FALSE)
-plotname = paste0("plots/plot-mse-n",n,"-R",R,".pdf")
+plotname = paste0("../plots/plot-mse-n",n,"-R",R,".pdf")
 
 pdf(plotname,height=5, width=6.5)
 plt
@@ -702,10 +749,10 @@ plot.heatmap.true <- function(simnum,pi,mu,R,nu,k,path,n)
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/unrealistic_simulations/results-R7/"
 mu = c(0.8,1.6)
 pi = c(0.3,0.8)
-R = 9
+R = 7
 nu=10
 simnum = 1
 ```
@@ -720,7 +767,7 @@ n=100
 k=8
 plt = plot.heatmap(simnum,pi,mu,R,nu,k,path,n)
 
-plotname = paste0("plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -730,7 +777,7 @@ n=100
 k=22
 plt = plot.heatmap(simnum,pi,mu,R,nu,k,path,n)
 
-plotname = paste0("plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -741,19 +788,11 @@ dev.off()
 - n=500, k=22
 
 ```{r}
-plt = plot.heatmap.true(simnum,pi,mu,R,nu,k,path,n)
-
-plotname = paste0("plots/plot-B-R",R,"-true.pdf")
-
-pdf(plotname,height=6, width=7)
-plt
-dev.off()
-
 n=500
 k=8
 plt = plot.heatmap(simnum,pi,mu,R,nu,k,path,n)
 
-plotname = paste0("plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -763,7 +802,7 @@ n=500
 k=22
 plt = plot.heatmap(simnum,pi,mu,R,nu,k,path,n)
 
-plotname = paste0("plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
+plotname = paste0("../plots/plot-B-n",n,"-k",k,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -878,11 +917,11 @@ plot.false.pos.neg <- function(simnum,pi,mu,R,nu,k,path,n,simtype=NULL,edgemu=NU
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/unrealistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/unrealistic_simulations/results-R7/"
 mu = c(0.8,1.6)
 pi = c(0.3,0.8)
 k = c(8,15,22)
-R = 9
+R = 7
 nu=10
 simnum = 1
 ```
@@ -894,7 +933,7 @@ Main text:
 ```{r}
 n = 500
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, xaxis=TRUE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -902,7 +941,7 @@ dev.off()
 
 n = 100
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, xaxis=TRUE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -923,7 +962,7 @@ Two types of plots:
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/realistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/realistic_simulations/results-R7/"
 mu = c(0.8,1.6)
 pi = c(0.3,0.8)
 nu=10
@@ -932,19 +971,19 @@ edgemu = 0.4
 ```
 
 Main text (random coefficients):
-- n=1000, k=8, R=9
-- n=1000, k=22, R=9
-- n=500, k=8, R=9
-- n=500, k=22, R=9
+- n=1000, k=8, R=7
+- n=1000, k=22, R=7
+- n=500, k=8, R=7
+- n=500, k=22, R=7
 
 ```{r}
 simtype = "additive_random"
-R=9
+R=7
 
 n=500
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -953,7 +992,7 @@ dev.off()
 n=500
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -962,7 +1001,7 @@ dev.off()
 n=1000
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -971,7 +1010,7 @@ dev.off()
 n=1000
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -979,19 +1018,19 @@ dev.off()
 ```
 
 SM (phylo coefficients):
-- n=1000, k=8, R=9
-- n=1000, k=22, R=9
-- n=500, k=8, R=9
-- n=500, k=22, R=9
+- n=1000, k=8, R=7
+- n=1000, k=22, R=7
+- n=500, k=8, R=7
+- n=500, k=22, R=7
 
 ```{r}
 simtype = "additive_phylo"
-R=9
+R=7
 
 n=500
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1000,7 +1039,7 @@ dev.off()
 n=500
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1009,7 +1048,7 @@ dev.off()
 n=1000
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1018,7 +1057,7 @@ dev.off()
 n=1000
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1029,20 +1068,20 @@ dev.off()
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/realistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/realistic_simulations/results-R7/"
 nu=10
 simnum = 2
 edgemu = 0.4
 ```
 
 Main text (random coeff):
-- n=1000, k=8, R=9, pi=0.3, mu=0.8
-- n=1000, k=8, R=9, pi=0.3, mu=1.6
-- n=1000, k=8, R=9, pi=0.8, mu=0.8
-- n=1000, k=8, R=9, pi=0.8, mu=1.6
+- n=1000, k=8, R=7, pi=0.3, mu=0.8
+- n=1000, k=8, R=7, pi=0.3, mu=1.6
+- n=1000, k=8, R=7, pi=0.8, mu=0.8
+- n=1000, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="additive_random"
 n=1000
 k=8
@@ -1050,9 +1089,9 @@ k=8
 
 pi=0.3
 mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-7,3), simtype=simtype,edgemu=edgemu)
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1060,9 +1099,9 @@ dev.off()
 
 pi=0.3
 mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-8,2),simtype=simtype, edgemu=edgemu)
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1070,9 +1109,9 @@ dev.off()
 
 pi=0.8
 mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-8,2),simtype=simtype, edgemu=edgemu)
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1080,22 +1119,22 @@ dev.off()
 
 pi=0.8
 mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-8,3),simtype=simtype, edgemu=edgemu)
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 Main text (random coeff):
-- n=500, k=8, R=9, pi=0.3, mu=0.8
-- n=500, k=8, R=9, pi=0.3, mu=1.6
-- n=500, k=8, R=9, pi=0.8, mu=0.8
-- n=500, k=8, R=9, pi=0.8, mu=1.6
+- n=500, k=8, R=7, pi=0.3, mu=0.8
+- n=500, k=8, R=7, pi=0.3, mu=1.6
+- n=500, k=8, R=7, pi=0.8, mu=0.8
+- n=500, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="additive_random"
 k=8
 n=500
@@ -1103,9 +1142,9 @@ n=500
 
 pi=0.3
 mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,6), simtype=simtype,edgemu=edgemu)
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1113,9 +1152,9 @@ dev.off()
 
 pi=0.3
 mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,7),simtype=simtype, edgemu=edgemu)
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1123,9 +1162,9 @@ dev.off()
 
 pi=0.8
 mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,7),simtype=simtype, edgemu=edgemu)
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1133,22 +1172,22 @@ dev.off()
 
 pi=0.8
 mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,7),simtype=simtype, edgemu=edgemu)
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (random coeff):
-- n=1000, k=22, R=9, pi=0.3, mu=0.8
-- n=1000, k=22, R=9, pi=0.3, mu=1.6
-- n=1000, k=22, R=9, pi=0.8, mu=0.8
-- n=1000, k=22, R=9, pi=0.8, mu=1.6
+- n=1000, k=22, R=7, pi=0.3, mu=0.8
+- n=1000, k=22, R=7, pi=0.3, mu=1.6
+- n=1000, k=22, R=7, pi=0.8, mu=0.8
+- n=1000, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="additive_random"
 n=1000
 k=22
@@ -1158,7 +1197,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1168,7 +1207,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1178,7 +1217,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1188,20 +1227,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (random coeff):
-- n=500, k=22, R=9, pi=0.3, mu=0.8
-- n=500, k=22, R=9, pi=0.3, mu=1.6
-- n=500, k=22, R=9, pi=0.8, mu=0.8
-- n=500, k=22, R=9, pi=0.8, mu=1.6
+- n=500, k=22, R=7, pi=0.3, mu=0.8
+- n=500, k=22, R=7, pi=0.3, mu=1.6
+- n=500, k=22, R=7, pi=0.8, mu=0.8
+- n=500, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="additive_random"
 k=22
 n=500
@@ -1209,9 +1248,221 @@ n=500
 
 pi=0.3
 mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,2.5), simtype=simtype,edgemu=edgemu)
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.3
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.8
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.8
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+```
+
+Main text (phylo coeff):
+- n=1000, k=8, R=7, pi=0.3, mu=0.8
+- n=1000, k=8, R=7, pi=0.3, mu=1.6
+- n=1000, k=8, R=7, pi=0.8, mu=0.8
+- n=1000, k=8, R=7, pi=0.8, mu=1.6
+
+```{r}
+R=7
+simtype="additive_phylo"
+n=1000
+k=8
+
+
+pi=0.3
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.3
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.8
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.8
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+```
+
+Main text (phylo coeff):
+- n=500, k=8, R=7, pi=0.3, mu=0.8
+- n=500, k=8, R=7, pi=0.3, mu=1.6
+- n=500, k=8, R=7, pi=0.8, mu=0.8
+- n=500, k=8, R=7, pi=0.8, mu=1.6
+
+```{r}
+R=7
+simtype="additive_phylo"
+k=8
+n=500
+
+
+pi=0.3
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.3
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.8
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.8
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+```
+
+SM (phylo coeff):
+- n=1000, k=22, R=7, pi=0.3, mu=0.8
+- n=1000, k=22, R=7, pi=0.3, mu=1.6
+- n=1000, k=22, R=7, pi=0.8, mu=0.8
+- n=1000, k=22, R=7, pi=0.8, mu=1.6
+
+```{r}
+R=7
+simtype="additive_phylo"
+n=1000
+k=22
+
+
+pi=0.3
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.3
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.8
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+
+
+pi=0.8
+mu=1.6
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+pdf(plotname,height=10, width=4)
+plt
+dev.off()
+```
+
+SM (phylo coeff):
+- n=500, k=22, R=7, pi=0.3, mu=0.8
+- n=500, k=22, R=7, pi=0.3, mu=1.6
+- n=500, k=22, R=7, pi=0.8, mu=0.8
+- n=500, k=22, R=7, pi=0.8, mu=1.6
+
+```{r}
+R=7
+simtype="additive_phylo"
+k=22
+n=500
+
+
+pi=0.3
+mu=0.8
+plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
+
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1221,7 +1472,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,2.5),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1231,7 +1482,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,2.5),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1241,219 +1492,7 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,3),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-```
-
-Main text (phylo coeff):
-- n=1000, k=8, R=9, pi=0.3, mu=0.8
-- n=1000, k=8, R=9, pi=0.3, mu=1.6
-- n=1000, k=8, R=9, pi=0.8, mu=0.8
-- n=1000, k=8, R=9, pi=0.8, mu=1.6
-
-```{r}
-R=9
-simtype="additive_phylo"
-n=1000
-k=8
-
-
-pi=0.3
-mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.3
-mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.8
-mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.8
-mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-```
-
-Main text (phylo coeff):
-- n=500, k=8, R=9, pi=0.3, mu=0.8
-- n=500, k=8, R=9, pi=0.3, mu=1.6
-- n=500, k=8, R=9, pi=0.8, mu=0.8
-- n=500, k=8, R=9, pi=0.8, mu=1.6
-
-```{r}
-R=9
-simtype="additive_phylo"
-k=8
-n=500
-
-
-pi=0.3
-mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,4), simtype=simtype,edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.3
-mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,4),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.8
-mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,4),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.8
-mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,4),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-```
-
-SM (phylo coeff):
-- n=1000, k=22, R=9, pi=0.3, mu=0.8
-- n=1000, k=22, R=9, pi=0.3, mu=1.6
-- n=1000, k=22, R=9, pi=0.8, mu=0.8
-- n=1000, k=22, R=9, pi=0.8, mu=1.6
-
-```{r}
-R=9
-simtype="additive_phylo"
-n=1000
-k=22
-
-
-pi=0.3
-mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2), simtype=simtype,edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.3
-mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.8
-mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.8
-mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,2),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-```
-
-SM (phylo coeff):
-- n=500, k=22, R=9, pi=0.3, mu=0.8
-- n=500, k=22, R=9, pi=0.3, mu=1.6
-- n=500, k=22, R=9, pi=0.8, mu=0.8
-- n=500, k=22, R=9, pi=0.8, mu=1.6
-
-```{r}
-R=9
-simtype="additive_phylo"
-k=22
-n=500
-
-
-pi=0.3
-mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,2.5), simtype=simtype,edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.3
-mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,2.5),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.8
-mu=0.8
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,2.5),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
-pdf(plotname,height=10, width=4)
-plt
-dev.off()
-
-
-pi=0.8
-mu=1.6
-plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,3),simtype=simtype, edgemu=edgemu)
-
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1467,7 +1506,7 @@ Two types of plots:
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/realistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/realistic_simulations/results-R7/"
 mu = c(0.8,1.6)
 pi = c(0.3,0.8)
 nu=10
@@ -1476,19 +1515,19 @@ edgemu = 0.4
 ```
 
 Main text (random coefficients):
-- n=1000, k=8, R=9
-- n=1000, k=22, R=9
-- n=500, k=8, R=9
-- n=500, k=22, R=9
+- n=1000, k=8, R=7
+- n=1000, k=22, R=7
+- n=500, k=8, R=7
+- n=500, k=22, R=7
 
 ```{r}
 simtype = "interaction_random"
-R=9
+R=7
 
 n=500
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1497,7 +1536,7 @@ dev.off()
 n=500
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1506,7 +1545,7 @@ dev.off()
 n=1000
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1515,7 +1554,7 @@ dev.off()
 n=1000
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1523,19 +1562,19 @@ dev.off()
 ```
 
 SM (phylo coefficients):
-- n=1000, k=8, R=9
-- n=1000, k=22, R=9
-- n=500, k=8, R=9
-- n=500, k=22, R=9
+- n=1000, k=8, R=7
+- n=1000, k=22, R=7
+- n=500, k=8, R=7
+- n=500, k=22, R=7
 
 ```{r}
 simtype = "interaction_phylo"
-R=9
+R=7
 
 n=500
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1544,7 +1583,7 @@ dev.off()
 n=500
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1553,7 +1592,7 @@ dev.off()
 n=1000
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1562,7 +1601,7 @@ dev.off()
 n=1000
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -1573,20 +1612,20 @@ dev.off()
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/realistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/realistic_simulations/results-R7/"
 nu=10
 simnum = 2
 edgemu = 0.4
 ```
 
 Main text (random coeff):
-- n=1000, k=8, R=9, pi=0.3, mu=0.8
-- n=1000, k=8, R=9, pi=0.3, mu=1.6
-- n=1000, k=8, R=9, pi=0.8, mu=0.8
-- n=1000, k=8, R=9, pi=0.8, mu=1.6
+- n=1000, k=8, R=7, pi=0.3, mu=0.8
+- n=1000, k=8, R=7, pi=0.3, mu=1.6
+- n=1000, k=8, R=7, pi=0.8, mu=0.8
+- n=1000, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="interaction_random"
 n=1000
 k=8
@@ -1596,7 +1635,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-5,3), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1606,7 +1645,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1616,7 +1655,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,7),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1626,20 +1665,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,7),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 Main text (random coeff):
-- n=500, k=8, R=9, pi=0.3, mu=0.8
-- n=500, k=8, R=9, pi=0.3, mu=1.6
-- n=500, k=8, R=9, pi=0.8, mu=0.8
-- n=500, k=8, R=9, pi=0.8, mu=1.6
+- n=500, k=8, R=7, pi=0.3, mu=0.8
+- n=500, k=8, R=7, pi=0.3, mu=1.6
+- n=500, k=8, R=7, pi=0.8, mu=0.8
+- n=500, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="interaction_random"
 k=8
 n=500
@@ -1649,7 +1688,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,6), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1659,7 +1698,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,7),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1669,7 +1708,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-9,17),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1679,20 +1718,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-9,17),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (random coeff):
-- n=1000, k=22, R=9, pi=0.3, mu=0.8
-- n=1000, k=22, R=9, pi=0.3, mu=1.6
-- n=1000, k=22, R=9, pi=0.8, mu=0.8
-- n=1000, k=22, R=9, pi=0.8, mu=1.6
+- n=1000, k=22, R=7, pi=0.3, mu=0.8
+- n=1000, k=22, R=7, pi=0.3, mu=1.6
+- n=1000, k=22, R=7, pi=0.8, mu=0.8
+- n=1000, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="interaction_random"
 n=1000
 k=22
@@ -1702,7 +1741,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,4), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1712,7 +1751,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,4),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1722,7 +1761,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,9),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1732,20 +1771,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,9),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (random coeff):
-- n=500, k=22, R=9, pi=0.3, mu=0.8
-- n=500, k=22, R=9, pi=0.3, mu=1.6
-- n=500, k=22, R=9, pi=0.8, mu=0.8
-- n=500, k=22, R=9, pi=0.8, mu=1.6
+- n=500, k=22, R=7, pi=0.3, mu=0.8
+- n=500, k=22, R=7, pi=0.3, mu=1.6
+- n=500, k=22, R=7, pi=0.8, mu=0.8
+- n=500, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="interaction_random"
 k=22
 n=500
@@ -1755,7 +1794,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,4.5), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1765,7 +1804,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2.5,4.5),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1775,7 +1814,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,8),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1785,20 +1824,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,9),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 Main text (phylo coeff):
-- n=1000, k=8, R=9, pi=0.3, mu=0.8
-- n=1000, k=8, R=9, pi=0.3, mu=1.6
-- n=1000, k=8, R=9, pi=0.8, mu=0.8
-- n=1000, k=8, R=9, pi=0.8, mu=1.6
+- n=1000, k=8, R=7, pi=0.3, mu=0.8
+- n=1000, k=8, R=7, pi=0.3, mu=1.6
+- n=1000, k=8, R=7, pi=0.8, mu=0.8
+- n=1000, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="interaction_phylo"
 n=1000
 k=8
@@ -1808,7 +1847,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,4), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1818,7 +1857,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,4),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1828,7 +1867,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-5,7),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1838,20 +1877,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-5,7),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 Main text (phylo coeff):
-- n=500, k=8, R=9, pi=0.3, mu=0.8
-- n=500, k=8, R=9, pi=0.3, mu=1.6
-- n=500, k=8, R=9, pi=0.8, mu=0.8
-- n=500, k=8, R=9, pi=0.8, mu=1.6
+- n=500, k=8, R=7, pi=0.3, mu=0.8
+- n=500, k=8, R=7, pi=0.3, mu=1.6
+- n=500, k=8, R=7, pi=0.8, mu=0.8
+- n=500, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="interaction_phylo"
 k=8
 n=500
@@ -1861,7 +1900,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-7,9), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1871,7 +1910,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,9),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1881,7 +1920,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-12,12),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1891,20 +1930,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-12,12),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (phylo coeff):
-- n=1000, k=22, R=9, pi=0.3, mu=0.8
-- n=1000, k=22, R=9, pi=0.3, mu=1.6
-- n=1000, k=22, R=9, pi=0.8, mu=0.8
-- n=1000, k=22, R=9, pi=0.8, mu=1.6
+- n=1000, k=22, R=7, pi=0.3, mu=0.8
+- n=1000, k=22, R=7, pi=0.3, mu=1.6
+- n=1000, k=22, R=7, pi=0.8, mu=0.8
+- n=1000, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="interaction_phylo"
 n=1000
 k=22
@@ -1914,7 +1953,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-5,5), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1924,7 +1963,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-5,5),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1934,7 +1973,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,7),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1944,20 +1983,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,7),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (phylo coeff):
-- n=500, k=22, R=9, pi=0.3, mu=0.8
-- n=500, k=22, R=9, pi=0.3, mu=1.6
-- n=500, k=22, R=9, pi=0.8, mu=0.8
-- n=500, k=22, R=9, pi=0.8, mu=1.6
+- n=500, k=22, R=7, pi=0.3, mu=0.8
+- n=500, k=22, R=7, pi=0.3, mu=1.6
+- n=500, k=22, R=7, pi=0.8, mu=0.8
+- n=500, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="interaction_phylo"
 k=22
 n=500
@@ -1967,7 +2006,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,5), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1977,7 +2016,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,6),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1987,7 +2026,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,7),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -1997,7 +2036,7 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,7),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2011,7 +2050,7 @@ Two types of plots:
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/realistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/realistic_simulations/results-R7/"
 mu = c(0.8,1.6)
 pi = c(0.3,0.8)
 nu=10
@@ -2020,19 +2059,19 @@ edgemu = 0.4
 ```
 
 Main text (random coefficients):
-- n=1000, k=8, R=9
-- n=1000, k=22, R=9
-- n=500, k=8, R=9
-- n=500, k=22, R=9
+- n=1000, k=8, R=7
+- n=1000, k=22, R=7
+- n=500, k=8, R=7
+- n=500, k=22, R=7
 
 ```{r}
 simtype = "redundant_random"
-R=9
+R=7
 
 n=500
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2041,7 +2080,7 @@ dev.off()
 n=500
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2050,7 +2089,7 @@ dev.off()
 n=1000
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2059,7 +2098,7 @@ dev.off()
 n=1000
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2067,19 +2106,19 @@ dev.off()
 ```
 
 SM (phylo coefficients):
-- n=1000, k=8, R=9
-- n=1000, k=22, R=9
-- n=500, k=8, R=9
-- n=500, k=22, R=9
+- n=1000, k=8, R=7
+- n=1000, k=22, R=7
+- n=500, k=8, R=7
+- n=500, k=22, R=7
 
 ```{r}
 simtype = "redundant_phylo"
-R=9
+R=7
 
 n=500
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2088,7 +2127,7 @@ dev.off()
 n=500
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, simtype=simtype, edgemu=edgemu)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2097,7 +2136,7 @@ dev.off()
 n=1000
 k=8
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2106,7 +2145,7 @@ dev.off()
 n=1000
 k=22
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,simtype=simtype, edgemu=edgemu,yaxis=FALSE)
-plotname = paste0("plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2117,20 +2156,20 @@ dev.off()
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/realistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/realistic_simulations/results-R7/"
 nu=10
 simnum = 2
 edgemu = 0.4
 ```
 
 Main text (random coeff):
-- n=1000, k=8, R=9, pi=0.3, mu=0.8
-- n=1000, k=8, R=9, pi=0.3, mu=1.6
-- n=1000, k=8, R=9, pi=0.8, mu=0.8
-- n=1000, k=8, R=9, pi=0.8, mu=1.6
+- n=1000, k=8, R=7, pi=0.3, mu=0.8
+- n=1000, k=8, R=7, pi=0.3, mu=1.6
+- n=1000, k=8, R=7, pi=0.8, mu=0.8
+- n=1000, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="redundant_random"
 n=1000
 k=8
@@ -2140,7 +2179,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,3), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2150,7 +2189,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,2),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2160,7 +2199,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,3),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2170,20 +2209,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,4),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 Main text (random coeff):
-- n=500, k=8, R=9, pi=0.3, mu=0.8
-- n=500, k=8, R=9, pi=0.3, mu=1.6
-- n=500, k=8, R=9, pi=0.8, mu=0.8
-- n=500, k=8, R=9, pi=0.8, mu=1.6
+- n=500, k=8, R=7, pi=0.3, mu=0.8
+- n=500, k=8, R=7, pi=0.3, mu=1.6
+- n=500, k=8, R=7, pi=0.8, mu=0.8
+- n=500, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="redundant_random"
 k=8
 n=500
@@ -2193,7 +2232,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-5,5), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2203,7 +2242,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-5,3),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2213,7 +2252,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-0.5,0.5),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2223,20 +2262,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-0.5,0.5),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (random coeff):
-- n=1000, k=22, R=9, pi=0.3, mu=0.8
-- n=1000, k=22, R=9, pi=0.3, mu=1.6
-- n=1000, k=22, R=9, pi=0.8, mu=0.8
-- n=1000, k=22, R=9, pi=0.8, mu=1.6
+- n=1000, k=22, R=7, pi=0.3, mu=0.8
+- n=1000, k=22, R=7, pi=0.3, mu=1.6
+- n=1000, k=22, R=7, pi=0.8, mu=0.8
+- n=1000, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="redundant_random"
 n=1000
 k=22
@@ -2246,7 +2285,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,2), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2256,7 +2295,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,4),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2266,7 +2305,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,1),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2276,20 +2315,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,200),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (random coeff):
-- n=500, k=22, R=9, pi=0.3, mu=0.8
-- n=500, k=22, R=9, pi=0.3, mu=1.6
-- n=500, k=22, R=9, pi=0.8, mu=0.8
-- n=500, k=22, R=9, pi=0.8, mu=1.6
+- n=500, k=22, R=7, pi=0.3, mu=0.8
+- n=500, k=22, R=7, pi=0.3, mu=1.6
+- n=500, k=22, R=7, pi=0.8, mu=0.8
+- n=500, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="redundant_random"
 k=22
 n=500
@@ -2299,7 +2338,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,4), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2309,7 +2348,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-2,1),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2319,7 +2358,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,1),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2329,20 +2368,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,1),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 Main text (phylo coeff):
-- n=1000, k=8, R=9, pi=0.3, mu=0.8
-- n=1000, k=8, R=9, pi=0.3, mu=1.6
-- n=1000, k=8, R=9, pi=0.8, mu=0.8
-- n=1000, k=8, R=9, pi=0.8, mu=1.6
+- n=1000, k=8, R=7, pi=0.3, mu=0.8
+- n=1000, k=8, R=7, pi=0.3, mu=1.6
+- n=1000, k=8, R=7, pi=0.8, mu=0.8
+- n=1000, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="redundant_phylo"
 n=1000
 k=8
@@ -2352,7 +2391,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,3), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2362,7 +2401,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-6,3),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2372,7 +2411,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-3,3),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2382,20 +2421,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,3),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 Main text (phylo coeff):
-- n=500, k=8, R=9, pi=0.3, mu=0.8
-- n=500, k=8, R=9, pi=0.3, mu=1.6
-- n=500, k=8, R=9, pi=0.8, mu=0.8
-- n=500, k=8, R=9, pi=0.8, mu=1.6
+- n=500, k=8, R=7, pi=0.3, mu=0.8
+- n=500, k=8, R=7, pi=0.3, mu=1.6
+- n=500, k=8, R=7, pi=0.8, mu=0.8
+- n=500, k=8, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="redundant_phylo"
 k=8
 n=500
@@ -2405,7 +2444,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-10,12), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2415,7 +2454,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-10,12),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2425,7 +2464,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,1),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2435,20 +2474,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,1),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (phylo coeff):
-- n=1000, k=22, R=9, pi=0.3, mu=0.8
-- n=1000, k=22, R=9, pi=0.3, mu=1.6
-- n=1000, k=22, R=9, pi=0.8, mu=0.8
-- n=1000, k=22, R=9, pi=0.8, mu=1.6
+- n=1000, k=22, R=7, pi=0.3, mu=0.8
+- n=1000, k=22, R=7, pi=0.3, mu=1.6
+- n=1000, k=22, R=7, pi=0.8, mu=0.8
+- n=1000, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="redundant_phylo"
 n=1000
 k=22
@@ -2458,7 +2497,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-4,4), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2468,7 +2507,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-5,5),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2478,7 +2517,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,1),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2488,20 +2527,20 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,200),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
 ```
 
 SM (phylo coeff):
-- n=500, k=22, R=9, pi=0.3, mu=0.8
-- n=500, k=22, R=9, pi=0.3, mu=1.6
-- n=500, k=22, R=9, pi=0.8, mu=0.8
-- n=500, k=22, R=9, pi=0.8, mu=1.6
+- n=500, k=22, R=7, pi=0.3, mu=0.8
+- n=500, k=22, R=7, pi=0.3, mu=1.6
+- n=500, k=22, R=7, pi=0.8, mu=0.8
+- n=500, k=22, R=7, pi=0.8, mu=1.6
 
 ```{r}
-R=9
+R=7
 simtype="redundant_phylo"
 k=22
 n=500
@@ -2511,7 +2550,7 @@ pi=0.3
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-13,11), simtype=simtype,edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2521,7 +2560,7 @@ pi=0.3
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-11,12),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2531,7 +2570,7 @@ pi=0.8
 mu=0.8
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,1),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2541,7 +2580,7 @@ pi=0.8
 mu=1.6
 plt = plot.intervals(simnum,pi,mu,R,nu,k,path,n,c(-1,1),simtype=simtype, edgemu=edgemu)
 
-plotname = paste0("plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-intervals-n",n,"-k",k,"-R",R,"-pi",pi,"-mu",mu,"-",simtype,".pdf")
 pdf(plotname,height=10, width=4)
 plt
 dev.off()
@@ -2551,11 +2590,11 @@ dev.off()
 
 Fixed parameters for all plots:
 ```{r}
-path = "BayesianNetworkRegression-googledrive/realistic_simulations/results/"
+path = "../BayesianNetworkRegression-googledrive/realistic_simulations/results-R7/"
 mu = c(0.8,1.6)
 pi = c(0.3,0.8)
 k = c(8,22)
-R = 9
+R = 7
 nu=10
 simnum = 2
 edgemu=0.4
@@ -2569,7 +2608,7 @@ Additive, random
 simtype="additive_random"
 n = 500
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n,simtype=simtype, edgemu=edgemu, xaxis=FALSE, title=TRUE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2577,7 +2616,7 @@ dev.off()
 
 n = 1000
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, simtype=simtype, edgemu=edgemu, xaxis=FALSE, title=TRUE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2592,7 +2631,7 @@ Interactive, random
 simtype="interaction_random"
 n = 500
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n,simtype=simtype, edgemu=edgemu, xaxis=FALSE, title=FALSE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2600,7 +2639,7 @@ dev.off()
 
 n = 1000
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, simtype=simtype, edgemu=edgemu, xaxis=FALSE, title=FALSE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2615,7 +2654,7 @@ Redundancy, random
 simtype="redundant_random"
 n = 500
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n,simtype=simtype, edgemu=edgemu, xaxis=TRUE, title=FALSE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2623,7 +2662,7 @@ dev.off()
 
 n = 1000
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, simtype=simtype, edgemu=edgemu, xaxis=TRUE, title=FALSE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2638,7 +2677,7 @@ Additive, phylo
 simtype="additive_phylo"
 n = 500
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n,simtype=simtype, edgemu=edgemu, xaxis=FALSE, title=TRUE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2646,7 +2685,7 @@ dev.off()
 
 n = 1000
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, simtype=simtype, edgemu=edgemu, xaxis=FALSE, title=TRUE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2661,7 +2700,7 @@ Interactive, phylo
 simtype="interaction_phylo"
 n = 500
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n,simtype=simtype, edgemu=edgemu, xaxis=FALSE, title=FALSE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2669,7 +2708,7 @@ dev.off()
 
 n = 1000
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, simtype=simtype, edgemu=edgemu, xaxis=FALSE, title=FALSE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2684,7 +2723,7 @@ Redundancy, phylo
 simtype="redundant_phylo"
 n = 500
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n,simtype=simtype, edgemu=edgemu, xaxis=TRUE, title=FALSE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
@@ -2692,7 +2731,7 @@ dev.off()
 
 n = 1000
 plt = plot.false.pos.neg(simnum,pi,mu,R,nu,k,path,n, simtype=simtype, edgemu=edgemu, xaxis=TRUE, title=FALSE)
-plotname = paste0("plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
+plotname = paste0("../plots/plot-rates-n",n,"-R",R,"-",simtype,".pdf")
 
 pdf(plotname,height=6, width=7)
 plt
