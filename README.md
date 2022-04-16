@@ -19,5 +19,14 @@ simulation/generate_realistic_sims.sh [SAMPLESIZE]
 
 where \[SAMPLESIZE\] is the number of samples to generate.
 
+For each combination of μ,π,number of microbes, simulation type, and sample size five files are generated in the following format:
+
+
+`R=9_edge_mu=0.4_mu=[MU]_n_microbes=[K]_nu=10_out=bs_pi=[PI]_samplesize=[SAMPLESIZE]_simnum=2_type=[SIMTYPE].csv`
+`R=9_edge_mu=0.4_mu=[MU]_n_microbes=[K]_nu=10_out=main_effects_pi=[PI]_samplesize=[SAMPLESIZE]_simnum=2_type=[SIMTYPE].csv`
+`R=9_edge_mu=0.4_mu=[MU]_n_microbes=[K]_nu=10_out=ms_pi=[PI]_samplesize=[SAMPLESIZE]_simnum=2_type=[SIMTYPE].csv`
+`R=9_edge_mu=0.4_mu=[MU]_n_microbes=[K]_nu=10_out=xis_pi=[PI]_samplesize=[SAMPLESIZE]_simnum=2_type=[SIMTYPE].csv`
+`R=9_edge_mu=0.4_mu=[MU]_n_microbes=[K]_nu=10_out=XYs_pi=[PI]_samplesize=[SAMPLESIZE]_simnum=2_type=[SIMTYPE].csv`
+
 ### Additional materials
 The `additional_materials` directory contains information used for testing, as well as old implementations of [BayesianNetworkRegression.jl](https://github.com/samozm/BayesianNetworkRegression.jl).
