@@ -82,7 +82,7 @@ function sim_one_case(case,nburn,nsamp)
     println("")
 
     tick()
-    res = GenerateSamples!(X, y, R, nburn=nburn,nsamples=nsamp, V = 20, aΔ=1.0, bΔ=1.0,ν=10,ι=1.0,ζ=1.0,x_transform=false,in_seq=true,num_chains=1)
+    res = Fit!(X, y, R, nburn=nburn,nsamples=nsamp, V = 20, aΔ=1.0, bΔ=1.0,ν=10,ι=1.0,ζ=1.0,x_transform=false,in_seq=true,num_chains=1)
     tock()
     state = res.state
 
