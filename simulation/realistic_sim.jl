@@ -79,24 +79,29 @@ function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng)
 
     @rput t
     @rput seed
-    R"set.seed(seed);source('src/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree$tree); tree_str <- tree$tree_str"
+    R"set.seed(seed);source('additional_materials/old-src/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree$tree); tree_str <- tree$tree_str"
     tree = @rget tree_str
     A_base = @rget A
+
+    for i in 1:size(A_base,1)
+        A_base[i,i] = 1
+    end
+
 
     ξ = rand(rng,Bernoulli(πₑ),t)
 
     type_arr = split(type,"_")
 
     # μₑ + πₑ
-    L_dict = Dict(1.1 => 1,  1.6 => 14, 1.9 => 1.4, 2.4 => 15)
+    L_dict = Dict(1.1 => 3,  1.6 => 22, 1.9 => 7, 2.4 => 30)
 
     if type_arr[2] == "phylo"
         # generate C (main effects)
         tree_obj = readTopology(tree)
-        trait_params = ParamsBM(μₛ,σₛ)
+        trait_params = ParamsBM(μₑ,σₛ)
         tree_sim = simulate(tree_obj, trait_params)
         C = tree_sim[:Tips]
-        B = diagm(C)
+        B = diagm(C) .* ξ
 
         if type_arr[1] == "additive"
             return generate_yAm(ξ,B,t,k,n,A_base,rng)
@@ -113,7 +118,7 @@ function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng)
     elseif type_arr[2] == "random"
         # generate C (main effects)
         C = rand(rng,Normal(μₑ,1),t)
-        B = diagm(C)
+        B = diagm(C) .* ξ
 
         if type_arr[1] == "additive"
             return generate_yAm(ξ,B,t,k,n,A_base,rng)
