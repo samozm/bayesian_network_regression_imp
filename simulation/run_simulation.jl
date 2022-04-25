@@ -1,26 +1,11 @@
-using Distributed
-@everywhere using DrWatson
-@everywhere begin 
-    @quickactivate
-    using Distributed
-    using LinearAlgebra
-    using Base: Bool, Float16, Int16
-    using CSV,ArgParse,TickTock
-    using ProfileView, Traceur
-    #using BayesianNetworkRegression
+using LinearAlgebra
 
-    using DataFrames: Vector
-    using Core: Typeof
-    using Base: Float64
-    using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter
-    using StaticArrays,TypedTables
-    using BayesianNetworkRegression
-    using Random, LinearAlgebra
-    using Distributions
-    using BenchmarkTools
-    using Distributed
-    using RCall
-end
+using CSV,ArgParse
+
+using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
+using StaticArrays,TypedTables
+using BayesianNetworkRegression,DrWatson,MCMCDiagnosticTools,JLD2
+#include("../BayesianNetworkRegression.jl/src/gelmandiag.jl")
 
 function parse_CL_args()
     args = ArgParseSettings()
@@ -28,11 +13,11 @@ function parse_CL_args()
     "--nburn", "-b"
         help="Number of burn-in Gibbs samples to take"
         arg_type = Int
-        default = 30000 #120000
+        default = 120000
     "--nsamp", "-a"
         help="Number of Gibbs samples to keep (after burn-in)"
         arg_type = Int
-        default = 20000 #40000
+        default = 40000
     "--simnum", "-n"
         help="which simulation to run"
         arg_type = Int
@@ -53,9 +38,6 @@ function parse_CL_args()
         help = "R value, the dimension of the latent space (relates to filename)"
         arg_type = Int
         default = 5
-    "--juliacon", "-j"
-        help = "flag indicating output should go to juliacon folder"
-        action = :store_true
     "--seed", "-s"
         help = "random seed to use for simulations"
         arg_type = Int
@@ -75,6 +57,9 @@ function parse_CL_args()
         help = "sample size (relates to filename)"
         arg_type = Int
         default = 100
+    "--timeout", "-t"
+        help = "flag indicating time should be saved"
+        action = :store_true
     end
     return parse_args(args)
 end
@@ -84,119 +69,103 @@ function main()
     nburn = parsed_CL_args["nburn"]
     nsamp = parsed_CL_args["nsamp"]
     simnum = parsed_CL_args["simnum"]
-    jcon = parsed_CL_args["juliacon"]
     μₛ = parsed_CL_args["mean"]
     πₛ = parsed_CL_args["pi"]
     R = parsed_CL_args["r"]
     k = parsed_CL_args["samptaxa"]
     ν = parsed_CL_args["nu"]
     seed = parsed_CL_args["seed"]
-    type = parsed_CL_args["simtype"]
+    typ = parsed_CL_args["simtype"]
     edge_μ = parsed_CL_args["edgemean"]
     sampsize = parsed_CL_args["samplesize"]
+    tmot = parsed_CL_args["timeout"]
     Random.seed!(seed)
 
-    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type,edge_μ,sampsize,seed)
+    run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,typ,edge_μ,sampsize,seed,tmot)
 end
 
-function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,jcon,type="",edge_μ=0.0,sampsize=100,seed=nothing)
+function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,typ="",edge_μ=0.0,sampsize=100,seed=nothing,tmot=false)
     loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis","samplesize"=>sampsize)
     simtypes = Dict(1 => "unrealistic", 2 => "realistic")
     if simtypes[simnum] == "realistic"
-        loadinfo["type"] = type
+        loadinfo["type"] = typ
         loadinfo["edge_mu"] = edge_μ
-    end
-    results = sim_one_case(nburn,nsamp,loadinfo,jcon,simtypes,simnum,seed,R=R,ν=ν)
-    γ  = results[1]
-    γ₀ = results[2]
-    MSE = results[3] 
-    MSEy = results[4] 
-    ξ = results[5] 
-    μ = results[6] 
-    psrf = results[7]
 
-    loadinfo["out"] = "xis"
-    if jcon
-        ξ_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
-    else
-        ξ_in = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
-
-        step = Int(floor(nsamp/100))
-        if step==0
-            step=1
+        if μₛ==0.8 && πₛ==0.3 && k==8 && (typ=="additive_random" || typ=="additive_phylo") && sampsize==1000
+            nburn = 200000
+        elseif μₛ==1.6 && πₛ==0.8 && k==22 && (typ=="redundant_random" || typ=="redundant_phylo") && sampsize==500
+            nburn = 160000
+        elseif μₛ==0.8 && πₛ==0.3 && k==22 && typ=="redundant_phylo" && sampsize==500
+            nburn = 200000
+        elseif μₛ==0.8 && πₛ==0.3 && k==22 && typ=="redundant_phylo" && sampsize==1000
+            nburn = 300000
         end
     end
-
-    loadinfo["R"] = R
-    loadinfo["nu"] = ν
-    output_results(γ[:,:,1],γ₀,MSE,MSEy,mean(ξ,dims=1)[1,:,1],ξ_in,μ,psrf,loadinfo,jcon,simtypes,simnum)
+    
+    sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum,seed=seed,η=1.01,ζ=1.0,ι=1.0,R=R,aΔ=1.0,bΔ=1.0,ν=ν,tmot=tmot)
 end
 
-function sim_one_case(nburn,nsamp,loadinfo,jcon::Bool,simtypes,simnum,seed;η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10)
+function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10,tmot=false)
     loadinfo["out"] = "XYs"
-    if jcon
-        data_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
+    #data_in = DataFrame(CSV.File(projectdir(simtypes[simnum],"data",savename(loadinfo,"csv",digits=1))))
+    data_in = DataFrame(CSV.File(string(simtypes[simnum],"/data/",savename(loadinfo,"csv",digits=1))))
 
-        loadinfo["out"] = "bs"
-        b_in = DataFrame(CSV.File(projectdir("juliacon","data",savename(loadinfo,"csv",digits=1))))
-        B₀ = convert(Array{Float64,1},b_in[!,:B])
-    else
-        data_in = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
+        
 
-        loadinfo["out"] = "bs"
-        b_in = DataFrame(CSV.File(datadir(joinpath("simulation",simtypes[simnum]),savename(loadinfo,"csv",digits=1))))
-        B₀ = convert(Array{Float64,1},b_in[!,:B])
-    end
-    #X = convert(Matrix,data_in[:,names(data_in,Not("y"))])
     X = Matrix(data_in[:,names(data_in,Not("y"))])
     y = SVector{size(X,1)}(data_in[:,:y])
 
     q = size(X,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
     
-    num_chains = 1
+    try 
+       @show size(X), size(y), R, η, nburn,nsamp, V, aΔ, bΔ,ν,ι,ζ,num_chains, seed
+    catch
+    end 
 
-    tick()
-    #τ², u, ξ, γ, D, θ, Δ, M, μ, Λ, πᵥ = BayesNet(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V_in = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false)
-    res = GenerateSamples!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, V = V, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=num_chains,seed=seed,in_seq=true)
-    tock()
+    tm=@elapsed result = Fit!(X, y, R, η=η, V=V, nburn=nburn,nsamples=nsamp, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=num_chains,seed=seed,in_seq=true,full_results=false)
+    
+    loadinfo["out"] = "bs"
+    b_in = DataFrame(CSV.File(string(simtypes[simnum],"/data/",savename(loadinfo,"csv",digits=1))))
+    B₀ = convert(Array{Float64,1},b_in[!,:B])
 
-    result = res.state
-    #γ_n = hcat(result.Gammas...)
+    loadinfo["out"] = "xis"
 
-    γ_n2 = mean(result.γ[nburn+1:nburn+nsamp,:,:],dims=1)
+    ξ_in = DataFrame(CSV.File(string(simtypes[simnum],"/data/",savename(loadinfo,"csv",digits=1))))
+
+    loadinfo["R"] = R
+    loadinfo["nu"] = ν
+
+    γ_n2 = mean(result.state.γ[:,:,:],dims=1)
     γ₀ = B₀
     MSE = 0
-    for i in 1:1:size(γ_n2,2)
+
+    for i in 1:size(γ_n2,2)
         MSE = MSE + (γ_n2[i] - γ₀[i])^2
     end
     MSE = MSE * (2/(V*(V-1)))
 
     n = size(y,1)
     y_pred = zeros(n)
-    μ_post = mean(result.μ[nburn+1:nburn+nsamp,1,1])
+    μ_post = mean(result.state.μ[:,1,1])
     for i in 1:n
         y_pred[i] = μ_post + sum(γ_n2[1,:,1] .* X[i,:])
     end
     MSEy = sum((y - y_pred).^2)/n
-
-    #result2 = res.states[2]
-    #γ_n = hcat(result.Gammas...)
-
-    #γ_n22 = mean(result2.γ[nburn+1:nburn+nsamp,:,:],dims=1)
-    #γ2₀ = B₀
-    #MSE2 = 0
-    #for i in 1:190
-    #    MSE2 = MSE2 + (γ_n22[i] - γ2₀[i])^2
-    #end
-    #MSE2 = MSE2 * (2/(V*(V-1)))
-    #show(stdout,"text/plain",DataFrame(MSE2=MSE2))
-    println("")
-
-    return (result.γ[nburn+1:nburn+nsamp,:,:],γ₀,MSE,MSEy,result.ξ[nburn+1:nburn+nsamp,:,:],result.μ[nburn+1:nburn+nsamp,1,1],res.psrf)
+    output_results(result.state.γ, γ₀, MSE, MSEy,mean(result.state.ξ,dims=1)[1,:,1],ξ_in,result.state.μ[:,1,1],result.psrf,loadinfo,simtypes,simnum)
+    time_df = DataFrame(time=tm)
+    time_df[:,"pi"] .= loadinfo["pi"]
+    time_df[:,"mu"] .= loadinfo["mu"]
+    time_df[:,"R"] .= loadinfo["R"]
+    time_df[:,"n_microbes"] .= loadinfo["n_microbes"]
+    time_df[:,"nu"] .= loadinfo["nu"]
+    loadinfo["out"] = "time"
+    CSV.write(string(savename(loadinfo,"csv",digits=1)),time_df)
 end
 
-function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,MSEy,ξ::AbstractArray{U},ξ⁰::DataFrame,μ,psrf,saveinfo,jcon::Bool,simtypes,simnum,realistic_type="",μₛ=0.0) where {S,T,U}
+
+function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::AbstractFloat,MSEy,ξ::AbstractArray{U},
+    ξ⁰::DataFrame,μ,psrf,saveinfo,simtypes,simnum,realistic_type="",μₛ=0.0) where {S,T,U}
     q = size(γ,2)
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
@@ -279,29 +248,28 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
         gam[:,"edge_mu"] .= μₛ
     end
 
-    if jcon
-        #TODO better way of adding suffix
-        saveinfo["out"] = "nodes"
-        CSV.write(projectdir("juliacon","results",savename(saveinfo,"csv",digits=1)),output)
-        saveinfo["out"] = "edges"
-        CSV.write(projectdir("juliacon","results",savename(saveinfo,"csv",digits=1)),gam)
-        saveinfo["out"] = "MSE"
-        CSV.write(projectdir("juliacon","results",savename(saveinfo,"csv",digits=1)),mse_df)
-    else
-        print("out to ")
-        println(projectdir("results","simulation",simtypes[simnum]))
-        saveinfo["out"] = "nodes"
-        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),output)
-        saveinfo["out"] = "edges"
-        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),gam)
-        saveinfo["out"] = "MSE"
-        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),mse_df)
-        saveinfo["out"] = "mu"
-        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),mu_df)
-        saveinfo["out"] = "psrf"
-        CSV.write(projectdir("results","simulation",simtypes[simnum],savename(saveinfo,"csv",digits=1)),psrf)
-    end
+    psrf_df = DataFrame(psrf)
+    
+    @show psrf_df
+
+    psrf_df[:,"mean_xi"] .= mean(psrf.ξ[1:V])
+    psrf_df[:,"max_xi"] .= max(psrf.ξ[1:V]...)
+    psrf_df[:,"mean_gamma"] .= mean(psrf.γ[1:q])
+    psrf_df[:,"max_gamma"] .= max(psrf.γ[1:q]...)
+
+    type = simtypes[simnum]
+    saveinfo["out"] = "nodes"
+    CSV.write(string(type,"-results/",savename(saveinfo,"csv",digits=1)),output)
+    saveinfo["out"] = "edges"
+    CSV.write(string(type,"-results/",savename(saveinfo,"csv",digits=1)),gam)
+    saveinfo["out"] = "MSE"
+    CSV.write(string(type,"-results/",savename(saveinfo,"csv",digits=1)),mse_df)
+    saveinfo["out"] = "mu"
+    CSV.write(string(type,"-results/",savename(saveinfo,"csv",digits=1)),mu_df)
+    saveinfo["out"] = "psrf"
+    CSV.write(string(type,"-results/",savename(saveinfo,"csv",digits=1)),psrf_df)
+    
 end
 
-#@profview run_case_and_output(100,100,1,0.8,0.3,9,22,10,false,"",0.0,500)
+
 main()

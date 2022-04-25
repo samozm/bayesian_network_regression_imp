@@ -1,5 +1,7 @@
 #### Simulations and other relevant materials for "Identifying microbial drivers in biological phenotypes with a Bayesian Network Regression model".
 
+All code is meant to be used with [BayesianNetworkRegression.jl](https://github.com/samozm/BayesianNetworkRegression.jl).
+
 ### Simulation
 All files for generating simulations are in the `simulation/` directory.
 
@@ -30,3 +32,5 @@ For each combination of μ,π,number of microbes, simulation type, and sample si
 
 ### Additional materials
 The `additional_materials` directory contains information used for testing, as well as old implementations of [BayesianNetworkRegression.jl](https://github.com/samozm/BayesianNetworkRegression.jl).
+
+`simulation/run_simulation.jl` is a julia script which will run the package.
