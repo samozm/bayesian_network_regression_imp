@@ -10,6 +10,9 @@ function parse_CL_args()
         help = "random seed to use for simulations"
         arg_type = Int
         default = 123
+    "--gseed", "-g"
+        help = "random seed used to generate gaussian noise. different from seed so that the same seed can be used between simulation types but get different gaussian noise"
+        arg_type = Int
     "--tottaxa", "-t"
         help = "number of microbial taxa to generate"
         arg_type = Int
@@ -49,15 +52,22 @@ function main()
     μₑ = args_in["mean"]
     πₑ = args_in["pi"]
     type = args_in["simtype"]
+    gseed = args_in["gseed"]
+
+    generate_real(t,k,n,seed,μₑ,πₑ,type,gseed)
+end
+
+function generate_real(t,k,n,seed,μₑ,πₑ,type,gseed)
     q = floor(Int,t*(t-1)/2)
 
     Random.seed!(seed)
     rng = MersenneTwister(seed)
+    gauss_rng = MersenneTwister(gseed)
 
     μₛ = 0.4
     σₛ = 1.0
 
-    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng)#,0,0.25)
+    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng,gauss_rng)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
@@ -75,7 +85,7 @@ function main()
 
 end
 
-function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng)
+function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng,gauss_rng)
 
     @rput t
     @rput seed
@@ -104,15 +114,15 @@ function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng)
         B = diagm(C) .* ξ
 
         if type_arr[1] == "additive"
-            return generate_yAm(ξ,B,t,k,n,A_base,rng)
+            return generate_yAm(ξ,B,t,k,n,A_base,rng,gauss_rng)
         end
 
         fill_B(B,ξ,t,μₛ,σₛ,rng)
 
         if type_arr[1] == "interaction"
-            return generate_yAm(ξ,B,t,k,n,A_base,rng)
+            return generate_yAm(ξ,B,t,k,n,A_base,rng,gauss_rng)
         elseif type_arr[1] == "redundant" 
-            return generate_yAm(ξ,B,t,k,n,A_base,rng,true,L=L_dict[round(μₑ+πₑ,digits=1)])
+            return generate_yAm(ξ,B,t,k,n,A_base,rng,gauss_rng,true,L=L_dict[round(μₑ+πₑ,digits=1)])
         end
 
     elseif type_arr[2] == "random"
@@ -121,21 +131,21 @@ function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng)
         B = diagm(C) .* ξ
 
         if type_arr[1] == "additive"
-            return generate_yAm(ξ,B,t,k,n,A_base,rng)
+            return generate_yAm(ξ,B,t,k,n,A_base,rng,gauss_rng)
         end
 
         fill_B(B,ξ,t,μₛ,σₛ,rng)
 
         if type_arr[1] == "interaction" 
-            return generate_yAm(ξ,B,t,k,n,A_base,rng)
+            return generate_yAm(ξ,B,t,k,n,A_base,rng,gauss_rng)
         elseif type_arr[1] == "redundant" 
-            return generate_yAm(ξ,B,t,k,n,A_base,rng,true,L=L_dict[round(μₑ+πₑ,digits=1)])
+            return generate_yAm(ξ,B,t,k,n,A_base,rng,gauss_rng,true,L=L_dict[round(μₑ+πₑ,digits=1)])
         end
     end
 end
 
 
-function generate_yAm(ξ,B,t,k,n,A_base,rng,redundant=false;L=1)
+function generate_yAm(ξ,B,t,k,n,A_base,rng,gauss_rng,redundant=false;L=1)
     y = zeros(n)
     m = [zeros(t)]
     A = [zeros(t,t)]
@@ -152,9 +162,9 @@ function generate_yAm(ξ,B,t,k,n,A_base,rng,redundant=false;L=1)
         m[i][chosen] .= 1
        
         if redundant
-            y[i] = min(tr(transpose(B) * A[i]) + rand(rng,Normal(0,1)),L)
+            y[i] = min(tr(transpose(B) * A[i]) + rand(gauss_rng,Normal(0,1)),L)
         else
-            y[i] = tr(transpose(B) * A[i]) + rand(rng,Normal(0,1))
+            y[i] = tr(transpose(B) * A[i]) + rand(gauss_rng,Normal(0,1))
         end
         if i != n
             append!(A,[zeros(t,t)])
@@ -165,4 +175,4 @@ function generate_yAm(ξ,B,t,k,n,A_base,rng,redundant=false;L=1)
     return ξ,B,y,A,m
 end
 
-main()
+#main()

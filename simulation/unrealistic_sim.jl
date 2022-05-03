@@ -9,6 +9,9 @@ function parse_CL_args()
         help = "random seed to use for simulations"
         arg_type = Int
         default = 123
+    "--gseed", "-g"
+        help = "random seed used to generate gaussian noise. different from seed so that the same seed can be used between simulation types but get different gaussian noise"
+        arg_type = Int
     "--tottaxa", "-t"
         help = "number of microbial taxa to generate"
         arg_type = Int
@@ -47,13 +50,22 @@ function main()
     μₛ = args_in["mean"]
     πₛ = args_in["pi"]
     jcon = args_in["juliacon"]
+    gseed = args_in["gseed"]
+
+    generate_unreal(t,k,n,seed,μₛ,πₛ,jcon,gseed)
+end
+
+function generate_unreal(t,k,n,seed,μₛ,πₛ,jcon,gseed)
+
     q = floor(Int,t*(t-1)/2)
 
     Random.seed!(seed)
     rng = MersenneTwister(seed)
+    gauss_rng = MersenneTwister(gseed)
+
     B,ξ = generate_Bs(t,rng,μₛ=μₛ,πₛ=πₛ)
 
-    y,A,m = generate_unrealistic_data(B,t,k,n,seed,rng)#,0,0.25)
+    y,A,m = generate_unrealistic_data(B,t,k,n,seed,gauss_rng)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
@@ -78,16 +90,16 @@ function generate_Bs(t,rng; μₛ=0.8,σₛ=1,πₛ=0.1)
     return B,ξ
 end
 
-function generate_unrealistic_data(B,t,k,n,seed,rng)
+function generate_unrealistic_data(B,t,k,n,seed,gauss_rng)
     y = zeros(n)
     m = [zeros(t)]
     A = [zeros(t,t)]
     A_base = zeros(t,t)
     @rput t
     @rput seed
-    R"set.seed(seed);source('src/sim_trees.R');inv_dist <- sim_tree_dists(t)"
+    R"set.seed(seed);source('additional_materials/old-src/sim_trees.R');inv_dist <- sim_tree_dists(t)"
     A_base = @rget inv_dist
-    ϵ = rand(rng,Normal(0,1),n)
+    ϵ = rand(gauss_rng,Normal(0,1),n)
 
     for i in 1:n
         chosen = sort(sample(1:t,k,replace=false))
@@ -108,4 +120,4 @@ function generate_unrealistic_data(B,t,k,n,seed,rng)
     return y,A,m,ϵ
 end
 
-main()
+#main()
