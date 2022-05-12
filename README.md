@@ -2,6 +2,21 @@
 
 All code is meant to be used with [BayesianNetworkRegression.jl](https://github.com/samozm/BayesianNetworkRegression.jl).
 
+To download the package: 
+
+1. Click the link above
+
+2. [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) the repository to your local machine.
+
+3. Open julia and enter package mode by pressing `]`
+
+4. run the following command: 
+```
+dev "PATH/BayesianNetworkRegression.jl"
+```
+
+where PATH is the path to the BayesianNetworkRegression.jl depository on your machine.
+
 ### Simulation
 All files for generating simulations are in the `simulation/` directory.
 
