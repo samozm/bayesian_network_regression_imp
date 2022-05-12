@@ -227,6 +227,8 @@ dev.off()
 - n=500, k=15, R=5
 - n=100, k=15, R=9
 - n=500, k=15, R=9
+- n=100, k=15, R=7
+- n=500, k=15, R=7
 
 ```{r}
 k=15
@@ -249,6 +251,15 @@ pdf(plotname,height=6, width=7)
 plt
 dev.off()
 
+n=500
+R=7
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n)
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
 n=100
 R=5
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n,yaxis=FALSE)
@@ -260,6 +271,15 @@ dev.off()
 
 n=100
 R=9
+plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, yaxis=FALSE)
+plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
+
+pdf(plotname,height=6, width=7)
+plt
+dev.off()
+
+n=100
+R=7
 plt = plot.nodes(pi,mu,path,simnum,R,nu,k,n, yaxis=FALSE)
 plotname = paste0("../plots/plot-nodes-n",n,"-k",k,"-R",R,".pdf")
 
