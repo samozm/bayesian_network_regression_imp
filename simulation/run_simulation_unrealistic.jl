@@ -33,21 +33,17 @@ function main()
                 for k in ks
                     for sampsize in sampsizes
                         if (μₛ==1.6 && πₛ==0.8 && k==22 && sampsize==100 && R==9) || 
-                           (μₛ==0.8 && πₛ==0.3 && k==22 && sampsize==500 && R==9) ||
-                           (μₛ==0.8 && πₛ==0.3 && k==22 && sampsize==500 && R==9) 
+                           (μₛ==0.8 && πₛ==0.3 && k==22 && sampsize==500 && R==9)
                             nburn = 40000
                         elseif (μₛ==0.8 && πₛ==0.3 && k==22 && sampsize==100 && R==9) ||
                                (μₛ==1.6 && πₛ==0.0 && k==22 && sampsize==500 && R==9) ||
-                               (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==7) || 
-                               (μₛ==1.6 && πₛ==0.0 && k==22 && sampsize==500 && R==9) || 
+                               (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==7) ||  
                                (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==100 && R==7) || 
                                (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==100 && R==9) ||
                                (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==100 && R==5)
                             nburn = 100000
                         elseif (μₛ==1.6 && πₛ==0.3 && k==8  && sampsize==100 && R==9)
                             nburn = 120000
-                        else
-                            continue
                         end
                         run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,sampsize,seed,tmot)
                         nburn = 30000
