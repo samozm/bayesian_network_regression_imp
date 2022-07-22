@@ -1,4 +1,4 @@
-occursin("Intel",Sys.cpu_info()[1].model) ? (using MKL) : (using LinearAlgebra)
+using LinearAlgebra
 
 using CSV,ArgParse
 
@@ -7,8 +7,7 @@ using StaticArrays,TypedTables
 using BayesianNetworkRegression,DrWatson,MCMCDiagnosticTools,JLD2,Distributed
 #include("../BayesianNetworkRegression.jl/src/gelmandiag.jl")
 
-addprocs(3,exeflags="--optimize=0")
-#addprocs(3)
+addprocs(3,exeflags="-O0")
 
 @everywhere begin
     using BayesianNetworkRegression,CSV,DataFrames,StaticArrays
@@ -16,48 +15,33 @@ addprocs(3,exeflags="--optimize=0")
 end
 
 function main()
-    nburn = 30000
-    nsamp = 20000
-    simnum = 1
+    nburn = 120000
+    nsamp = 40000
+    simnum = 2
     μₛs = [0.8,1.6]
-    πₛs = [0.0,0.3,0.8]
-    Rs = [5,7,9]
+    πₛs = [0.3,0.8]
+    R = 7
+    edge_μ = 0.4
     ks = [8,15,22]
     ν = 10
     seed = 2358
-    sampsizes = [100,500]
+    sampsizes = [500,1000]
+    simtypes = ["additive_random","additive_phylo","interaction_random","interaction_phylo","redundant_random","redundant_phylo"]
     tmot = true
     Random.seed!(seed)
 
     for μₛ in μₛs
         for πₛ in πₛs
-            for R in Rs
-                for k in ks
-                    for sampsize in sampsizes
-                        if (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==5) # good
-                            nburn = 100000 #prev 30000 then 60000
-                        elseif (μₛ==1.6 && πₛ==0.0 && k==22 && sampsize==100 && R==9) # good
-                            nburn = 60000 #prev 30000
-                        elseif (μₛ==0.8 && πₛ==0.3 && k==22 && sampsize==100 && R==9) # good
-                            nburn = 80000 #prev 40000 then 60
-                        elseif (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==9) # good
-                            nburn = 100000 #prev 30000 then 40000 then 60000
-                        elseif (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==7) # good
-                            nburn = 80000 #prev 40000
-                        elseif (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==100 && R==5) ##
-                            nburn = 120000 #prev 30000 then 60000 then 80000
-                        elseif (μₛ==1.6 && πₛ==0.8 && k==22 && sampsize==100 && R==5)
-                            nburn = 200000
-                        end
-                        #=
-                        if (R == 7 && μₛ==1.6 && πₛ==0.8 && sampsize==100 && k == 8)
-                        elseif (R==7 && μₛ==0.8 && πₛ==0.8 && sampsize==100 && k == 15)
-                        else
+            for k in ks
+                for sampsize in sampsizes
+                    for typ in simtypes
+                        if μₛ==1.6 && πₛ==0.8 && k==22 && (typ=="redundant_random") && sampsize==500
+                            nburn = 60000
+                        else 
                             continue
                         end
-                        =#
-                        run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,sampsize,seed,tmot)
-                        nburn = 30000
+                        run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,typ,edge_μ,sampsize,seed,tmot)
+                        nburn = 120000
                         GC.gc()
                     end
                 end
@@ -66,12 +50,14 @@ function main()
     end
 end
 
-function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,sampsize=100,seed=nothing,tmot=false)
+function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,typ="",edge_μ=0.0,sampsize=100,seed=nothing,tmot=false)
     loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis","samplesize"=>sampsize)
     simtypes = Dict(1 => "unrealistic", 2 => "realistic")
+    loadinfo["type"] = typ
+    loadinfo["edge_mu"] = edge_μ
     
     @show nburn,nsamp
-    @show μₛ; @show πₛ; @show R; @show k; @show ν; @show sampsize
+    @show μₛ; @show πₛ; @show R; @show k; @show ν; @show sampsize; @show typ
     sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum,seed=seed,η=1.01,ζ=1.0,ι=1.0,R=R,aΔ=1.0,bΔ=1.0,ν=ν,tmot=tmot)
 end
 
@@ -88,7 +74,7 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
     V = convert(Int,(1 + sqrt(1 + 8*q))/2)
 
 
-    if simnum == 2
+    if simnum == 1
         println("wrong simnum")
     else
         @everywhere begin
@@ -112,9 +98,14 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
             y = $(y)
         end
         num_chains=3
+        purge_burn=10000
         tm=@elapsed result = Fit!(X, y, R, η=η, V=V, nburn=nburn,nsamples=nsamp, aΔ=aΔ, 
                                     bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,suppress_timer=false,
-                                    num_chains=num_chains,seed=seed,full_results=false)
+                                    num_chains=num_chains,seed=seed,full_results=false,
+                                    purge_burn=purge_burn)
+
+        nburn = purge_burn
+        
 
         loadinfo["out"] = "bs"
         b_in = DataFrame(CSV.File(string("data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
@@ -256,11 +247,9 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     
     saveinfo["out"] = "nodes"
     CSV.write(string("results/simulation/local/",type,"-results/",savename(saveinfo,"csv",digits=1)),output)
-    #CSV.write(string("../BayesianNetworkRegression.jl/test/data/",savename(saveinfo,"csv",digits=1)),output)
 
     saveinfo["out"] = "edges"
     CSV.write(string("results/simulation/local/",type,"-results/",savename(saveinfo,"csv",digits=1)),gam)
-    #CSV.write(string("../BayesianNetworkRegression.jl/test/data/",savename(saveinfo,"csv",digits=1)),gam)
 
     saveinfo["out"] = "MSE"
     CSV.write(string("results/simulation/local/",type,"-results/",savename(saveinfo,"csv",digits=1)),mse_df)
