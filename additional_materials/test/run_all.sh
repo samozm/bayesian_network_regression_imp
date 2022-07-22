@@ -32,12 +32,12 @@ else
   nsamp=$nsamp_in
 fi
 
-julia test/simulation1.jl --nburn $nburn --nsamp $nsamp
+julia additional_materials/test/simulation1.jl --nburn $nburn --nsamp $nsamp
 
-julia test/simulation2.jl -c 1 --nburn $nburn --nsamp $nsamp
+julia additional_materials/test/simulation2.jl -c 1 --nburn $nburn --nsamp $nsamp
 
-julia test/simulation2.jl -c 2 --nburn $nburn --nsamp $nsamp
+julia additional_materials/test/simulation2.jl -c 2 --nburn $nburn --nsamp $nsamp
 
-open plots/test/gamma_cis_sim1.png
-open plots/test/gamma_cis_sim2_case1.png
-open plots/test/gamma_cis_sim2_case2.png
+open additional_materials/plots/test/gamma_cis_sim1.png
+open additional_materials/plots/test/gamma_cis_sim2_case1.png
+open additional_materials/plots/test/gamma_cis_sim2_case2.png

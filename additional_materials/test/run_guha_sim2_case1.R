@@ -9,7 +9,7 @@ guha_sim2_case1 <- function(nburn=30000, nsamp=20000)
   
   y <- sim2$y
   Xmat <- data.matrix(sim2[1:190])
-  source("test/BNSP-Function.R") #### loads function 'BNSPfunc'
+  source("additional_materials/test/BNSP-Function.R") #### loads function 'BNSPfunc'
   
   #timer1 <- createTimer()
   #timer1$start("BNSPfunc")

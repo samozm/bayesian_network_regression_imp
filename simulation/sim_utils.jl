@@ -1,10 +1,10 @@
 using DrWatson,DataFrames,CSV
 
-function fill_B(B,ξ,t,μₛ,σₛ)
+function fill_B(B,ξ,t,μₛ,σₛ,rng)
     for i in 1:t
         for j in (i+1):t
             if (ξ[i] == 1 && ξ[j] == 1)
-                B[i,j] = B[j,i] = rand(Normal(μₛ,σₛ))
+                B[i,j] = B[j,i] = rand(rng,Normal(μₛ,σₛ))
             end
         end
     end

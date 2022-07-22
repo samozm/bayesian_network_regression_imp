@@ -173,6 +173,7 @@ create_node_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samp
     {
       flnm <- make.filename(inpath,simnum,i.pi,j.mu,R,nu,n_microbes,"nodes",
                             samplesize,simtype,edge_mu)
+      print(flnm)
       nodes <- rbind(nodes, read.csv(flnm))
     }
   }
@@ -190,8 +191,8 @@ create_node_plots <- function(simnum,pis,mus,R,nu,n_microbes,inpath,outpath,samp
     scale_y_continuous(position="right",breaks = c(0,0.5,1),limits=c(0,1)) + 
     facet_grid(pi ~ mu, switch="both",
               labeller = labeller(
-                mu = c(`0.8` = "mu=0.8", `1.6` = "mu=1.6"),
-                pi = c(`0` = "pi=0.0", `0.3` = "pi=0.3", `0.8` = "pi=0.8")
+                mu = c(`0.8` = "mu=0.8", `1.2` = "mu=1.2", `1.4` = "mu=1.4", `1.6` = "mu=1.6"),
+                pi = c(`0` = "pi=0.0", `0.3` = "pi=0.3", `0.5` = "pi=0.5", `0.7` = "pi=0.7", `0.8` = "pi=0.8")
               ),
               as.table = FALSE)
   if(is.null(simtype))
@@ -420,47 +421,73 @@ plot_loops <- function(simnum,pis,mus,R,nus,n_microbes,inpath,outpath,samplesize
 }
 
 # unrealistic, power, 100 samples
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-             c(100))
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5,10,15),c(10,15,20),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(100))
 #create_plots(1,c(0.3,0.8),c(0.8,1.6),c(15,15,25),c(16,17,30),c(8,15,22),
 #             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
 #             c(100))
 #create_plots(1,c(0.3,0.8),c(0.8,1.6),c(5),c(7),c(8,15,22),
 #             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
 #             c(100))
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-             c(100))
-
-# unrealistic, null, 100 samples
-create_plots(1,c("0.0"),c(0.8,1.6),c(9),c(10),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/nullsim/",
-             c(100),NULL,"nullsim_")
-
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(100))
 
 # unrealistic, power, 500 samples
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-             c(500))
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(500))
+
+# CHTC unrealistic, null, 500 samples
+# create_plots(1,c("0.0"),c(0.8,1.6),c(9),c(10),c(8,15,22),
+#             "results/simulation/chtc-unrealistic/results/","plots/simulation/chtc-unrealistic/nullsim/",
+#             c(500),NULL,"nullsim_")
+
+## CHTC UNREALISTIC 500,100 samples
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(7),c(10),c(8,15,22),
+#            "results/simulation/chtc-unrealistic-O0-R7/","results/plots/simulation/chtc-unrealistic-O0-R7/",
+#             c(500,100))
+
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+#             "results/simulation/chtc-unrealistic-O0/","results/plots/simulation/chtc-unrealistic/",
+#             c(500,100))
+
+
+## CHTC REALISTIC 500,1000 samples
+#create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),
+#             "results/simulation/chtc-realistic/results/","plots/simulation/chtc-realistic/",
+#             c(500,1000),c("additive_phylo", "additive_random", "interaction_phylo", 
+#                          "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
+
+#create_plots(2,c(0.3,0.8),c(0.8,1.6),c(7),c(10),c(8,22),
+#             "results/simulation/chtc-realistic-O0-R7/","results/plots/simulation/chtc-realistic-O0-R7/",
+#             c(500,1000),c("additive_phylo", "additive_random", "interaction_phylo", 
+#                          "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
 
 #create_plots(1,c(0.8),c("2.0"),c(9),c(10),c(8),
 #             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
 #             c(500))
 
 # unrealistic, power, 1000 samples
-create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
-             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
-             c(1000))
+#create_plots(1,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,15,22),
+#             "results/simulation/unrealistic/","plots/simulation/unrealistic/",
+#             c(1000))
 
-create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
-             "plots/simulation/realistic/",c(100),
-             c("additive_phylo", "additive_random", "interaction_phylo", 
-               "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
+#create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
+#             "plots/simulation/realistic/",c(100),
+#             c("additive_phylo", "additive_random", "interaction_phylo", 
+#               "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
 
 
-create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
-             "plots/simulation/realistic/",c(500),
-             c("additive_phylo", "additive_random", "interaction_phylo", 
-               "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
+#create_plots(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),"results/simulation/realistic/",
+#             "plots/simulation/realistic/",c(500),
+#             c("additive_phylo", "additive_random", "interaction_phylo", 
+#               "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
+
+
+### intermediate mu and pi values 
+#create_node_plots(1,c(0.3,0.5,0.7,0.8),c('1.0',1.2,1.4,1.6),9,10,22,
+#                  "results/simulation/chtc-unrealistic/","plots/simulation/chtc-unrealistic/",
+#                  c(500))
 

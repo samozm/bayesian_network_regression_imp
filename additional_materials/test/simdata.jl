@@ -1,5 +1,5 @@
 using CSV,Random,Distributions,LinearAlgebra,Printf
-include("../src/BayesNet.jl")
+include("../old-src/BayesNet.jl")
 
 
 function parse_CL_args()

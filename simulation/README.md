@@ -70,3 +70,13 @@ Realistic simulations also includes the following file:
 ## Results
 Results are in `results/simulation/[SIMTYPE]`.
 For the model run, we will use 2358 as the random seed.
+
+## Running Realistic simulations
+We used run_simulation.jl to run realistic simulations, as follows:
+
+```
+julia -O0 simulation/run_simulation.jl -n 2 -m [MU] -p [PI] -r [R] -k [k] -s 2358 -u [u] --simtype [simulation type] -e 0.4 -z [sample size]
+```
+
+## Running Unrealistic simulations
+For the unrealistic simulations `simulation/run_simulation_unrealistic.jl` handles everything, no command line arguments are needed.

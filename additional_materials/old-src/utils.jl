@@ -81,9 +81,11 @@ function gelman_rubin(X::AbstractArray{T,2}, y::AbstractVector{U}, nburn, nsampl
 
     X_new = Matrix{eltype(T)}(undef, n, q)
 
-    BayesianNetworkRegression.initialize_variables!(state1,X_new,X,1.01,1,1,9,1,1,10,V,false)
-    BayesianNetworkRegression.initialize_variables!(state2,X_new,X,1.01,1,1,9,1,1,10,V,false)
-    BayesianNetworkRegression.initialize_variables!(state3,X_new,X,1.01,1,1,9,1,1,10,V,false)
+    rng = MersenneTwister()
+
+    BayesianNetworkRegression.initialize_variables!(state1,X_new,X,1.01,1,1,9,1,1,10,V,rng,false)
+    BayesianNetworkRegression.initialize_variables!(state2,X_new,X,1.01,1,1,9,1,1,10,V,rng,false)
+    BayesianNetworkRegression.initialize_variables!(state3,X_new,X,1.01,1,1,9,1,1,10,V,rng,false)
 
     #for i in 1:q
     #    state1.γ[1,i,1] = rand(Normal(0,8))
@@ -97,9 +99,9 @@ function gelman_rubin(X::AbstractArray{T,2}, y::AbstractVector{U}, nburn, nsampl
 
     p = Progress(total-1,1)
     for i in 2:total
-        BayesianNetworkRegression.GibbsSample!(state1, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10)
-        BayesianNetworkRegression.GibbsSample!(state2, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10)
-        BayesianNetworkRegression.GibbsSample!(state3, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10)
+        BayesianNetworkRegression.GibbsSample!(state1, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10, rng)
+        BayesianNetworkRegression.GibbsSample!(state2, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10, rng)
+        BayesianNetworkRegression.GibbsSample!(state3, i, X_new, y, V, 1.01, 1, 1, 9, 1, 1, 10, rng)
         next!(p)
     end
 

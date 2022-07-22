@@ -1,25 +1,38 @@
-guha_sim2_case2 <- function(nburn  = 30000, nsamp = 20000)
+
+guha_sim1 <- function(nburn=30000,nsamp=20000)
 {
   rm(list=ls())
   #if (!require(timeR)) install.packages('timeR')
-  sim2 <- read.csv("data/test/simulation2_case2.csv")
-  sim2_b <- read.csv("data/test/simulation2_case2_bs.csv")
   
-  y <- sim2$y
-  Xmat <- data.matrix(sim2[1:190])
-  source("test/BNSP-Function.R") #### loads function 'BNSPfunc'
+  load("data/test/GuhaData.Rdata") 
+  #### Xmat (Predictor Matrix) and y (continuous response vector) are loaded.
+  Xmat <- simdata$Xmat
+  y <- simdata$y
+  ## For later comparisons, load 'true.b'
+  true.b <- simdata$true.b
+  bin.gen <- simdata$bin.gen
   
+  ####  Example values below, and what they mean...
+  ####  V <- 20 ## No. of nodes for simulations
+  ####  R <- 5 ## Maximum Dimensionality (Varies with simulation settings)
+  ####  niter <- 50000  ## No. of iterations
+  ####################################################################################
+  #### Run the model 
+  ####################################################################################
+  
+  source("additional_materials/test/BNSP-Function.R") #### loads function 'BNSPfunc'
+  
+  # i added this
+  #library(timeR)
   #timer1 <- createTimer()
   #timer1$start("BNSPfunc")
-  outlist <- BNSPfunc(Xmat = Xmat, y = y, V = 20, R = 5, niter = nburn+nsamp, a.wish=10)
+  outlist <- BNSPfunc(Xmat = Xmat, y = y, V = 20, R = 5, niter = nburn+nsamp)
   #timer1$stop("BNSPfunc", comment="outlist <- BNSPfunc (V=20,R=5,niter=50000) finished")
   #getTimer(timer1)
   #### Compute model performance (for inference) metrics.
   ####################################################################################
   ####  ***Post-Analysis Code for Simulated Scenario***      
   ####################################################################################
-  
-  true.b <- sim2_b$B
   
   burnin <- nburn
   postburn <- nsamp

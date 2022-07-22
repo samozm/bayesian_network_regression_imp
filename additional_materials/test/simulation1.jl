@@ -1,6 +1,6 @@
 using ArgParse,RCall,TickTock
 using BayesianNetworkRegression,StatsBase,DataFrames
-include("../src/plot_output.jl")
+include("../old-src/plot_output.jl")
 
 
 function parse_CL_args()
@@ -29,7 +29,7 @@ function run_samp(nburn,nsamp)
     γ₁,MSE₁,ξ₁ = sim_one_case(nburn,nsamp)
     @rput nburn
     @rput nsamp
-    R"source('test/run_guha_sim1.R')"
+    R"source('additional_materials/test/run_guha_sim1.R')"
     println("Guha:")
     tick()
     R"retlist <- guha_sim1(nburn,nsamp)"
@@ -63,7 +63,7 @@ function sim_one_case(nburn,nsamp)
 
     #region full run test
     tick()
-    res = GenerateSamples!(Z, y, R, nburn=nburn,nsamples=nsamp, V = 20, x_transform = false)
+    res = Fit!(Z, y, R, nburn=nburn,nsamples=nsamp, V = 20, x_transform = false,in_seq=true,num_chains=1)
     tock()
     state = res.state
 
