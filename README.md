@@ -59,7 +59,7 @@ sample(rng, 100:9999, )
 ### Additional materials
 The `additional_materials` directory contains information used for testing, as well as old implementations of [BayesianNetworkRegression.jl](https://github.com/samozm/BayesianNetworkRegression.jl).
 
-`simulation/run_simulation.jl` is a julia script which will run the package.
+`simulation/run_simulation_unrealistic.jl` and `simulation/run_simulation_realistic.jl` are julia scripts which will run the package. For more info, see the simulation folder ![simulation/README.md](readme).
 
 ### RESULTS
 Final results are in the following folders:
