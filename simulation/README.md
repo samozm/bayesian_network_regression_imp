@@ -16,14 +16,47 @@ bash generate_realistic_onetype.sh [TYPE] [SAMPLES]
 (to be run from the main folder `bayesian_network_regression_imp/`) generates one type of realistic simulation (of the 6 types described above). It runs the model on all combinations of pi=0.3,0.8 (density parameter of the coefficient matrix), mu=0.8,1.6 (magnitude of node coefficients), and microbes per sample=8,22 (density of adjacency matrix). 
 
 ```
-bash run_unrealistic.sh [R] [NU] [SAMPLESIZE]
+julia simulation/run_simulation_unrealistic.jl
 ```
-(to be run from the main folder `bayesian_network_regression_imp/`) takes as input R value, nu value, and number of samples where R is the dimension of the latent variable u used in the model. It runs the model on all combinations of pi=0.3,0.8 (density parameter of the coefficient matrix), mu=0.8,1.6 (magnitude of edge coefficients), and microbes per sample=8,15,22 (density of adjacency matrix) for the unrealistic simulations. 
+(to be run from the main folder `bayesian_network_regression_imp/`). It runs the model on all combinations of *pi=0.3,0.8* (density parameter of the coefficient matrix), *mu=0.8,1.6* (magnitude of edge coefficients),  *microbes per sample=8,15,22* (density of adjacency matrix), *samplesize=100,500*, and latent dimension of u *R=5,7,9* for the unrealistic simulations. 
 
 ```
-bash run_realistic.sh [R] [NU] [SIMTYPE] [SAMPLESIZE]
+julia simulation/run_simulation_unrealistic.jl
 ```
-(to be run from the main folder `bayesian_network_regression_imp/`) takes as input R value, nu value, and number of samples where R is the dimension of the latent variable u used in the model. It runs the model on all combinations of *pi=0.3,0.8* (density parameter of the coefficient matrix), *mu=0.8,1.6* (magnitude of edge coefficients), *microbes per sample=8,22* (density of adjacency matrix), and *simtype=additive_phylo, additive_random, interaction_phylo, interaction_random, redundant_phylo, redundant_random* for the realistic simulations. 
+(to be run from the main folder `bayesian_network_regression_imp/`). It runs the model on all combinations of *pi=0.3,0.8* (density parameter of the coefficient matrix), *mu=0.8,1.6* (magnitude of edge coefficients), *microbes per sample=8,22* (density of adjacency matrix), *samplesize=500,1000*, and *simtype=additive_phylo, additive_random, interaction_phylo, interaction_random, redundant_phylo, redundant_random* for the realistic simulations. 
+
+
+# Simulation
+
+## Files
+Each simulation consists of 4 files in the `data/simulation/[SIMTYPE]/` directory. Each file is named using a _-separated list of values used for the simulation (pi, mu, etc):
+- The base file (out=XYs.csv) contains the X matrices and corresponding y vectors for the simulation.
+- The b file (out=bs.csv) contains the true B matrix (column matrix) associated with the simulated data.
+- The m file (out=ms.csv) contains the m value (which shows which taxa were "sampled" for each "sample" (row in the X matrix/entry in the y vector)). A 1 indicates that taxa was included in that sample, a 0 indicates that it wasn't.
+- The xi file (out=xi) contais a vector of boolean values indicating whether each node is "turned on" - an edge has nonzero value if it connects two "turned on" nodes.
+
+Realistic simulations also includes the following file:
+- The main effects file (out=main_effects) contains the main effect for each node used to generate the results (since realistic simulations are generated using node main effects)
+
+## Results
+Results are in `results/simulation/[SIMTYPE]`.
+For the model run, we will use 2358 as the random seed.
+
+## Running Realistic simulations
+We used `run_simulation_realistic.jl` to run realistic simulations, as follows:
+
+```
+julia --optimize=0 --math-mode=ieee --check-bounds=yes simulation/run_simulation_realistic.jl
+```
+
+## Running Unrealistic simulations
+For the unrealistic simulations `simulation/run_simulation_unrealistic.jl` is run
+```
+julia --optimize=0 --math-mode=ieee --check-bounds=yes simulation/run_simulation_unrealistic.jl
+```
+
+
+## Additional (old) scripts
 
 ```
 bash run_sim1.sh
@@ -54,29 +87,3 @@ bash run_Xsamp_sim2.sh [SAMPLESIZE]
 julia run_simulation.jl
 ```
 (to be run from the main folder `bayesian_network_regression_imp/`) handles actually running the Bayesian Network Regression and outputting the results (in `results/simulation/[SIMTYPE]`, where \[SIMTYPE\] is either "realistic" or "unrealistic") into four files: one contains MSE values, one contains posterior probabilities of influence for each node (as well as whether they were truly influential), one contains the following posterior values for each edge coefficient: 2.5th %ile, 5th %ile, mean, 95%ile, and 97.5%ile (for forming credible intervals) and one contains posterior values for mu, the overall mean. Each output file also contains the values of pi, mu, nu, R, and number of microbes used for that run. See file for argument options.
-
-# Simulation
-
-## Files
-Each simulation consists of 4 files in the `data/simulation/[SIMTYPE]/` directory. Each file is named using a _-separated list of values used for the simulation (pi, mu, etc):
-- The base file (out=XYs.csv) contains the X matrices and corresponding y vectors for the simulation.
-- The b file (out=bs.csv) contains the true B matrix (column matrix) associated with the simulated data.
-- The m file (out=ms.csv) contains the m value (which shows which taxa were "sampled" for each "sample" (row in the X matrix/entry in the y vector)). A 1 indicates that taxa was included in that sample, a 0 indicates that it wasn't.
-- The xi file (out=xi) contais a vector of boolean values indicating whether each node is "turned on" - an edge has nonzero value if it connects two "turned on" nodes.
-
-Realistic simulations also includes the following file:
-- The main effects file (out=main_effects) contains the main effect for each node used to generate the results (since realistic simulations are generated using node main effects)
-
-## Results
-Results are in `results/simulation/[SIMTYPE]`.
-For the model run, we will use 2358 as the random seed.
-
-## Running Realistic simulations
-We used run_simulation.jl to run realistic simulations, as follows:
-
-```
-julia -O0 simulation/run_simulation.jl -n 2 -m [MU] -p [PI] -r [R] -k [k] -s 2358 -u [u] --simtype [simulation type] -e 0.4 -z [sample size]
-```
-
-## Running Unrealistic simulations
-For the unrealistic simulations `simulation/run_simulation_unrealistic.jl` handles everything, no command line arguments are needed.

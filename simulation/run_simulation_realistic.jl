@@ -22,7 +22,7 @@ function main()
     πₛs = [0.3,0.8]
     R = 7
     edge_μ = 0.4
-    ks = [8,15,22]
+    ks = [8,22]
     ν = 10
     seed = 2358
     sampsizes = [500,1000]
@@ -35,10 +35,12 @@ function main()
             for k in ks
                 for sampsize in sampsizes
                     for typ in simtypes
-                        if μₛ==1.6 && πₛ==0.8 && k==22 && (typ=="redundant_random") && sampsize==500
-                            nburn = 60000
-                        else 
-                            continue
+                        if (μₛ==1.6 && πₛ==0.3 && k==8 && sampsize==500 && typ=="additive_random")
+                            nburn = 100000 #prev 60000
+                        elseif (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==500 && typ=="redundant_phylo")
+                            nburn = 100000 #prev 60000
+                        elseif (μₛ==1.6 && πₛ==0.8 && k==22 && sampsize==500 && typ=="redundant_random")
+                            nburn = 140000 #prev 60000 then 100000 then 120000
                         end
                         run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,typ,edge_μ,sampsize,seed,tmot)
                         nburn = 120000
@@ -99,9 +101,9 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         end
         num_chains=3
         purge_burn=10000
-        tm=@elapsed result = Fit!(X, y, R, η=η, V=V, nburn=nburn,nsamples=nsamp, aΔ=aΔ, 
+        tm=@elapsed result = Fit!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, aΔ=aΔ, 
                                     bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,suppress_timer=false,
-                                    num_chains=num_chains,seed=seed,full_results=false,
+                                    num_chains=num_chains,seed=seed,
                                     purge_burn=purge_burn)
 
         nburn = purge_burn
