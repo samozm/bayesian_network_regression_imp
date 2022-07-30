@@ -1,10 +1,10 @@
 # Final plots
 
-- We will base the plots on the existing functions in [plot_result.R](https://github.com/samozm/bayesian_network_regression_imp/blob/main/additional_materials/old-src/plot_results.R).
+- We will base the plots on the existing functions in [plot_result.R](https://github.com/samozm/bayesian_network_regression_imp/blob/main/additional_materials/plot_results.R).
 - The result files are in the [Google Drive](https://drive.google.com/drive/u/2/folders/1obkVu6qJfC6tdNAnLFHhsSSn9SUwTxE2) which we downloaded and put in the github repo (but gitignored).
 
 ```{r}
-source("old-src/plot_results.R")
+source("plot_results.R")
 ```
 
 ## Unrealistic simulations
