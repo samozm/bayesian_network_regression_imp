@@ -51,6 +51,8 @@ Project.toml
 */test/run_my_sim1_case1.R
 simulation/run_hihi_guha.R
 */final-plots-sam.Rmd
+*/old-src/*
+*/results/*
 
 # VS code files
 .vscode/*
