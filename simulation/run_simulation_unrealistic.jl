@@ -1,14 +1,11 @@
-occursin("Intel",Sys.cpu_info()[1].model) ? (using MKL) : (using LinearAlgebra)
-
 using CSV,ArgParse
 
 using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
 using StaticArrays,TypedTables
 using BayesianNetworkRegression,DrWatson,MCMCDiagnosticTools,JLD2,Distributed
-#include("../BayesianNetworkRegression.jl/src/gelmandiag.jl")
 
 addprocs(3,exeflags=["--optimize=0","--math-mode=ieee","--check-bounds=yes"])
-#addprocs(3)
+
 
 @everywhere begin
     using BayesianNetworkRegression,CSV,DataFrames,StaticArrays

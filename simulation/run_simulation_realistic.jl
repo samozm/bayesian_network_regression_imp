@@ -5,7 +5,6 @@ using CSV,ArgParse
 using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
 using StaticArrays,TypedTables
 using BayesianNetworkRegression,DrWatson,MCMCDiagnosticTools,JLD2,Distributed
-#include("../BayesianNetworkRegression.jl/src/gelmandiag.jl")
 
 addprocs(3,exeflags="-O0")
 

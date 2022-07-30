@@ -1,9 +1,5 @@
-echo "running EVERYTHING - this will take ~ 30 hours"
+echo "running EVERYTHING - this will take ~ 5-6 days"
 
-zsh simulation/run_sim1.sh
+julia --optimize=0 --math-mode=ieee --check-bounds=yes bayesian_network_regression_imp/simulation/run_simulation_unrealistic.jl
 
-zsh simulation/run_sim2.sh
-
-zsh simulation/run_Xsamp_sim1.sh 500
-
-zsh simulation/run_Xsamp_sim2.sh 500
+julia --optimize=0 --math-mode=ieee --check-bounds=yes bayesian_network_regression_imp/simulation/run_simulation_realistic.jl
