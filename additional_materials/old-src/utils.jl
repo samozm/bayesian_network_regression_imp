@@ -83,9 +83,9 @@ function gelman_rubin(X::AbstractArray{T,2}, y::AbstractVector{U}, nburn, nsampl
 
     rng = MersenneTwister()
 
-    BayesianNetworkRegression.initialize_variables!(state1,X_new,X,1.01,1,1,9,1,1,10,V,rng,false)
-    BayesianNetworkRegression.initialize_variables!(state2,X_new,X,1.01,1,1,9,1,1,10,V,rng,false)
-    BayesianNetworkRegression.initialize_variables!(state3,X_new,X,1.01,1,1,9,1,1,10,V,rng,false)
+    BayesianNetworkRegression.initialize_variables!(state1,X_new,X,1.01,9,10,V,rng,false)
+    BayesianNetworkRegression.initialize_variables!(state2,X_new,X,1.01,9,10,V,rng,false)
+    BayesianNetworkRegression.initialize_variables!(state3,X_new,X,1.01,9,10,V,rng,false)
 
     #for i in 1:q
     #    state1.γ[1,i,1] = rand(Normal(0,8))

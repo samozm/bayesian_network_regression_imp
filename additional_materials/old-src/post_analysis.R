@@ -135,27 +135,14 @@ check_psrf <- function(simnum,pis,mus,R,nus,n_microbes,inpath,samplesizes,simtyp
 
 
 check_psrf(c(1),c("0.0","0.3","0.8"),c("0.8","1.6"),c(5,7,9),c(10),c(8,15,22),
-           "results/simulation/chtc-unrealistic-O0-R7/",c(100,500))
-
-check_psrf(c(1),c("0.3","0.8"),c("0.8","1.6"),c(7),c(10),c(8,15,22),
-           "results/simulation/chtc-unrealistic-R7-psrf/",c(100,500))
+           "results/simulation/kahan/unrealistic/",c(100,500))
 
 check_psrf(c(1),c("0.0","0.3","0.8"),c("0.8","1.6"),c(5,7,9),c(10),c(8,15,22),
-           "results/simulation/local/unrealistic-results/",c(100,500))
+           "results/simulation/wid/unrealistic/",c(100,500))
 
-## 7 only
-check_psrf(c(1),c("0.0","0.3","0.8"),c("0.8","1.6"),c(7),c(10),c(8,15,22),
-           "results/simulation/local/unrealistic-results/",c(100,500))
-
-
-
-check_psrf(2,c(0.3,0.8),c(0.8,1.6),c(9),c(10),c(8,22),
-  "results/simulation/chtc-realistic-O0/",
-  c(500,1000),c("additive_phylo", "additive_random", "interaction_phylo", 
-                "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
 
 check_psrf(2,c(0.3,0.8),c(0.8,1.6),c(7),c(10),c(8,22),
-           "results/simulation/chtc-realistic-O0-R7/",
+           "results/simulation/kahan/realistic/",
            c(500,1000),c("additive_phylo", "additive_random", "interaction_phylo", 
                          "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
 
@@ -285,7 +272,7 @@ psrf_gamma %>% filter(simtype=="redundant_random" & samplesize==1000) %>% filter
 
 
 a_p_unreal <- all_psrf(1,c(0.3,0.8),c(0.8,1.6),c(7),c(10),c(8,15,22),
-                "results/simulation/chtc-unrealistic-O0-R7/",
+                "results/simulation/wid/unrealistic/",
                 c(500,100))
 
 
@@ -365,6 +352,11 @@ check_fl_exist(2,c(0.3,0.8),c(0.8,1.6),c(7),c(10),c(8,22),
                c(500,1000),c("additive_phylo", "additive_random", "interaction_phylo", 
                              "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
 
+check_fl_exist(2,c(0.3,0.8),c(0.8,1.6),c(7),c(10),c(8,22),
+               "results/simulation/kahan/chtc-realistic-O0-R7/",
+               c(500,1000),c("additive_phylo", "additive_random", "interaction_phylo", 
+                             "interaction_random", "redundant_phylo", "redundant_random"),"",0.4)
+
 
 
 check_time <- function(simnum,pis,mus,R,nus,n_microbes,inpath,samplesizes,simtypes=c(NULL),pref="",edge_mu=NULL)
@@ -433,36 +425,18 @@ tms_u <- check_time(c(1),c("0.0","0.3","0.8"),c("0.8","1.6"),c(5,7,9),c(10),c(8,
            "results/simulation/local/unrealistic-results/",c(100,500))
 
 seconds_to_period(mean(tms_u[tms_u$samplesize == 100 & 
-                            !(tms_u$R == 5 & tms_u$pi == 0.3 & tms_u$mu == 1.6 & tms_u$n_microbes == 22) &
-                            !(tms_u$R == 7 & tms_u$pi == 0.3 & tms_u$mu == 1.6 & tms_u$n_microbes == 22) &
-                            !(tms_u$R == 9 & tms_u$pi == 0.3 & tms_u$mu == 0.8 & tms_u$n_microbes == 22) &
-                            !(tms_u$R == 9 & tms_u$pi == 0.3 & tms_u$mu == 1.6 & tms_u$n_microbes == 8 ) &
-                            !(tms_u$R == 9 & tms_u$pi == 0.3 & tms_u$mu == 1.6 & tms_u$n_microbes == 22) &
-                            !(tms_u$R == 9 & tms_u$pi == 0.8 & tms_u$mu == 1.6 & tms_u$n_microbes == 22) ,
+                            !(tms_u$mu == 1.6 & tms_u$pi == 0.0 & tms_u$n_microbes == 22 & tms_u$R == 9) &
+                            !(tms_u$mu == 1.6 & tms_u$pi == 0.3 & tms_u$n_microbes == 22 & tms_u$R == 5) &
+                            !(tms_u$mu == 1.6 & tms_u$pi == 0.3 & tms_u$n_microbes == 22 & tms_u$R == 7) &
+                            !(tms_u$mu == 1.6 & tms_u$pi == 0.3 & tms_u$n_microbes == 22 & tms_u$R == 9) &
+                            !(tms_u$mu == 1.6 & tms_u$pi == 0.8 & tms_u$n_microbes == 22 & tms_u$R == 5) ,
                             "time"]))
 
 seconds_to_period(mean(tms_u[tms_u$samplesize == 500 & 
-                               !(tms_u$R == 7 & tms_u$pi == 0.3 & tms_u$mu == 0.8 & tms_u$n_microbes == 15) &
-                               !(tms_u$R == 9 & tms_u$pi == 0.0 & tms_u$mu == 1.6 & tms_u$n_microbes == 22) &
-                               !(tms_u$R == 9 & tms_u$pi == 0.3 & tms_u$mu == 0.8 & tms_u$n_microbes == 22) ,
+                            !(tms_u$mu == 0.8 & tms_u$pi == 0.3 & tms_u$n_microbes == 15 & tms_u$R==5) &
+                            !(tms_u$mu == 0.8 & tms_u$pi == 0.3 & tms_u$n_microbes == 15 & tms_u$R==7) &
+                            !(tms_u$mu == 1.6 & tms_u$pi == 0.3 & tms_u$n_microbes == 8  & tms_u$R==5) ,
                              "time"]))
-
-#seconds_to_period(mean(tms_u[tms_u$samplesize == 100 & tms_u$R == 5 &
-#                               !((tms_u$mu==1.6 & tms_u$pi==0.3 & tms_u$n_microbes==22 &
-#                                    tms_u$samplesize==100 & tms_u$R==5)), "time"])/2)
-#seconds_to_period(mean(tms_u[tms_u$samplesize == 100 & tms_u$R == 7 & 
-#                               !((tms_u$mu==1.6 & tms_u$pi==0.3 & tms_u$n_microbes==22 &
-#                                    tms_u$samplesize==100 & tms_u$R==7)), "time"])/2)
-#seconds_to_period(mean(tms_u[tms_u$samplesize == 100 & tms_u$R == 9 & 
-#                               !((tms_u$mu==1.6 & tms_u$pi==0.8 & tms_u$n_microbes==22 &
-#                                    tms_u$samplesize==100 & tms_u$R==9)), "time"])/2)
-#seconds_to_period(mean(tms_u[tms_u$samplesize == 500 & tms_u$R == 5 & 
-#                             !((tms_u$mu==0.8 & tms_u$pi==0.3 & tms_u$n_microbes==15 &
-#                                  tms_u$samplesize==500 & tms_u$R==5) | 
-#                              (tms_u$mu==0.8 & tms_u$pi==0.3 & tms_u$n_microbes==22 &
-#                                  tms_u$samplesize==100 & tms_u$R==5)),"time"])/2)
-#seconds_to_period(mean(tms_u[tms_u$samplesize == 500 & tms_u$R == 7, "time"])/2)
-#seconds_to_period(mean(tms_u[tms_u$samplesize == 500 & tms_u$R == 9, "time"])/2)
 
 
 
