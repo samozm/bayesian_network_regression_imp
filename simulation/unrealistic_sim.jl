@@ -97,7 +97,7 @@ function generate_unrealistic_data(B,t,k,n,seed,gauss_rng)
     A_base = zeros(t,t)
     @rput t
     @rput seed
-    R"set.seed(seed);source('additional_materials/old-src/sim_trees.R');inv_dist <- sim_tree_dists(t)"
+    R"set.seed(seed);source('simulation/sim_trees.R');inv_dist <- sim_tree_dists(t)"
     A_base = @rget inv_dist
     ϵ = rand(gauss_rng,Normal(0,1),n)
 

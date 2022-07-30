@@ -89,7 +89,7 @@ function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng,gau
 
     @rput t
     @rput seed
-    R"set.seed(seed);source('additional_materials/old-src/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree$tree); tree_str <- tree$tree_str"
+    R"set.seed(seed);source('simulation/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree$tree); tree_str <- tree$tree_str"
     tree = @rget tree_str
     A_base = @rget A
 
