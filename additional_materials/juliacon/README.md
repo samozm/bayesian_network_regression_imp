@@ -1,8 +1,8 @@
-This folder contains scripts and output for JuliaCon 2021.
+This folder contains scripts and output for [JuliaCon2021 presentation](https://www.youtube.com/watch?v=ZYtyD8-Cweg).
 
 ALL SCRIPTS SHOULD BE RUN FROM THE BASE FOLDER (`bayesian_network_regression_imp/`). FAILURE TO DO SO COULD CAUSE UNEXPECTED BEHAVIOR.
 
-The simulations in the `data/` folder are obtained similarly to those described [here](/data/simulation/ReadMe.md), but only 30 total microbes are used, with t=8 and t=15 in each sample. Also, sparsity parameter (for the coefficient matrix) πₛ=0.3 is not used, only πₛ=0.1 and πₛ=0.8 are used. For generating the data, seed 734 was used.
+The simulations in the `data/` folder are obtained similarly to those described [in the simulation folder](https://github.com/samozm/bayesian_network_regression_imp/tree/main/simulation), but only 30 total microbes are used, with k=8 and k=15 in each sample. Also, sparsity parameter (for the coefficient matrix) πₛ=0.3 is not used, only πₛ=0.1 and πₛ=0.8 are used. For generating the data, seed 734 was used.
 
 Siginifcant changes have been made to these files since JuliaCon - most notably, the file naming structure has changed. The result files actually used for JuliaCon are named simulation1_caseX.csv (Xis) or simulation1_caseX_gammas.csv (Gammas) (gammas are in VxV matrix form). The data files are named simulation1_caseX.csv (X and y) or simulation1_caseX_type.csv where type is bs, ms, or xis (ms shows which microbes were selected for each sample).
 

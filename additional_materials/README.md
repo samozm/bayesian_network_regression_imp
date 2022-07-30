@@ -1,19 +1,6 @@
-### Testing
-Tests are run on Simulation 1 Case 1, Simulation 2 cases 1 and 2 (as described in Guha 2018)
+# Additional materials (not relevant to the manuscript)
 
-To run all 3 cases in order run:
-```
-bash additional_materials/test/run_all.sh --nburn X --nsamp Y
-```
-
-Where X and Y are integers, X is the number of burn-in gibbs samples to discard
-and Y is the number of gibbs samples to use. For testing, we used 30000 burn-in samples
-and 20000 post-burn samples (the same number used by Guha &amp; Rodriguez).
-
-This runs my implementation as well as Guha's on the same data.
-
-Final ξ values (posterior probability of a node being selected) and MSE for
-my implementation and Guha's implementation are output to text.
-Graphs of γ values (coefficients for each edge) are also created in `plots/test/`
-(Guha's in red, mine in blue) and automatically opened. As of 5/17/21 results for
-these tests appear to be consistent between my implementation and Guha's.
+- `juliacon` folder contains the scripts used in the [JuliaCon2021 presentation](https://www.youtube.com/watch?v=ZYtyD8-Cweg) 
+- `test-guha` folder contains the comparison to the R implementation in [Guha and Rodriguez (2018)](https://www.tandfonline.com/doi/full/10.1080/01621459.2020.1772079)
+- `final_plots.Rmd` contains the code to redo the figures in Ozminkowski and Solis-Lemus (2022)
+- `plot_results.R` contains the R functions needed in `final_plots.Rmd`

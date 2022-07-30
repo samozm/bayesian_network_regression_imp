@@ -1,14 +1,23 @@
-This folder contains scripts to create the simulated data used for testing.
+This folder contains scripts to create the simulated data in Ozminkowski and Solis-Lemus (2022).
 
+## Main scripts
+
+Unrealistic (theoretical) simulations:
 ```
 bash generate_unrealistic_sims.sh [SAMPLESIZE]
 ```
-(to be run from the main folder `bayesian_network_regression_imp/`) generates simulation 1, which are "unrealistic". Simulated data is output in files in the `data/simulation/` folder. Currently 734 is used as the random seed for all simulations, but that can easily be changed by updating the file. Uses `unrealistic_sim.jl` to actually generate the data. \[SAMPLESIZE\] is a required parameter, the number of samples to generate.
 
+Note that this script should be run from the main folder `bayesian_network_regression_imp/`, and it generates simulation 1, which are "unrealistic". Simulated data is output in files in the `data/simulation/` folder. Currently 734 is used as the random seed for all simulations, but that can easily be changed by updating the file. The script `generate_unrealistic_sims.sh` calls `unrealistic_sim.jl` to actually generate the data. \[SAMPLESIZE\] is a required parameter, the number of samples to generate.
+
+Realistic simulations:
 ```
 bash generate_realistic_sims.sh [SAMPLESIZE]
 ```
-(to be run from the main folder `bayesian_network_regression_imp/`) generates simulation 2, which are "realistic". This script generates simulated data for all 6 types of realistic simulations (additive phylogenetic, additive random, interaction phylogenetic, interaction random, functional redundancy phylogenetic, functional redundancy random - more information on these types of simulations is in notes.md) Simulated data is output in files in the `data/simulation/` folder. Currently 734 is used as the random seed for all simulations, but that can easily be changed by updating the file. Calls `generate_realistic_onetype` which in turn calls `realistic_sim.jl` to actually generate the data. \[SAMPLESIZE\] is a required parameter, the number of samples to generate. All edges are drawn from a normal distribution with mean 0.4 and standard deviation 1.
+
+Note that this script should be run from the main folder  `bayesian_network_regression_imp/`), and it generates simulation 2, which are "realistic". This script generates simulated data for all 6 types of realistic simulations (additive phylogenetic, additive random, interaction phylogenetic, interaction random, functional redundancy phylogenetic, functional redundancy random). Simulated data is output in files in the `data/simulation/` folder. Currently 734 is used as the random seed for all simulations, but that can easily be changed by updating the file. The script `generate_realistic_sims.sh` calls `generate_realistic_onetype` which in turn calls `realistic_sim.jl` to actually generate the data. \[SAMPLESIZE\] is a required parameter, the number of samples to generate. All edges are drawn from a normal distribution with mean 0.4 and standard deviation 1.
+
+
+## Complementary scripts
 
 ```
 bash generate_realistic_onetype.sh [TYPE] [SAMPLES]
@@ -26,24 +35,8 @@ julia simulation/run_simulation_unrealistic.jl
 (to be run from the main folder `bayesian_network_regression_imp/`). It runs the model on all combinations of *pi=0.3,0.8* (density parameter of the coefficient matrix), *mu=0.8,1.6* (magnitude of edge coefficients), *microbes per sample=8,22* (density of adjacency matrix), *samplesize=500,1000*, and *simtype=additive_phylo, additive_random, interaction_phylo, interaction_random, redundant_phylo, redundant_random* for the realistic simulations. 
 
 
-# Simulation
-
-## Files
-Each simulation consists of 4 files in the `data/simulation/[SIMTYPE]/` directory. Each file is named using a _-separated list of values used for the simulation (pi, mu, etc):
-- The base file (out=XYs.csv) contains the X matrices and corresponding y vectors for the simulation.
-- The b file (out=bs.csv) contains the true B matrix (column matrix) associated with the simulated data.
-- The m file (out=ms.csv) contains the m value (which shows which taxa were "sampled" for each "sample" (row in the X matrix/entry in the y vector)). A 1 indicates that taxa was included in that sample, a 0 indicates that it wasn't.
-- The xi file (out=xi) contais a vector of boolean values indicating whether each node is "turned on" - an edge has nonzero value if it connects two "turned on" nodes.
-
-Realistic simulations also includes the following file:
-- The main effects file (out=main_effects) contains the main effect for each node used to generate the results (since realistic simulations are generated using node main effects)
-
-## Results
-Results are in `results/simulation/[SIMTYPE]`.
-For the model run, we will use 2358 as the random seed.
-
 ## Running Realistic simulations
-We used `run_simulation_realistic.jl` to run realistic simulations, as follows:
+We use `run_simulation_realistic.jl` to run realistic simulations, as follows:
 
 ```
 julia --optimize=0 --math-mode=ieee --check-bounds=yes simulation/run_simulation_realistic.jl
