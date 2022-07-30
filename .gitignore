@@ -53,6 +53,7 @@ simulation/run_hihi_guha.R
 */final-plots-sam.Rmd
 */old-src/*
 results/*
+results/
 
 # VS code files
 .vscode/*
