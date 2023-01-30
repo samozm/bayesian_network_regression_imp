@@ -76,7 +76,7 @@ All scripts should be run at the main level `bayesian_network_regression_imp/`, 
 To fit the BNR model on the simulated data, we run 
 ```
 julia --optimize=0 --math-mode=ieee --check-bounds=yes simulation/run_simulation_unrealistic.jl
-``
+```
 for the unrealistic (theoretical) simulations, and
 ```
 julia --optimize=0 --math-mode=ieee --check-bounds=yes simulation/run_simulation_realistic.jl
