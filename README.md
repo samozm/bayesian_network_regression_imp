@@ -76,7 +76,7 @@ All scripts should be run at the main level `bayesian_network_regression_imp/`, 
 To fit the BNR model on the simulated data, we run 
 ```
 julia --optimize=0 --math-mode=ieee --check-bounds=yes simulation/run_simulation_unrealistic.jl
-```
+``
 for the unrealistic (theoretical) simulations, and
 ```
 julia --optimize=0 --math-mode=ieee --check-bounds=yes simulation/run_simulation_realistic.jl
@@ -86,5 +86,9 @@ for the realistic simulations.
 
 ### Manuscript plots
 
-The final plots in the manuscript can be obtained using the [`final-plots.Rmd`](https://github.com/samozm/bayesian_network_regression_imp/blob/main/additional_materials/final-plots.Rmd) file.
+The final plots in the manuscript can be obtained using the [`final-plots.Rmd`](https://github.com/samozm/bayesian_network_regression_imp/blob/main/additional_materials/final-plots.Rmd) file. Plots for the real data can be obtained using [`wagg_analysis/plots.Rmd](https://github.com/samozm/bayesian_network_regression_imp/tree/main/wagg_analysis/plots.Rmd) file. 
 
+
+### Real Data Preparation and Augmentation
+
+The data used for the real data section is in [`wagg_analysis/wagg_etal_data`](https://github.com/samozm/bayesian_network_regression_imp/tree/main/wagg_analysis/wagg_etal_data). Data preparation and augmentation can be found in [`prep_data.R`](https://github.com/samozm/bayesian_network_regression_imp/blob/main/wagg_analysis/src/prep_data.R).
