@@ -95,6 +95,10 @@ colnames(func) <- colnames(Func)
 
 keep_prob <- 0.90
 
+new_nleach_sd <- (sd(Func$Nleach[1:50]))^(1/50)
+new_pleach_sd <- (sd(Func$Pleach[1:50]))/2
+new_decom_sd <- (sd(Func$Decom[1:50]))^(1/50)
+
 for(i in 1:LEN_OTU)
 {
   num_necesary <- length(OTU_DATAT_RES_TMP[i,])
@@ -105,9 +109,23 @@ for(i in 1:LEN_OTU)
   }
   func[i,] <- Func[i,]
   func[i+LEN_OTU,] <- Func[i,]
-  func[i+LEN_OTU,"Nleach"] <- func[i+LEN_OTU,"Nleach"] + round(rnorm(1,0,(sd(Func$Nleach))^(1/4)),digits=2)
-  func[i+LEN_OTU,"Pleach"] <- func[i+LEN_OTU,"Pleach"] + round(rnorm(1,0,(sd(Func$Pleach))^(1/4)),digits=3)
-  func[i+LEN_OTU,"Decom"] <- func[i+LEN_OTU,"Decom"] + rnorm(1,0,(sd(Func$Decom))^(1/4))
+  
+  new_nleach <- func[i+LEN_OTU,"Nleach"] + round(rnorm(1,0,new_nleach_sd),digits=2)
+  if(new_nleach <= 0) { new_nleach <- rchisq(1,3)/15 }
+  func[i+LEN_OTU,"Nleach"] <- new_nleach
+  
+  pleach_add <- round(rnorm(1,0,new_pleach_sd),digits=3)
+  new_pleach <- func[i+LEN_OTU,"Pleach"] + pleach_add
+  print(func[i+LEN_OTU,"Pleach"])
+  print(pleach_add)
+  print(new_pleach)
+  if(new_pleach <= 0) { new_pleach <- rchisq(1,3)/15; print(new_pleach) }
+  func[i+LEN_OTU,"Pleach"] <- new_pleach
+  print("-------------")
+  
+  new_decom <- func[i+LEN_OTU,"Decom"] + rnorm(1,0,new_decom_sd)
+  if(new_decom <= 0) { new_decom <- rchisq(1,3)/15 }
+  func[i+LEN_OTU,"Decom"] <- new_decom
 }
 
 
@@ -174,5 +192,16 @@ mean(OTU_DATAT_RES.df$num_nonzero[51:100])
 
 # Meta-Matrix
 sum(upperTriangle(B.META,byrow=T) != 0) / length(upperTriangle(B.META,byrow=T))
+
+
+### Stats about Pleach 
+XYs <- data.frame(XY)
+XYs$Pleach <- as.numeric(XYs$Pleach)
+ggplot(data=XYs) + geom_histogram(aes(x=Pleach))
+ggplot(data=XYs[1:50,]) + geom_histogram(aes(x=Pleach))
+ggplot(data=XYs[51:100,]) + geom_histogram(aes(x=Pleach))
+
+summary(XYs$Pleach[1:50])
+round(summary(XYs$Pleach[51:100]),4)
 
 
