@@ -77,7 +77,7 @@ function generate_real(t,k,n,seed,μₑ,πₑ,type,gseed)
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
-    saveinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type,"edge_mu"=>μₛ,"samplesize"=>n)
+    saveinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type,"edge_mu"=>μₛ,"samplesize"=>n,"total_microbes"=>t)
     output_data(saveinfo,out_df,B,m,ξ,false,"realistic")
 
     saveinfo["out"] = "main-effects"

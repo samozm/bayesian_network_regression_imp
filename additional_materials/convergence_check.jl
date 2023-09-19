@@ -37,21 +37,14 @@ for flnm in readdir("results/simulation/local/realistic-results")
     k = flnm[last(findfirst("n_microbes=",flnm))+1]
     if k == '2'
         k = 22
-<<<<<<< HEAD
-=======
     elseif k == '1'
         k = 15
->>>>>>> 7ecfb195d06f989dc8cab6257cf3b9500098ae81
     elseif k == '8'
         k = 8
     else
         print("bad switch")
     end
-<<<<<<< HEAD
-    n = flnm[last(findfirst("samplesize=",flnm))+1] == '5' ? flnm[last(findfirst("samplesize=",flnm))+1:last(findfirst("samplesize=",flnm))+3] : flnm[last(findfirst("samplesize=",flnm))+1:last(findfirst("samplesize=",flnm))+4] 
-=======
     n = flnm[last(findfirst("samplesize=",flnm))+1:last(findfirst("samplesize=",flnm))+3]
->>>>>>> 7ecfb195d06f989dc8cab6257cf3b9500098ae81
 
     ix1 = last(findfirst("type=",flnm))+1
     ix2 = first(findfirst(".csv",flnm))-1
