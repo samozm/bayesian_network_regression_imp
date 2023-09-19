@@ -3,7 +3,8 @@ using CSV,ArgParse
 using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
 using StaticArrays,TypedTables
 using BayesianNetworkRegression,DrWatson,MCMCDiagnosticTools,JLD2,Distributed
-#include("../BayesianNetworkRegression.jl/src/gelmandiag.jl")
+
+addprocs(3,exeflags=["--optimize=0","--math-mode=ieee","--check-bounds=yes"])
 
 addprocs(3,exeflags=["--optimize=0","--math-mode=ieee","--check-bounds=yes"])
 #addprocs(3)
@@ -105,9 +106,9 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
             y = $(y)
         end
         num_chains=3
-        tm=@elapsed result = Fit!(X, y, R, η=η, V=V, nburn=nburn,nsamples=nsamp, aΔ=aΔ, 
+        tm=@elapsed result = Fit!(X, y, R, η=η,nburn=nburn,nsamples=nsamp, aΔ=aΔ, 
                                     bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,suppress_timer=false,
-                                    num_chains=num_chains,seed=seed,full_results=false)
+                                    num_chains=num_chains,seed=seed)
 
         loadinfo["out"] = "bs"
         b_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
@@ -124,7 +125,7 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         γ₀ = B₀
         MSE = 0
 
-        for i in 1:size(γ_n2,2)
+        for i in axes(γ_n2,2)
             MSE = MSE + (γ_n2[i] - γ₀[i])^2
         end
         MSE = MSE * (2/(V*(V-1)))
@@ -249,11 +250,9 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
     
     saveinfo["out"] = "nodes"
     CSV.write(string("results/simulation/local/",type,"-results/",savename(saveinfo,"csv",digits=1)),output)
-    #CSV.write(string("../BayesianNetworkRegression.jl/test/data/",savename(saveinfo,"csv",digits=1)),output)
 
     saveinfo["out"] = "edges"
     CSV.write(string("results/simulation/local/",type,"-results/",savename(saveinfo,"csv",digits=1)),gam)
-    #CSV.write(string("../BayesianNetworkRegression.jl/test/data/",savename(saveinfo,"csv",digits=1)),gam)
 
     saveinfo["out"] = "MSE"
     CSV.write(string("results/simulation/local/",type,"-results/",savename(saveinfo,"csv",digits=1)),mse_df)

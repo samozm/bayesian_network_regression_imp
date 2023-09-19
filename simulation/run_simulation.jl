@@ -123,7 +123,7 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
     catch
     end 
 
-    tm=@elapsed result = Fit!(X, y, R, η=η, V=V, nburn=nburn,nsamples=nsamp, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=num_chains,seed=seed,in_seq=true,full_results=false)
+    tm=@elapsed result = Fit!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, aΔ=aΔ, bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,num_chains=num_chains,seed=seed,in_seq=true)
     
     loadinfo["out"] = "bs"
     b_in = DataFrame(CSV.File(string(simtypes[simnum],"/data/",savename(loadinfo,"csv",digits=1))))

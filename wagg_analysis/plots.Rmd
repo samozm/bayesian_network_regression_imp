@@ -1,0 +1,262 @@
+---
+title: "wagg_plots"
+author: "Sam Ozminkowski"
+date: "12/19/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+library(stringr)
+```
+
+
+# Universal Values
+
+```{r}
+cutoff = 40
+in_path   = "~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/results/"
+out_path  = "~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/"
+
+make.filename <- function(path,R,cutoff,nburn,nsamp,nu,out)
+{
+  return(sprintf("%sR=%s_cutoff=%s_nburn=%s_nsamples=%s_nu=%s_out=%s.csv",
+                         path,R,cutoff,nburn,nsamp,nu,out))
+  
+}
+
+OTU_IDs <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/Wagg_etal_data/Bacterial_OTU_ID.csv")
+```
+
+# Plotting functions
+
+```{r}
+plot.intervals <- function(in_path,R,cutoff,nburn,nsamp,nu,lim,title=TRUE)
+{
+  flnm <- make.filename(in_path,R,cutoff,nburn,nsamp,nu,"edges")
+  edges <- read.csv(flnm)
+  
+  nn <- length(edges$X0.025)
+  edges$edge <- 1:nn
+  edges <- transform(edges,rej=ifelse(X0.025 > 0 | X0.975 < 0,TRUE,FALSE))
+  
+  if(pi>0.5){
+    label = "True influential edges"
+  }else{
+    label = "True \n inf."
+  }
+  
+  plt <- edges %>% ggplot() + geom_errorbar(aes(x=factor(edge),ymin=X0.025,
+                                                                 ymax=X0.975,
+                                                                 color=rej)) +
+        xlab("") + ylab("") +
+        scale_color_manual(values=c("#82AFBC","#0E4B87")) + 
+        theme(
+          plot.title = element_text(hjust=0.5, size=rel(2)),
+          axis.title.x = element_text(size=rel(1.2)),
+          axis.title.y = element_text(size=rel(1.9), angle=90, vjust=0.5, hjust=0.5),
+          axis.text.x = element_text(colour="grey", size=rel(1.8), hjust=.5, vjust=.5, face="plain"),
+          axis.ticks.y = element_blank(),
+          panel.background = element_rect(fill = NA, color = "black"),
+          axis.line = element_line(colour = "grey"),
+          strip.text = element_text(size = rel(1.5)),
+          legend.position = "none"
+        ) +
+          #scale_x_continuous(limits=c(1,n)) + coord_flip() +
+          scale_y_continuous(limits=lim) +
+          coord_flip() + scale_x_discrete(labels=NULL,expand=expansion(add=4)) +
+          geom_point(aes(x=factor(edge),y=mean, color=rej),shape=18, size=2) +
+          geom_hline(aes(yintercept=0),linetype="solid",color="#696969", size=1) #+
+          ##geom_hline(aes(yintercept=mu),linetype="dashed",color="blue") +
+          ##facet_grid(nonzero_mean ~.,scales="free_y",space="free_y", labeller = labeller(
+          ##  nonzero_mean = c(`TRUE` = label, `FALSE` = "True non-influential edges")
+          ##)) 
+  
+  if(title)
+  {
+    plt <- plt + ggtitle(paste0(nsamp," retained samples \n",nburn," burn-in \n nu=",nu,", R=",R))
+  }
+  return(plt)
+}
+
+plot.nodes = function(in_path,R,cutoff,nburn,nsamp,nu,nodepp,yaxis=TRUE,title=TRUE){
+  ## Reading csv output files and appending
+  flnm <- make.filename(in_path,R,cutoff,nburn,nsamp,nu,"nodes")
+  nodes <- read.csv(flnm)
+  
+  ## Labelling the nodes:
+  nn <- length(nodes$Xi_posterior)
+  nodes$microbe <- 1:nn
+  
+  nodes$mic_name <- sapply(nodes$microbe,get_otu_from_ID)
+  
+  nodes <- mutate(nodes, goodpp = ifelse(Xi_posterior > nodepp, round(Xi_posterior,2), ""),
+                  goodpp_name = ifelse(Xi_posterior > nodepp, mic_name, ""),
+                  goodpp_name_num = ifelse(Xi_posterior > nodepp, paste0(mic_name," - ", round(Xi_posterior,2)), ""))
+  
+  if(yaxis){
+    ylabel = "PP of influential node"
+    axisTextY = element_text(colour="grey", size=rel(1.5), angle=0, hjust=.5, vjust=.5, face="plain")
+  }else{
+    ylabel = ""
+    axisTextY = element_blank()
+  }
+  
+  ## Plot:
+  plt <- ggplot(data=nodes,aes(x=microbe,y=Xi_posterior)) + 
+      geom_bar(stat="Identity",fill="#bbbdbb") + xlab("") + ylab(ylabel) +
+      theme(
+          plot.title = element_text(hjust=1.5, size=rel(1.5)),
+          axis.title.x = element_text(size=rel(1.2), vjust=0.5, hjust=0.5),
+          axis.title.y = element_text(size=rel(1.9), angle=90, vjust=0.5, hjust=0.5),
+          axis.text.y = element_text(size=12),
+          panel.background = element_rect(fill = NA, color = "black"),
+          axis.line = element_line(colour = "grey"),
+          strip.text = element_text(size = rel(2)),
+          plot.margin = unit(c(5.5, 5.5, 24, 5.5), "points")
+          ) +
+      guides(fill="none") +
+      scale_y_continuous(position="right",breaks = c(0.3,0.5,0.6,0.65,0.7,1),limits=c(0,1)) +
+      #scale_x_discrete(limit=as.character(nodes$microbe),labels=nodes$goodpp_name,expand=c(0.02,0.02)) +
+      geom_abline(slope=0,intercept=0.5,color="red",linetype="dashed") + 
+      geom_abline(slope=0,intercept=0.65,color="blue",linetype="dashed") +
+      geom_abline(slope=0,intercept=0.7,color="yellow",linetype="dashed") + 
+      geom_abline(slope=0,intercept=0.6,color="orange",linetype="dashed") + 
+      coord_flip(ylim = c(0.3, 1))
+  
+  if(title)
+  {
+    plt <- plt + geom_text(aes(label = goodpp), hjust = -0.2,color="red",size=4,position = position_jitter(width=1,height=0)) +
+      ggtitle(paste0(nsamp," retained samples, ",nburn," burn-in, nu=",nu,", R=",R)) + 
+      scale_x_discrete(guide = guide_axis(n.dodge=2),limit=as.character(nodes$microbe),labels=nodes$goodpp_name,expand=c(0.02,0.02)) 
+  }
+  else
+  {
+    plt <- plt + scale_x_discrete(limit=as.character(nodes$microbe),labels=nodes$goodpp_name,expand=c(0.02,0.02)) +
+      geom_text(aes(label = goodpp), hjust = -0.2,color="red",size=5)
+  }
+
+  return(plt)
+}
+
+get_otu_from_ID <- function(otu_id)
+{
+  if(otu_id == ""){ return("") }
+  otu_id_full = paste0("OTU_",otu_id)[1]
+  return(str_split(OTU_IDs[OTU_IDs$OTU == otu_id_full,"Genus"],"\\(")[[1]][1])
+}
+```
+
+
+```{r}
+options(scipen = 100)
+
+nburns <- c(10000,30000)
+nsamps <- c(10000,20000)
+Rs     <- c(    3,    3)
+nus    <- c(    9,    7)
+
+nodepp = 0.65
+
+for(i in 1:length(nburns))
+{
+  nburn = nburns[i]
+  nsamp = nsamps[i]
+  R     = Rs[i]
+  nu    = nus[i]
+  
+  title <- !(R == 3 && nburn == 10000 && nsamp == 10000 && nu == 9)
+  
+  flnm <- make.filename(in_path,R,cutoff,nburn,nsamp,nu,"psrf")
+  psrf <- read.csv(flnm)
+  
+  if(psrf$max_xi[1] > 1.2 || psrf$max_gamma[1] > 1.2)
+  {
+    print("-------------------")
+    print("bad:")
+    print(sprintf("R: %s, nburn: %s, nsamp: %s, nu: %s - PSRF xi = %s, PSRF gamma = %s",R,nburn,nsamp,nu,psrf$max_xi[1], psrf$max_gamma[1]))
+    next
+  }
+  
+  print("-------------------")
+  print(sprintf("R: %s, nburn: %s, nsamp: %s, nu: %s - PSRF xi = %s, PSRF gamma = %s",R,nburn,nsamp,nu,psrf$max_xi[1], psrf$max_gamma[1]))
+  plt <- plot.intervals(in_path,R,cutoff,nburn,nsamp,nu,c(-7,7),title)
+  plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-intervals-nburn",
+                    nburn,"-nsamples",nsamp,"-R",R,"-nu",nu,".pdf")
+  pdf(plotname,height=10, width=4)
+  print(plt)
+  dev.off()
+  
+  plt2 <- plot.nodes(in_path,R,cutoff,nburn,nsamp,nu,nodepp,TRUE,title)
+  plotname2 = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-nodes-nburn",
+                    nburn,"-nsamples",nsamp,"-R",R,"-nu",nu,".pdf")
+  pdf(plotname2,height=6, width=8)
+  print(plt2)
+  dev.off()
+}
+```
+
+```{r}
+library(lubridate)
+nburn = 30000
+nsamp = 20000
+R     = 5
+nu    = 12
+flnm <- make.filename(in_path,R,cutoff,nburn,nsamp,nu,"time")
+tm <- read.csv(flnm)
+
+seconds_to_period(tm$time)
+
+```
+
+```{r}
+XYs <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/Wagg_etal_data/cutoff=40_out=XY.csv")
+
+ggplot(data=XYs) + geom_histogram(aes(x=Pleach))
+
+summary(XYs$Pleach[1:50])
+summary(XYs$Pleach[51:100])
+
+trunc.XY <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/data/simulation/realistic/edge_mu=0.4_mu=0.8_n_microbes=8_out=XYs_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.csv")
+
+sum(trunc.XY$y >= 22)
+
+trunc.XY2 <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/data/simulation/realistic/edge_mu=0.4_mu=0.8_n_microbes=22_out=XYs_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.csv")
+
+sum(trunc.XY2$y >= 22)
+
+length(trunc.XY2$y)
+
+mean(trunc.XY$y)
+sd(trunc.XY$y)
+
+mean(trunc.XY2$y)
+sd(trunc.XY2$y)
+
+mean(XYs$Pleach)
+sd(XYs$Pleach)
+
+plt <- ggplot(XYs) + geom_histogram(aes(x=Pleach),binwidth=0.01,color="white",fill="grey") + theme_bw() + 
+  labs(x="P leaching (mg/L)", y="Count")
+plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/pleach_histogram.pdf")
+pdf(plotname,height=4, width=6)
+print(plt)
+dev.off()
+  
+plt <- ggplot(trunc.XY) + geom_histogram(aes(x=y),binwidth=0.25,color="white",fill="grey") + theme_bw() + 
+  labs(x="Simulated response value", y="Count")
+plotname = paste0("/Users/samoz/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/results/plots/simulation/final/realistic/edge_mu=0.4_mu=0.8_n_microbes=8_out=histogram_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.pdf")
+pdf(plotname,height=4, width=6)
+print(plt)
+dev.off()
+
+plt <- ggplot(trunc.XY2) + geom_histogram(aes(x=y),binwidth=0.25,color="white",fill="grey") + theme_bw() + 
+  labs(x="Simulated response value", y="Count")
+plotname = paste0("/Users/samoz/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/results/plots/simulation/final/realistic/edge_mu=0.4_mu=0.8_n_microbes=22_out=histogram_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.pdf")
+pdf(plotname,height=4, width=6)
+print(plt)
+dev.off()
+```

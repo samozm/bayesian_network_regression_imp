@@ -1,8 +1,6 @@
 include("realistic_sim.jl")
 include("unrealistic_sim.jl")
 
-#generate(t,k,n,seed,μₑ,πₑ,type,gseed)
-
 g_rng = MersenneTwister(734)
 
 @quickactivate

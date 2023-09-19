@@ -5,7 +5,6 @@ using CSV,ArgParse
 using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
 using StaticArrays,TypedTables
 using BayesianNetworkRegression,DrWatson,MCMCDiagnosticTools,JLD2,Distributed
-#include("../BayesianNetworkRegression.jl/src/gelmandiag.jl")
 
 addprocs(3,exeflags=["--optimize=0","--math-mode=ieee","--check-bounds=yes"])
 
@@ -22,6 +21,7 @@ function main()
     πₛs = [0.3,0.8]
     R = 7
     edge_μ = 0.4
+    ks = [8,22]
     ks = [8,22]
     ν = 10
     seed = 2358
@@ -110,9 +110,9 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         end
         num_chains=3
         purge_burn=10000
-        tm=@elapsed result = Fit!(X, y, R, η=η, V=V, nburn=nburn,nsamples=nsamp, aΔ=aΔ, 
+        tm=@elapsed result = Fit!(X, y, R, η=η, nburn=nburn,nsamples=nsamp, aΔ=aΔ, 
                                     bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,suppress_timer=false,
-                                    num_chains=num_chains,seed=seed,full_results=false,
+                                    num_chains=num_chains,seed=seed,
                                     purge_burn=purge_burn)
 
         nburn = purge_burn
