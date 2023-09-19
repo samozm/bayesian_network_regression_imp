@@ -7,7 +7,7 @@ using StaticArrays,TypedTables
 using BayesianNetworkRegression,DrWatson,MCMCDiagnosticTools,JLD2,Distributed
 #include("../BayesianNetworkRegression.jl/src/gelmandiag.jl")
 
-addprocs(3,exeflags="-O0")
+addprocs(3,exeflags=["--optimize=0","--math-mode=ieee","--check-bounds=yes"])
 
 @everywhere begin
     using BayesianNetworkRegression,CSV,DataFrames,StaticArrays
@@ -15,14 +15,14 @@ addprocs(3,exeflags="-O0")
 end
 
 function main()
-    nburn = 120000
-    nsamp = 40000
+    #nburn = 120000
+    #nsamp = 40000
     simnum = 2
     μₛs = [0.8,1.6]
     πₛs = [0.3,0.8]
     R = 7
     edge_μ = 0.4
-    ks = [8,15,22]
+    ks = [8,22]
     ν = 10
     seed = 2358
     sampsizes = [500,1000]
@@ -30,18 +30,29 @@ function main()
     tmot = true
     Random.seed!(seed)
 
+    #nburn = 60000
+    #nsamp = 40000
+    nburn = 30000
+    nsamp = 20000
+
     for μₛ in μₛs
         for πₛ in πₛs
             for k in ks
                 for sampsize in sampsizes
                     for typ in simtypes
-                        if μₛ==1.6 && πₛ==0.8 && k==22 && (typ=="redundant_random") && sampsize==500
-                            nburn = 60000
-                        else 
-                            continue
+                        #if (μₛ==1.6 && πₛ==0.3 && k==8 && sampsize==500 && typ=="additive_random")
+                        #    nburn = 120000 #prev 60000
+                        #elseif (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==500 && typ=="redundant_phylo")
+                        #    nburn = 100000 #prev 60000
+                        #elseif (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==1000 && typ=="redundant_random")
+                        #    nburn = 60000
+                        if (μₛ==0.8 && πₛ==0.8 && k==22 && sampsize==1000 && typ=="additive_random")
+                            #nburn = 60000
+                        else continue
                         end
                         run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,typ,edge_μ,sampsize,seed,tmot)
-                        nburn = 120000
+                        #nburn = 60000
+                        nburn = 30000
                         GC.gc()
                     end
                 end
@@ -63,7 +74,7 @@ end
 
 function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10,tmot=false)
     loadinfo["out"] = "XYs"
-    data_in = DataFrame(CSV.File(string("data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
+    data_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
 
         
 
@@ -108,11 +119,11 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         
 
         loadinfo["out"] = "bs"
-        b_in = DataFrame(CSV.File(string("data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
+        b_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
 
         loadinfo["out"] = "xis"
-        ξ_in = DataFrame(CSV.File(string("data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
+        ξ_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
 
         total = nburn + nsamp
         loadinfo["R"] = R

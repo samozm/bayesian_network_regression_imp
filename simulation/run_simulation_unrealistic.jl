@@ -1,5 +1,3 @@
-occursin("Intel",Sys.cpu_info()[1].model) ? (using MKL) : (using LinearAlgebra)
-
 using CSV,ArgParse
 
 using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
@@ -7,7 +5,7 @@ using StaticArrays,TypedTables
 using BayesianNetworkRegression,DrWatson,MCMCDiagnosticTools,JLD2,Distributed
 #include("../BayesianNetworkRegression.jl/src/gelmandiag.jl")
 
-addprocs(3,exeflags="--optimize=0")
+addprocs(3,exeflags=["--optimize=0","--math-mode=ieee","--check-bounds=yes"])
 #addprocs(3)
 
 @everywhere begin
@@ -34,28 +32,23 @@ function main()
             for R in Rs
                 for k in ks
                     for sampsize in sampsizes
-                        if (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==5) # good
-                            nburn = 100000 #prev 30000 then 60000
-                        elseif (μₛ==1.6 && πₛ==0.0 && k==22 && sampsize==100 && R==9) # good
-                            nburn = 60000 #prev 30000
-                        elseif (μₛ==0.8 && πₛ==0.3 && k==22 && sampsize==100 && R==9) # good
-                            nburn = 80000 #prev 40000 then 60
-                        elseif (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==9) # good
-                            nburn = 100000 #prev 30000 then 40000 then 60000
-                        elseif (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==7) # good
-                            nburn = 80000 #prev 40000
-                        elseif (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==100 && R==5) ##
-                            nburn = 120000 #prev 30000 then 60000 then 80000
-                        elseif (μₛ==1.6 && πₛ==0.8 && k==22 && sampsize==100 && R==5)
-                            nburn = 200000
+                        if (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==5) #1 
+                            nburn = 260000 
+                        elseif (μₛ==0.8 && πₛ==0.3 && k==15 && sampsize==500 && R==7) # 3
+                            nburn = 340000
+                        elseif (μₛ==1.6 && πₛ==0.0 && k==22 && sampsize==100 && R==9) #5
+                            nburn = 100000 
+                        elseif (μₛ==1.6 && πₛ==0.3 && k==8 && sampsize==500 && R==5) #2
+                            nburn = 60000
+                        elseif (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==100 && R==5) #
+                            nburn = 160000 
+                        elseif (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==100 && R==7) #4
+                            nburn = 240000 
+                        elseif (μₛ==1.6 && πₛ==0.3 && k==22 && sampsize==100 && R==9) #
+                            nburn = 60000
+                        elseif (μₛ==1.6 && πₛ==0.8 && k==22 && sampsize==100 && R==5) #
+                            nburn = 200000 
                         end
-                        #=
-                        if (R == 7 && μₛ==1.6 && πₛ==0.8 && sampsize==100 && k == 8)
-                        elseif (R==7 && μₛ==0.8 && πₛ==0.8 && sampsize==100 && k == 15)
-                        else
-                            continue
-                        end
-                        =#
                         run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,sampsize,seed,tmot)
                         nburn = 30000
                         GC.gc()
@@ -77,7 +70,7 @@ end
 
 function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10,tmot=false)
     loadinfo["out"] = "XYs"
-    data_in = DataFrame(CSV.File(string("data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
+    data_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
 
         
 
@@ -117,11 +110,11 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
                                     num_chains=num_chains,seed=seed,full_results=false)
 
         loadinfo["out"] = "bs"
-        b_in = DataFrame(CSV.File(string("data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
+        b_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
         B₀ = convert(Array{Float64,1},b_in[!,:B])
 
         loadinfo["out"] = "xis"
-        ξ_in = DataFrame(CSV.File(string("data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
+        ξ_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
 
         total = nburn + nsamp
         loadinfo["R"] = R
