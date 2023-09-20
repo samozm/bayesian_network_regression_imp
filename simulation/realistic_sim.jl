@@ -67,11 +67,22 @@ function generate_real(t,k,n,seed,μₑ,πₑ,type,gseed)
     μₛ = 0.4
     σₛ = 1.0
 
+    aug = false
+
+    if n == 100
+        n = 50
+        aug = true
+    end
+
     ξ,B,y,A,m = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng,gauss_rng)#,0,0.25)
 
     X = Matrix{Float64}(undef, size(A,1), q)
     for i in 1:size(A,1)
         X[i,:] = BayesianNetworkRegression.lower_triangle(A[i])
+    end
+
+    if aug
+        X,y = augment(X,y,rng)
     end
 
     out_df = DataFrame(X,:auto)
