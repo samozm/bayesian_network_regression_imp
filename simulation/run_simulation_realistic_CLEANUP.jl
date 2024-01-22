@@ -1,3 +1,5 @@
+using LinearAlgebra
+
 using CSV,ArgParse
 
 using Random, DataFrames, StatsBase, InvertedIndices, ProgressMeter, Distributions
@@ -5,62 +7,88 @@ using StaticArrays,TypedTables
 #using BayesianNetworkRegression,DrWatson,MCMCDiagnosticTools,JLD2,Distributed
 using DrWatson,MCMCDiagnosticTools,JLD2,Distributed
 include("../../BayesianNetworkRegression.jl/src/BayesianNetworkRegression.jl")
+include("sim_utils.jl")
+#include("../BayesianNetworkRegression.jl/src/gelmandiag.jl")
+
+NORMED = false
 
 NUM_CHAINS = 3
-MAX_MULT = 50
+MAX_MULT   = 200
+
+MIN_GEN = 5000
+MAX_GEN = 700000
 
 addprocs(NUM_CHAINS,exeflags=["--optimize=0","--math-mode=ieee","--check-bounds=yes"])
 
 @everywhere begin
     #using BayesianNetworkRegression,CSV,DataFrames,StaticArrays
-    include("../../BayesianNetworkRegression.jl/src/BayesianNetworkRegression.jl")
     using CSV,DataFrames,StaticArrays
+    include("../../BayesianNetworkRegression.jl/src/BayesianNetworkRegression.jl")
+    include("sim_utils.jl")
     using TypedTables,Random,LinearAlgebra,Distributions,DrWatson
 end
 
 function main()
-    nburn = 10000
-    nsamp = 10000
-    simnum = 1
-    μₛs = [0.8,1.6]
-    πₛs = [0.0,0.3,0.8]
-    Rs = [5,7,9]
-    ks = [8,15,22]
+    nburn = 5000
+    nsamp = 25000
+    simnum = 2
+    if NORMED
+        simnum = 3
+    end
+    μₛs          = [              0.8,                 0.8,               0.8,              0.8,               1.6,                1.6,              0.8,                1.6,              1.6,               1.6,                0.8,                 1.6,            1.6,              1.6]
+    πₛs          = [              0.3,                 0.3,               0.3,              0.3,               0.3,                0.3,              0.3,                0.3,              0.3,               0.3,                0.8,                 0.3,            0.8,              0.8]
+    sampsizes    = [             1000,                1000,              1000,              500,              1000,               500,             1000,                1000,             1000,              1000,               1000,               1000,            1000,             1000]
+    simtypes     = ["redundant_phylo","interaction_random","redundant_random","redundant_phylo","redundant_random","redundant_random","redundant_phylo","interaction_random","redundant_phylo","redundant_random","interaction_phylo","interaction_phylo","additive_phylo","redundant_phylo"]
+    psrf_cutoffs = [             1.07,                1.02,              1.03,             1.06,               1.1,              1.05,             1.01,                1.01,             1.01,              1.03,               1.01,               1.05,            1.01,             1.01]
+
+    μₛs          = [              0.8,                   1.6,               1.6]
+    πₛs          = [              0.3,                   0.3,               0.3]
+    sampsizes    = [             1000,                  1000,              1000]
+    simtypes     = ["interaction_random","interaction_phylo","redundant_random"]
+    psrf_cutoffs = [             1.02,                 1.035,              1.03]
+
+    R = 7
+    edge_μ = 0.4
+    k = 22
     ν = 10
     seed = 2358
-    sampsizes = [100,500]
+    t = 30 #[30,60]
     tmot = true
     Random.seed!(seed)
-    idx=1
-    tot_idx=length(μₛs)*length(πₛs)*length(ks)*length(sampsizes)*length(Rs)
+    rng = Xoshiro(seed)
+    
+    tot_idx=length(simtypes)
 
-    for μₛ in μₛs
-        for πₛ in πₛs
-            for R in Rs
-                for k in ks
-                    for sampsize in sampsizes
-                        println("-------------------------")
-                        println(stderr,"case ", idx, " of ", tot_idx)
-                        idx = idx+1
-                        run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,sampsize,seed,tmot)
-                        GC.gc()
-                    end
-                end
-            end
-        end
+    for idx in 1:length(simtypes)
+        println(stderr,"-------------------------")
+        println(stderr,"case ", idx, " of ", tot_idx)
+        println(stderr,"mu=",μₛs[idx]," pi=",πₛs[idx]," k=",k," simtype=",simtypes[idx]," sampsize=",sampsizes[idx])
+        run_case_and_output(nburn,nsamp,simnum,μₛs[idx],πₛs[idx],R,k,ν,simtypes[idx],edge_μ,sampsizes[idx],t,seed,tmot,rng,psrf_cutoffs[idx])
+        GC.gc()
     end
+
 end
 
-function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,sampsize=100,seed=nothing,tmot=false)
-    loadinfo = Dict("simnum"=>simnum,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis","samplesize"=>sampsize)
-    simtypes = Dict(1 => "unrealistic", 2 => "realistic")
+function run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,typ="",edge_μ=0.0,sampsize=100,t=30,seed=nothing,tmot=false,rng=nothing,psrf_cutoff=nothing)
+    simn = simnum
+    if simnum==3
+        simn=2
+    end
+    loadinfo = Dict("simnum"=>simn,"pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"out"=>"xis","samplesize"=>sampsize)
+    simtypes = Dict(1 => "unrealistic", 2 => "realistic", 3 => "normed")
+    loadinfo["type"] = typ
+    loadinfo["edge_mu"] = edge_μ
+
+    if NORMED
+        loadinfo["normed"] = "Y"
+    end
     
     @show nburn,nsamp
-    @show μₛ; @show πₛ; @show R; @show k; @show ν; @show sampsize
-    sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum,seed=seed,η=1.01,ζ=1.0,ι=1.0,R=R,aΔ=1.0,bΔ=1.0,ν=ν,tmot=tmot)
+    @show μₛ; @show πₛ; @show R; @show k; @show ν; @show sampsize; @show typ; @show t
+    sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum,seed=seed,η=1.01,ζ=1.0,ι=1.0,R=R,aΔ=1.0,bΔ=1.0,ν=ν,tmot=tmot,rng=rng,psrf_cutoff=psrf_cutoff)
 end
 
-function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10,tmot=false)
+function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,ζ=1.0,ι=1.0,R=5,aΔ=1.0,bΔ=1.0,ν=10,tmot=false,rng=nothing,psrf_cutoff=nothing)
     loadinfo["out"] = "XYs"
     data_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
 
@@ -70,27 +98,25 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
     y = SVector{size(X,1)}(data_in[:,:y])
 
     q = size(X,2)
-    V = convert(Int,(1 + sqrt(1 + 8*q))/2)
+    V = convert(Int,(-1 + sqrt(1 + 8*q))/2)
 
-
-    if simnum == 2
+    if simnum == 1
         println("wrong simnum")
     else
         @everywhere begin
             num_chains = $(NUM_CHAINS)
             R = $(R)
             V = $(V)
+
+            mingen = $(MIN_GEN)
+            maxgen = $(MAX_GEN)
+
             nburn = $(nburn)
             nsamp = $(nsamp)
             total = nburn+nsamp
-            q = floor(Int,V*(V-1)/2)
+            q = floor(Int,V*(V+1)/2)
             seed = $(seed)
-            simnum=1
-
             loadinfo = $(loadinfo)
-            simtypes = Dict(1 => "unrealistic", 2 => "realistic")
-
-
             Random.seed!(seed)
 
             X = $(X)
@@ -98,16 +124,24 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         end
 
         purge_burn=10000
-        num_chains = NUM_CHAINS
-        psrf_cutoff = 1.01
+
+        if isnothing(psrf_cutoff)
+            psrf_cutoff = 1.05
+        end
         maxburn=nburn*MAX_MULT
 
-        tm=@elapsed result = BayesianNetworkRegression.Fit!(X, y, R, η=η, V=V, minburn=nburn, 
-                                    maxburn=maxburn,nsamp=nsamp, aΔ=aΔ, 
+        #tm=@elapsed result = BayesianNetworkRegression.Fit!(X, y, R, η=η, V=V, minburn=nburn, 
+        #                            maxburn=maxburn,nsamp=nsamp, aΔ=aΔ, 
+        #                            bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,suppress_timer=false,
+        #                            num_chains=num_chains,seed=seed,
+        #                            purge_burn=purge_burn,psrf_cutoff=psrf_cutoff)
+
+        tm=@elapsed result = BayesianNetworkRegression.Fit!(X, y, R, η=η, V=V, mingen=mingen, 
+                                    maxgen=maxgen, aΔ=aΔ, 
                                     bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,suppress_timer=false,
                                     num_chains=num_chains,seed=seed,
                                     purge_burn=purge_burn,psrf_cutoff=psrf_cutoff)
-
+        
 
         loadinfo["out"] = "bs"
         b_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
@@ -116,7 +150,13 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         loadinfo["out"] = "xis"
         ξ_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
 
-        total = nburn + nsamp
+        nburn = convert(Int64, round(MIN_GEN / 2))
+
+        if purge_burn <= nburn
+            nburn = purge_burn
+        end
+
+        total = size(result.state.γ,1)
         loadinfo["R"] = R
         loadinfo["nu"] = ν
 
@@ -124,10 +164,10 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         γ₀ = B₀
         MSE = 0
 
-        for i in axes(γ_n2,2)
+        for i in 1:size(γ_n2,2)
             MSE = MSE + (γ_n2[i] - γ₀[i])^2
         end
-        MSE = MSE * (2/(V*(V-1)))
+        MSE = MSE * (2/(V*(V+1)))
 
         n = size(y,1)
         y_pred = zeros(n)
@@ -194,7 +234,7 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
 
     l = 1
     for i in 1:V
-        for j in i+1:V
+        for j in i:V
             gam[l,"y_microbe"] = i
             gam[l,"x_microbe"] = j
             l += 1

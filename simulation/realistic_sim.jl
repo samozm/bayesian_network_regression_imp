@@ -70,6 +70,7 @@ function generate_real(t,k,n,seed,μₑ,πₑ,type,gseed)
     aug = false
 
     if n == 100
+        old_n = n
         n = 50
         aug = true
     end
@@ -83,6 +84,7 @@ function generate_real(t,k,n,seed,μₑ,πₑ,type,gseed)
 
     if aug
         X,y = augment(X,y,rng)
+        n = old_n
     end
 
     out_df = DataFrame(X,:auto)

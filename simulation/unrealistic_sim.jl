@@ -57,7 +57,7 @@ end
 
 function generate_unreal(t,k,n,seed,μₛ,πₛ,jcon,gseed)
 
-    q = floor(Int,t*(t-1)/2)
+    q = floor(Int,t*(t+1)/2)
 
     Random.seed!(seed)
     rng = MersenneTwister(seed)

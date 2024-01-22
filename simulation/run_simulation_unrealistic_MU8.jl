@@ -7,7 +7,10 @@ using DrWatson,MCMCDiagnosticTools,JLD2,Distributed
 include("../../BayesianNetworkRegression.jl/src/BayesianNetworkRegression.jl")
 
 NUM_CHAINS = 3
-MAX_MULT = 50
+MAX_MULT = 200
+
+MIN_GEN = 10000
+MAX_GEN = 500000
 
 addprocs(NUM_CHAINS,exeflags=["--optimize=0","--math-mode=ieee","--check-bounds=yes"])
 
@@ -19,10 +22,10 @@ addprocs(NUM_CHAINS,exeflags=["--optimize=0","--math-mode=ieee","--check-bounds=
 end
 
 function main()
-    nburn = 10000
-    nsamp = 10000
+    nburn = 5000
+    nsamp = 20000
     simnum = 1
-    μₛs = [0.8,1.6]
+    μₛs = [0.8]
     πₛs = [0.0,0.3,0.8]
     Rs = [5,7,9]
     ks = [8,15,22]
@@ -39,8 +42,9 @@ function main()
             for R in Rs
                 for k in ks
                     for sampsize in sampsizes
-                        println("-------------------------")
+                        println(stderr,"-------------------------")
                         println(stderr,"case ", idx, " of ", tot_idx)
+                        println(stderr,"mu=",μₛ," pi=",πₛ," k=",k," sampsize=",sampsize)
                         idx = idx+1
                         run_case_and_output(nburn,nsamp,simnum,μₛ,πₛ,R,k,ν,sampsize,seed,tmot)
                         GC.gc()
@@ -80,6 +84,8 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
             num_chains = $(NUM_CHAINS)
             R = $(R)
             V = $(V)
+            mingen = $(MIN_GEN)
+            maxgen = $(MAX_GEN)
             nburn = $(nburn)
             nsamp = $(nsamp)
             total = nburn+nsamp
@@ -102,8 +108,14 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         psrf_cutoff = 1.01
         maxburn=nburn*MAX_MULT
 
-        tm=@elapsed result = BayesianNetworkRegression.Fit!(X, y, R, η=η, V=V, minburn=nburn, 
-                                    maxburn=maxburn,nsamp=nsamp, aΔ=aΔ, 
+        #tm=@elapsed result = BayesianNetworkRegression.Fit!(X, y, R, η=η, V=V, minburn=nburn, 
+        #                            maxburn=maxburn,nsamp=nsamp, aΔ=aΔ, 
+        #                            bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,suppress_timer=false,
+        #                            num_chains=num_chains,seed=seed,
+        #                            purge_burn=purge_burn,psrf_cutoff=psrf_cutoff)
+
+        tm=@elapsed result = BayesianNetworkRegression.Fit!(X, y, R, η=η, V=V, mingen=mingen, 
+                                    maxgen=maxgen, aΔ=aΔ, 
                                     bΔ=bΔ,ν=ν,ι=ι,ζ=ζ,x_transform=false,suppress_timer=false,
                                     num_chains=num_chains,seed=seed,
                                     purge_burn=purge_burn,psrf_cutoff=psrf_cutoff)
@@ -116,11 +128,17 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         loadinfo["out"] = "xis"
         ξ_in = DataFrame(CSV.File(string("bayesian_network_regression_imp/data/simulation/",simtypes[simnum],"/",savename(loadinfo,"csv",digits=1))))
 
-        total = nburn + nsamp
+        nburn = convert(Int64, round(MIN_GEN / 2))
+
+        if purge_burn >= nburn
+            purge_burn = nburn
+        end
+
+        total = size(result.state.γ,1)
         loadinfo["R"] = R
         loadinfo["nu"] = ν
 
-        γ_n2 = mean(result.state.γ[nburn+1:total,:,:],dims=1)
+        γ_n2 = mean(result.state.γ[purge_burn+1:total,:,:],dims=1)
         γ₀ = B₀
         MSE = 0
 
@@ -194,7 +212,7 @@ function output_results(γ::AbstractArray{T},γ₀::AbstractVector{S},MSE::Abstr
 
     l = 1
     for i in 1:V
-        for j in i+1:V
+        for j in i:V
             gam[l,"y_microbe"] = i
             gam[l,"x_microbe"] = j
             l += 1

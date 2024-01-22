@@ -152,6 +152,7 @@ function sim_one_case(nburn,nsamp,loadinfo,simtypes,simnum;seed=nothing,η=1.01,
         time_df[:,"R"] .= loadinfo["R"]
         time_df[:,"n_microbes"] .= loadinfo["n_microbes"]
         time_df[:,"nu"] .= loadinfo["nu"]
+        time_df[:,"tot_samples"] .= result.sampled * 2
         loadinfo["out"] = "time"
         println("")
         println("-----------------------------------------------")
