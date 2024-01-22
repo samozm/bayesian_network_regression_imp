@@ -2,7 +2,7 @@ This folder contains scripts to create the simulated data in Ozminkowski and Sol
 
 ## Main scripts
 ```
-bash generate_all_sims.jl
+julia simulation/generate_all_sims.jl
 ```
 (to be run from the main folder `bayesian_network_regression_imp/`) generates all types of unrealistic and realistic simulations (of the 6 types described below). It runs the model on all combinations of pi=0.3,0.8 (density parameter of the coefficient matrix), mu=0.8,1.6 (magnitude of node coefficients), microbes per sample=8,22 (density of adjacency matrix), samplesize (=100,500 for theoretical, 500,1000 for realistic), and simulation type (additive phylogenetic, additive random, interaction phylogenetic, interaction random, functional redundancy phylogenetic, functional redundancy random -- for realistic only). 
 

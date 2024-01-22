@@ -65,23 +65,23 @@ function generate_unreal(t,k,n,seed,μₛ,πₛ,jcon,gseed)
 
     B,ξ = generate_Bs(t,rng,μₛ=μₛ,πₛ=πₛ)
 
-    y,A,m = generate_unrealistic_data(B,t,k,n,seed,gauss_rng)#,0,0.25)
+    y,A,m,ϵ,A_base = generate_unrealistic_data(B,t,k,n,seed,gauss_rng)#,0,0.25)
 
-    X = Matrix{Float64}(undef, size(A,1), q)
-    for i in 1:size(A,1)
-        X[i,:] = BayesianNetworkRegression.lower_triangle(A[i])
+    t = size(A,1)
+    X = Matrix{Float64}(undef, t, q)
+    for i in 1:t
+        X[i,:] = lower_triangle(A[i])
     end
 
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
     saveinfo = Dict("simnum"=>"1","pi"=>πₛ,"mu"=>μₛ,"n_microbes"=>k,"samplesize"=>n)
-    output_data(saveinfo,out_df,B,m,ξ,jcon,"unrealistic")
+    output_data(saveinfo,out_df,ξ,A_base,DataFrame(B=lower_triangle(B)[:,1]),false,"unrealistic")
 
 end
 
 function generate_Bs(t,rng; μₛ=0.8,σₛ=1,πₛ=0.1)
-
     ξ = rand(rng,Bernoulli(πₛ),t)
     B = zeros(t,t)
 
@@ -117,7 +117,7 @@ function generate_unrealistic_data(B,t,k,n,seed,gauss_rng)
     end
 
 
-    return y,A,m,ϵ
+    return y,A,m,ϵ,A_base
 end
 
 #main()

@@ -1,0 +1,599 @@
+---
+title: "wagg_plots"
+author: "Sam Ozminkowski"
+date: "12/27/2023"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+library(stringr)
+library(grid)
+library(gridExtra)
+library(cowplot)
+```
+
+
+# Universal Values
+
+```{r}
+cutoff = 40
+in_path   = "~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/results/"
+out_path  = "~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/"
+
+
+make.filename <- function(path,R,nu,cutoff,n,normed,out)
+{
+  if(normed)
+  {
+    return(sprintf("%sR=%s_cutoff=%s_n=%s_normed=yes_nu=%s_out=%s.csv",
+                         path,R,cutoff,n,nu,out))
+  }
+  else
+  {
+    return(sprintf("%sR=%s_cutoff=%s_n=%s_nu=%s_out=%s.csv",
+                         path,R,cutoff,n,nu,out))
+  }
+  
+}
+
+OTU_IDs <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/Wagg_etal_data/Bacterial_OTU_ID.csv")
+```
+
+# Plotting functions
+### Plot credible intervals for nodes
+```{r}
+plot.ci.nodes <- function(path,n,R,nu,cutoff,normed,ylab=T,xticks=T,level=0.05,in_lim=NULL)
+{
+  nodes <- data.frame()
+  nonc <- F
+
+  flnm2 <- make.filename(path,R,nu,cutoff,n,normed,"psrf")
+  if(!file.exists(flnm2)){print(paste0("file does not exist: ",flnm2)); return()}
+  psrf <- read.csv(flnm2)[1,]
+  if ((psrf$max_gamma[1] > 1.01 || psrf$max_xi[1] > 1.01))
+  {
+    nonc <- T
+  }
+  flnm <- make.filename(path,R,nu,cutoff,n,normed,"edges")
+  edges <- read.csv(flnm)
+  
+  nn <- length(edges$mean)
+  edges$edge <- 1:nn
+  if(level == 0.1)
+  {
+    edges <- transform(edges,rej=ifelse(X0.05 > 0 | X0.95 < 0,TRUE,FALSE))
+  }
+  else
+  {
+    edges <- transform(edges,rej=ifelse(X0.025 > 0 | X0.975 < 0,TRUE,FALSE))
+  }
+  
+  flnm3 <- make.filename(path,R,nu,cutoff,n,normed,"nodes")
+  nodes <- read.csv(flnm3)
+  
+  ## Labelling the nodes:
+  n.len <- length(nodes$Xi_posterior)
+
+  mat <- matrix(0,n.len,n.len)
+  mat[lower.tri(mat, diag=T)] <- edges$mean
+  mat <- t(mat)
+  
+  lower.mat <- matrix(0,n.len,n.len)
+  if(level == 0.1)
+  {
+    lower.mat[lower.tri(lower.mat, diag=T)] <- edges$X0.05
+  }
+  else
+  {
+    lower.mat[lower.tri(lower.mat, diag=T)] <- edges$X0.025
+  }
+  lower.mat <- t(lower.mat)
+  
+  upper.mat <- matrix(0,n.len,n.len)
+  if(level == 0.1)
+  {
+    upper.mat[lower.tri(upper.mat, diag=T)] <- edges$X0.95
+  }
+  else
+  {
+    upper.mat[lower.tri(upper.mat, diag=T)] <- edges$X0.975
+  }
+  upper.mat <- t(upper.mat)
+  
+  rej.mat <- matrix(0,n.len,n.len)
+  rej.mat[lower.tri(rej.mat, diag=T)] <- edges$rej
+  rej.mat <- t(rej.mat)
+  
+  #print(n.len)
+  #print(diag(upper.mat))
+  #print(diag(mat))
+  
+  #print("main effect coefficients")
+  coefdf <- data.frame(lower=diag(lower.mat),coef=diag(mat),
+                       upper=diag(upper.mat),nodepp=nodes$Xi_posterior,
+                       node=1:length(diag(lower.mat)),
+                       rej = as.factor(diag(rej.mat)),
+                       mic_name = sapply(nodes$microbe,get_otu_from_ID)
+                       )
+  
+  #print(cbind(coefdf[(dim(coefdf)[1]-13):dim(coefdf)[1],c("lower","upper","mic_name")],nodes$microbe[(dim(coefdf)[1]-13):dim(coefdf)[1]]))
+  
+  coefdf <- mutate(coefdf,goodpp_name = ifelse(rej == "1", mic_name, ""))
+  
+  lim_low <- min(coefdf$lower) - 0.25
+  lim_high <- max(coefdf$upper) + 0.25
+  lim <- c(lim_low,lim_high)
+  
+  if(ylab){
+    ylabel2 = "PP"
+    axisTextY = element_text(colour="grey", size=rel(1.5), angle=0, hjust=.5, vjust=.5, face="plain")
+    axisLabsY = element_text(size=rel(1.5), face="plain")
+  }else{
+    ylabel2 = ""
+    axisTextY = element_blank()
+    axisLabsY = element_blank()
+  }
+  if(ylab){
+    ylabel = expression(beta)
+    axisTextY = element_text(colour="grey", size=rel(1.5), angle=0, hjust=.5, vjust=.5, face="plain")
+    axisLabsY = element_text(size=rel(1.5), face="plain")
+  }else{
+    ylabel = ""
+    axisTextY = element_blank()
+    
+  }
+  if(xticks){
+    #xlabel = "Microbe"
+    xlabel = ""
+    axisLabsX = element_text(angle=60,hjust=1,vjust=1,size=rel(1.5))
+  }
+  else
+  {
+    xlabel = ""
+    axisLabsX = element_blank()
+    axisLabsY = element_blank()
+  }
+  
+  plt1 <- coefdf %>% ggplot() + geom_errorbar(aes(x=factor(node),ymin=lower,
+                                                                 ymax=upper,
+                                                                 color=rej)) +
+        xlab("") + ylab(ylabel)+ ggtitle(paste0("level=",level))+
+        scale_color_manual(values=c("#82AFBC","#0E4B87")) + 
+        theme(
+          plot.title = element_text(hjust=0.5, size=rel(2)),
+          #axis.text.x=element_blank(), 
+          #axis.ticks.x=element_blank(),
+          axis.text.y = axisTextY,
+          axis.title.y = axisLabsY,
+          axis.text.x = axisLabsX,
+          axis.ticks.y = element_blank(),
+          panel.background = element_rect(fill = NA, color = "black"),
+          axis.line = element_line(colour = "grey"),
+          strip.text = element_text(size = rel(1.5)),
+          legend.position = "none"
+        ) +
+          geom_point(aes(x=factor(node),y=coef, color=rej),shape=18, size=2) +
+          geom_hline(aes(yintercept=0),linetype="dashed",color="#696969", size=0.5)
+  
+  view_lim <- c(max(lim_low,-10),min(lim_high,10))
+  
+  if(!is.null(in_lim))
+  {
+    view_lim <- in_lim
+  }
+  
+  plt1 <- plt1 + coord_cartesian(ylim = view_lim) + 
+    scale_x_discrete(limit=as.character(coefdf$node),
+                     labels=coefdf$goodpp_name,
+                     expand=c(0.02,0.02))
+  
+  plt2 <- ggplot(data=coefdf,aes(x=factor(node),y=nodepp,fill=rej)) + 
+    geom_bar(stat="Identity") + xlab(xlabel) + ylab(ylabel2) + ggtitle(paste0("level=",level)) +
+    theme(
+        plot.title = element_text(hjust=0.5, size=rel(2)),
+        axis.title.x = element_text(size=rel(1.5)),
+        axis.title.y = axisLabsY,
+        axis.text.x=element_blank(), 
+        axis.ticks.x=element_blank(),
+        panel.background = element_rect(fill = NA, color = "black"),
+        axis.line = element_line(colour = "grey"),
+        strip.text = element_text(size = rel(2)),
+        strip.background = element_blank(),
+        strip.text.x = element_blank()
+        ) +
+  scale_fill_manual(values=c("#82AFBC","#82AFBC")) + 
+    guides(fill="none") +
+    scale_y_continuous(breaks = c(0,0.5,1),limits=c(0,1.05))
+    
+  
+  
+  #if(nonc)
+  #{
+  #  plt1 <- plt1 + ggtitle(paste0("NOT CONV."))
+  #  plt2 <- plt2 + ggtitle(paste0("NOT CONV."))
+  #}
+
+  return(list(plt1,plt2))
+}
+
+get_otu_from_ID <- function(otu_id)
+{
+  if(otu_id == ""){ return("") }
+  otu_id_full = paste0("OTU_",otu_id)[1]
+  return(str_split(OTU_IDs[OTU_IDs$OTU == otu_id_full,"Genus"],"\\(")[[1]][1])
+}
+```
+
+```{r}
+plot.intervals <- function(in_path,R,nu,cutoff,normed=F,title=TRUE,level=0.05)
+{
+  flnm <- make.filename(in_path,R,nu,cutoff,n,normed,"edges")
+  if(!file.exists(flnm)){print(paste0("file does not exist: ",flnm)); return()}
+  edges <- read.csv(flnm)
+  
+  nn <- length(edges$X0.025)
+  edges$edge <- 1:nn
+  edges <- transform(edges,rej=ifelse(X0.025 > 0 | X0.975 < 0,TRUE,FALSE))
+  
+  n.len <- as.integer((-1 + sqrt( 1 + 8 * nn))/2)
+  
+  mat <- matrix(0,n.len,n.len)
+  mat[lower.tri(mat, diag=T)] <- edges$mean
+  #mat <- t(mat)
+  
+  edge.mat <- matrix(0,n.len,n.len)
+  edge.mat[lower.tri(edge.mat, diag=T)] <- as.factor(edges$edge)
+  
+  lower.mat <- matrix(0,n.len,n.len)
+  if(level == 0.1)
+  {
+    lower.mat[lower.tri(lower.mat, diag=T)] <- edges$X0.05
+  }
+  else
+  {
+    lower.mat[lower.tri(lower.mat, diag=T)] <- edges$X0.025
+  }
+  #lower.mat <- t(lower.mat)
+  
+  upper.mat <- matrix(0,n.len,n.len)
+  if(level == 0.1)
+  {
+    upper.mat[lower.tri(upper.mat, diag=T)] <- edges$X0.95
+  }
+  else
+  {
+    upper.mat[lower.tri(upper.mat, diag=T)] <- edges$X0.975
+  }
+  #upper.mat <- t(upper.mat)
+  
+  rej.mat <- matrix(0,n.len,n.len)
+  rej.mat[lower.tri(rej.mat, diag=T)] <- edges$rej
+  #rej.mat <- t(rej.mat)
+  
+  coefdf <- data.frame(X0.025 = lower.mat[lower.tri(lower.mat,diag=F)],
+                       X0.975 = upper.mat[lower.tri(upper.mat,diag=F)],
+                       mean = mat[lower.tri(mat,diag=F)],
+                       rej  = as.factor(rej.mat[lower.tri(rej.mat,diag=F)]),
+                       edge = as.factor(edge.mat[lower.tri(edge.mat,diag=F)]))
+  
+  
+  lim_low <- floor(quantile(edges$lower,0.025))
+  lim_high <- ceiling(quantile(edges$upper,0.975))
+  lim <- c(lim_low,lim_high)
+  
+  plt <- coefdf %>% ggplot() + geom_errorbar(aes(x=factor(edge),ymin=X0.025,
+                                                                 ymax=X0.975,
+                                                                 color=rej)) +
+        xlab("") + ylab("") +
+        scale_color_manual(values=c("#82AFBC","#0E4B87")) + 
+        theme(
+          plot.title = element_text(hjust=0.5, size=rel(2)),
+          axis.title.x = element_text(size=rel(2)),
+          axis.title.y = element_blank(),
+          #axis.text.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.background = element_rect(fill = NA, color = "black"),
+          axis.line = element_line(colour = "grey"),
+          strip.text = element_text(size = rel(1.5)),
+          legend.position = "none"
+        ) +
+        #scale_x_continuous(limits=c(1,n)) + coord_flip() +
+        #scale_x_discrete(labels=NULL,expand=expansion(add=4)) +
+        geom_point(aes(x=factor(edge),y=mean, color=rej),shape=18, size=2) +
+        geom_hline(aes(yintercept=0),linetype="solid",color="#696969", size=1)
+  
+  view_lim <- c(max(lim_low,-10),min(lim_high,10))
+  
+  #plt <- plt + coord_flip(ylim = view_lim) + scale_x_discrete(labels=NULL,expand=expansion(add=4))
+  plt <- plt + coord_cartesian(ylim = view_lim) + scale_x_discrete(labels=NULL,expand=expansion(add=4))
+  
+  ### delete
+  
+  if(title)
+  {
+    plt <- plt + ggtitle(paste0("level=",level))
+  }
+  return(plt)
+}
+```
+
+
+```{r}
+options(scipen = 100)
+
+Rs      <- c(6) #c(2,  2,  4, 6,  6,  6,  6,  6,  6,  6,  8,  8, 10, 10, 13, 13, 15, 15, 20, 20, 24, 24, 30, 20, 40, 50)
+nus     <- c(12) #c(4,  6, 14, 8, 10, 12, 16, 18, 20, 24, 10, 12, 12, 14, 16, 17, 18, 19, 24, 26, 28, 30, 36, 36, 46, 56) 
+normeds <- c("yes","no")
+ns      <- c(100,200)
+
+nodepp = 0.45 #0.65
+
+ylab = TRUE
+xticks = TRUE
+
+for(i in 1:length(Rs))
+{
+  for(level in c(0.05,0.1))
+  {  
+    for(n in ns){
+      for(normed in normeds)
+      {
+        R     = Rs[i]
+        nu    = nus[i]
+        
+        title <- T #!(R == 3 && nburn == 10000 && nsamp == 10000 && nu == 9)
+        
+        flnm <- make.filename(in_path,R,nu,cutoff,n,normed == "yes","psrf")
+        if(!file.exists(flnm))
+        {
+          print(paste0("file does not exist: ",flnm))
+          next
+        }
+        
+        psrf <- read.csv(flnm)[1,]
+        
+        if(round(psrf$max_xi[1],digits=2) > 1.01 || round(psrf$max_gamma[1],digits=2) > 1.01)
+        {
+          print("-------------------")
+          print("bad:")
+          print(sprintf("R: %s, n: %s, normed: %s, nu: %s - PSRF xi = %s, PSRF gamma = %s",R,n,normed,nu,psrf$max_xi[1], psrf$max_gamma[1]))
+        }
+        if(round(psrf$max_xi[1],digits=2) > 1.1 || round(psrf$max_gamma[1],digits=2) > 1.1)
+        {
+          print("-------------------")
+          print("inexcusable:")
+          print(sprintf("R: %s, n: %s, normed: %s, nu: %s - PSRF xi = %s, PSRF gamma = %s",R,n,normed,nu,psrf$max_xi[1], psrf$max_gamma[1]))
+          next
+        }
+        
+        #print("-------------------")
+        #print(sprintf("R: %s, nburn: %s, nsamp: %s, nu: %s - PSRF xi = %s, PSRF gamma = %s",R,nburn,nsamp,nu,psrf$max_xi[1], psrf$max_gamma[1]))
+        plt <- plot.ci.nodes(in_path,n,R,nu,cutoff,normed=="yes",level==0.05,xticks,level,in_lim=c(-0.5,0.5))
+        
+        if(level==0.05)
+        {
+          wdt = 6
+        }
+        else
+        {
+          wdt = 5.5
+        }
+
+        if(normed == "yes")
+        {
+          plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-ci-nodes-ci","-level",level,"-n",n,"-nu",nu,"-R",R,"-normed.pdf")
+        }
+        else
+        {
+          plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-ci-nodes-ci","-level",level,"-n",n,"-nu",nu,"-R",R,".pdf")
+        }
+        pdf(plotname,height=5, width=wdt)
+        #title <- ggdraw() + draw_label(paste0("level=",level), fontface='bold')
+        #print(plot_grid(title, plt[[1]], ncol=1, align="v", rel_heights = c(0.01,1)))
+        print(plt[[1]])
+        dev.off()
+        
+        if(normed == "yes")
+        {
+          plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-ci-nodes-pp","-level",level,"-n",n,"-nu",nu,"-R",R,"-normed.pdf")
+        }
+        else
+        {
+          plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-ci-nodes-pp","-level",level,"-n",n,"-nu",nu,"-R",R,".pdf")
+        }
+        pdf(plotname,height=5, width=8)
+        #title <- ggdraw() + draw_label(paste0(" n: ", n, " R: ", R, " nu: ", nu, " level=",level), fontface='bold')
+        #print(plot_grid(title, plt[[2]], ncol=1, align="v", rel_heights = c(0.05,1)))
+        print(plt[[2]])
+        dev.off()
+        
+        #### intervals
+        if(normed == "yes")
+        {
+          plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-intervals","-level",level,"-n",n,"-nu",nu,"-R",R,"-normed.pdf")
+        }
+        else
+        {
+          plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-intervals","-level",level,"-n",n,"-nu",nu,"-R",R,".pdf")
+        }
+        
+        pdf(plotname,height=2, width=10)
+        plt2 <- plot.intervals(in_path,R,nu,cutoff,normed=="yes",title=TRUE)
+        print(plt2)
+        dev.off()
+      }
+    }
+  }
+  
+}
+```
+
+
+```{r}
+library(lubridate)
+#nburn = 5000
+#nsamp = 5000
+R      = 6
+nu     = 12
+n      = 200
+normed = "no"
+        #function(path,R,nu,cutoff,n,normed,out)
+flnm <- make.filename(in_path,R,nu,cutoff,n,normed=="yes","time")
+tm <- read.csv(flnm)
+
+paste0("total time: ", seconds_to_period(tm$time))
+paste0(seconds_to_period((tm$time/tm$tot_samples)*10000), " per 10k samples")
+paste0(tm$tot_samples, " samples")
+
+```
+
+```{r}
+print("----------100 samples----------")
+XYs <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/Wagg_etal_data/cutoff=40_out=XY_100samples.csv")
+
+ggplot(data=XYs) + geom_histogram(aes(x=Pleach))
+
+print("--original data--")
+summary(XYs$Pleach[1:50])
+print("--augmented data--")
+summary(XYs$Pleach[51:100])
+
+print("--unique OTUs per sample--")
+OTU_DATAT_RES.df <- subset(XYs,select=-c(Nleach,Pleach,Decom))
+OTU_DATAT_RES.df$num_ones <- rowSums(OTU_DATAT_RES.df==1)
+#OTU_DATAT_RES.df$num_nonzero[1:50]
+#OTU_DATAT_RES.df$num_nonzero[51:100]
+
+print("--original data--")
+print("min")
+min(OTU_DATAT_RES.df$num_ones[1:50])
+print("max")
+max(OTU_DATAT_RES.df$num_ones[1:50])
+print("mean")
+mean(OTU_DATAT_RES.df$num_ones[1:50])
+
+print("--generated data--")
+print("min")
+min(OTU_DATAT_RES.df$num_ones[51:100])
+print("max")
+max(OTU_DATAT_RES.df$num_ones[51:100])
+print("mean")
+mean(OTU_DATAT_RES.df$num_ones[51:100])
+
+print("--non-zero entries (as percentage)--")
+OTU_DATAT_RES.df <- subset(XYs,select=-c(Nleach,Pleach,Decom))
+OTU_DATAT_RES.df[OTU_DATAT_RES.df == 1] <- 0
+OTU_DATAT_RES.df$num_nonzero <- rowSums(OTU_DATAT_RES.df != 0)
+print("original")
+sum(OTU_DATAT_RES.df$num_nonzero[1:50]) / 4005 * 2
+print("generated")
+sum(OTU_DATAT_RES.df$num_nonzero[51:100]) / 4005 * 2
+print("all")
+sum(OTU_DATAT_RES.df$num_nonzero) / 4005
+```
+
+```{r}
+print("----------200 samples----------")
+XYs <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/Wagg_etal_data/cutoff=40_out=XY_200samples.csv")
+
+print("--original data--")
+summary(XYs$Pleach[1:50])
+print("--augmented data--")
+summary(XYs$Pleach[51:200])
+print("--all data--")
+summary(XYs$Pleach)
+sd(XYs$Pleach)
+
+print("--unique OTUs per sample--")
+OTU_DATAT_RES.df <- subset(XYs,select=-c(Nleach,Pleach,Decom))
+OTU_DATAT_RES.df$num_nonzero <- rowSums(OTU_DATAT_RES.df==1)
+OTU_DATAT_RES.df$num_nonzero[1:50]
+OTU_DATAT_RES.df$num_nonzero[51:100]
+
+# ORIGINAL DATA
+print("min")
+min(OTU_DATAT_RES.df$num_nonzero[1:50])
+print("max")
+max(OTU_DATAT_RES.df$num_nonzero[1:50])
+print("mean")
+mean(OTU_DATAT_RES.df$num_nonzero[1:50])
+
+# GENERATED DATA
+print("min")
+min(OTU_DATAT_RES.df$num_nonzero[51:200])
+print("max")
+max(OTU_DATAT_RES.df$num_nonzero[51:200])
+print("mean")
+mean(OTU_DATAT_RES.df$num_nonzero[51:200])
+```
+
+
+```{r}
+print("-------truncated simulation---------")
+
+trunc.XY <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/data/simulation/realistic/edge_mu=0.4_mu=0.8_n_microbes=8_out=XYs_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.csv")
+
+sum(trunc.XY$y >= 22)
+
+trunc.XY2 <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/data/simulation/realistic/edge_mu=0.4_mu=0.8_n_microbes=22_out=XYs_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.csv")
+
+sum(trunc.XY2$y >= 22)
+
+length(trunc.XY2$y)
+
+mean(trunc.XY$y)
+sd(trunc.XY$y)
+
+mean(trunc.XY2$y)
+sd(trunc.XY2$y)
+
+trunc.XY3 <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/data/simulation/realistic/edge_mu=0.4_mu=1.6_n_microbes=8_out=XYs_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.csv")
+
+trunc.XY4 <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/data/simulation/realistic/edge_mu=0.4_mu=1.6_n_microbes=22_out=XYs_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.csv")
+
+XYs <- read.csv("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/Wagg_etal_data/cutoff=40_out=XY_200samples.csv")
+mean(XYs$Pleach)
+sd(XYs$Pleach)
+
+plt <- ggplot(XYs) + geom_histogram(aes(x=Pleach),binwidth=0.01,color="white",fill="grey") + theme_bw() + 
+  labs(x="P leaching (mg/L)", y="Count")
+plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/pleach_histogram.pdf")
+pdf(plotname,height=4, width=6)
+print(plt)
+dev.off()
+  
+plt <- ggplot(trunc.XY) + geom_histogram(aes(x=y),binwidth=0.25,color="white",fill="grey") + theme_bw() + 
+  labs(x="Simulated response value", y="Count")
+plotname = paste0("/Users/samoz/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/edge_mu=0.4_mu=0.8_n_microbes=8_out=histogram_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.pdf")
+pdf(plotname,height=4, width=6)
+print(plt)
+dev.off()
+
+plt <- ggplot(trunc.XY2) + geom_histogram(aes(x=y),binwidth=0.25,color="white",fill="grey") + theme_bw() + 
+  labs(x="Simulated response value", y="Count")
+plotname = paste0("/Users/samoz/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/edge_mu=0.4_mu=0.8_n_microbes=22_out=histogram_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.pdf")
+pdf(plotname,height=4, width=6)
+print(plt)
+dev.off()
+
+plt <- ggplot(trunc.XY3) + geom_histogram(aes(x=y),binwidth=0.25,color="white",fill="grey") + theme_bw() + 
+  labs(x="Simulated response value", y="Count")
+plotname = paste0("/Users/samoz/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/edge_mu=0.4_mu=1.6_n_microbes=8_out=histogram_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.pdf")
+pdf(plotname,height=4, width=6)
+print(plt)
+dev.off()
+
+plt <- ggplot(trunc.XY4) + geom_histogram(aes(x=y),binwidth=0.25,color="white",fill="grey") + theme_bw() + 
+  labs(x="Simulated response value", y="Count")
+plotname = paste0("/Users/samoz/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/edge_mu=0.4_mu=1.6_n_microbes=22_out=histogram_pi=0.8_samplesize=500_simnum=2_type=redundant_phylo.pdf")
+pdf(plotname,height=4, width=6)
+print(plt)
+dev.off()
+```
+
+
+

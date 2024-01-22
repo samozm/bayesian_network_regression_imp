@@ -57,8 +57,8 @@ function main()
     generate_real(t,k,n,seed,μₑ,πₑ,type,gseed)
 end
 
-function generate_real(t,k,n,seed,μₑ,πₑ,type,gseed)
-    q = floor(Int,t*(t-1)/2)
+function generate_real(t,k,n,seed,μₑ,πₑ,type,gseed,normdiag=false)
+    q = floor(Int,t*(t+1)/2)
 
     Random.seed!(seed)
     rng = MersenneTwister(seed)
@@ -68,46 +68,97 @@ function generate_real(t,k,n,seed,μₑ,πₑ,type,gseed)
     σₛ = 1.0
 
     aug = false
+    num_aug=0
 
+<<<<<<< HEAD
     if n == 100
+=======
+    if n == 100 
+>>>>>>> d5f23a3283dc0459a2e4ead6e8e867926119458d
         old_n = n
         n = 50
         aug = true
-    end
+        num_aug=1
+        loadinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type,"edge_mu"=>μₛ,"samplesize"=>n)
+        loadinfo["out"] = "XYs"
+        data_in = DataFrame(CSV.File(string("data/simulation/realistic/",savename(loadinfo,"csv",digits=1))))
+        X = Matrix(data_in[:,names(data_in,Not("y"))])
+        y = Vector(data_in[:,:y])
 
-    ξ,B,y,A,m = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng,gauss_rng)#,0,0.25)
+        loadinfo["out"] = "xis"
+        ξ_in = DataFrame(CSV.File(string("data/simulation/realistic/",savename(loadinfo,"csv",digits=1))))[!,"TrueXi"]
 
-    X = Matrix{Float64}(undef, size(A,1), q)
-    for i in 1:size(A,1)
-        X[i,:] = BayesianNetworkRegression.lower_triangle(A[i])
-    end
+        loadinfo["out"] = "A"
+        A_base = DataFrame(CSV.File(string("data/simulation/realistic/",savename(loadinfo,"csv",digits=1))))
+        A_base = Matrix(A_base)
 
-    if aug
-        X,y = augment(X,y,rng)
+        X,y = augment(X,y,ξ_in,A_base,rng,num_aug)
         n = old_n
+        ξ = ξ_in
+
+        loadinfo["out"] = "bs"
+        B = DataFrame(CSV.File(string("data/simulation/realistic/",savename(loadinfo,"csv",digits=1))))
+
+    elseif n == 200
+        old_n = n
+        n = 50
+        aug = true
+        num_aug=3
+        loadinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type,"edge_mu"=>μₛ,"samplesize"=>n)
+        loadinfo["out"] = "XYs"
+        data_in = DataFrame(CSV.File(string("data/simulation/realistic/",savename(loadinfo,"csv",digits=1))))
+        X = Matrix(data_in[:,names(data_in,Not("y"))])
+        y = Vector(data_in[:,:y])
+
+        loadinfo["out"] = "xis"
+        ξ_in = DataFrame(CSV.File(string("data/simulation/realistic/",savename(loadinfo,"csv",digits=1))))[!,"TrueXi"]
+
+        loadinfo["out"] = "A"
+        A_base = DataFrame(CSV.File(string("data/simulation/realistic/",savename(loadinfo,"csv",digits=1))))
+        A_base = Matrix(A_base)
+
+        X,y = augment(X,y,ξ_in,A_base,rng,num_aug)
+        n = old_n
+        ξ = ξ_in
+
+        loadinfo["out"] = "bs"
+        B = DataFrame(CSV.File(string("data/simulation/realistic/",savename(loadinfo,"csv",digits=1))))
+    else
+        
+        ξ,B,y,A,m,A_base = generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng,gauss_rng,normdiag)#,0,0.25)
+
+        X = Matrix{Float64}(undef, size(A,1), q)
+        for i in 1:size(A,1)
+            X[i,:] = lower_triangle(A[i])
+        end
+        B = DataFrame(B=lower_triangle(B)[:,1])
     end
 
+    saveinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type,"edge_mu"=>μₛ,"samplesize"=>n)
     out_df = DataFrame(X,:auto)
     out_df[!,:y] = y
 
-    saveinfo = Dict("simnum"=>"2","pi"=>πₑ,"mu"=>μₑ,"n_microbes"=>k,"type"=>type,"edge_mu"=>μₛ,"samplesize"=>n,"total_microbes"=>t)
-    output_data(saveinfo,out_df,B,m,ξ,false,"realistic")
-
-    saveinfo["out"] = "main-effects"
-    CSV.write(datadir(joinpath("simulation","realistic"),savename(saveinfo,"csv",digits=1)),DataFrame(me=diag(B)))
+    output_data(saveinfo,out_df,ξ,A_base,B,false,"realistic")
 
 end
 
-function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng,gauss_rng)
+function generate_realistic_data(t,k,n,μₑ,πₑ,μₛ,σₛ,type,seed,rng,gauss_rng,normdiag=false)
 
     @rput t
     @rput seed
     R"set.seed(seed);source('simulation/sim_trees.R');tree <- sim_tree_string(t); A <- tree_dist(tree$tree); tree_str <- tree$tree_str"
     tree = @rget tree_str
     A_base = @rget A
+    mean_A_base = mean(A_base)
 
-    for i in 1:size(A_base,1)
-        A_base[i,i] = 1
+    if normdiag
+        for i in 1:size(A_base,1)
+            A_base[i,i] = mean_A_base
+        end
+    else    
+        for i in 1:size(A_base,1)
+            A_base[i,i] = 1
+        end
     end
 
 
@@ -185,7 +236,8 @@ function generate_yAm(ξ,B,t,k,n,A_base,rng,gauss_rng,redundant=false;L=1)
         end
     end
 
-    return ξ,B,y,A,m
+    return ξ,B,y,A,m,A_base
 end
+
 
 #main()
