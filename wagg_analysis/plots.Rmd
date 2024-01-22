@@ -119,18 +119,20 @@ plot.nodes = function(in_path,R,cutoff,nburn,nsamp,nu,nodepp,yaxis=TRUE,title=TR
           plot.margin = unit(c(5.5, 5.5, 24, 5.5), "points")
           ) +
       guides(fill="none") +
-      scale_y_continuous(position="right",breaks = c(0.3,0.5,0.6,0.65,0.7,1),limits=c(0,1)) +
+      scale_y_continuous(position="right",breaks = c(0.3,0.35,0.4,0.45,0.5,1),limits=c(0,1)) +
       #scale_x_discrete(limit=as.character(nodes$microbe),labels=nodes$goodpp_name,expand=c(0.02,0.02)) +
       geom_abline(slope=0,intercept=0.5,color="red",linetype="dashed") + 
-      geom_abline(slope=0,intercept=0.65,color="blue",linetype="dashed") +
-      geom_abline(slope=0,intercept=0.7,color="yellow",linetype="dashed") + 
-      geom_abline(slope=0,intercept=0.6,color="orange",linetype="dashed") + 
+      geom_abline(slope=0,intercept=0.35,color="blue",linetype="dashed") +
+      geom_abline(slope=0,intercept=0.3,color="yellow",linetype="dashed") + 
+      geom_abline(slope=0,intercept=0.45,color="orange",linetype="dashed") +
+      geom_abline(slope=0,intercept=0.4,color="green",linetype="dashed") +
       coord_flip(ylim = c(0.3, 1))
   
   if(title)
   {
     plt <- plt + geom_text(aes(label = goodpp), hjust = -0.2,color="red",size=4,position = position_jitter(width=1,height=0)) +
-      ggtitle(paste0(nsamp," retained samples, ",nburn," burn-in, nu=",nu,", R=",R)) + 
+      ggtitle(paste0("nu=",nu,", R=",R)) + 
+      #ggtitle(paste0(nsamp," retained samples, ",nburn," burn-in, nu=",nu,", R=",R)) + 
       scale_x_discrete(guide = guide_axis(n.dodge=2),limit=as.character(nodes$microbe),labels=nodes$goodpp_name,expand=c(0.02,0.02)) 
   }
   else
@@ -150,16 +152,90 @@ get_otu_from_ID <- function(otu_id)
 }
 ```
 
+### 6. Plot credible intervals for nodes
+```{r}
+plot.ci.nodes <- function(in_path,R,cutoff,nburn,nsamp,nu,lim,title=TRUE)
+{
+  nonc <- F
+  # path,R,cutoff,nburn,nsamp,nu,out
+  flnm2 <- make.filename(in_path,R,cutoff,nburn,nsamp,nu,"psrf")
+  psrf <- read.csv(flnm2)[1,]
+  if ((psrf$max_gamma[1] > 1.01 || psrf$max_xi[1] > 1.01))
+  {
+    nonc <- T
+  }
+  flnm <- make.filename(in_path,R,cutoff,nburn,nsamp,nu,"edges")
+  edges <- read.csv(flnm)
+  
+  nn <- length(edges$mean)
+  edges$edge <- 1:nn
+  edges <- transform(edges,rej=ifelse(X0.025 > 0 | X0.975 < 0,TRUE,FALSE))
+  
+  mat <- matrix(0,30,30)
+  mat[lower.tri(mat, diag=T)] <- edges$mean
+  mat <- t(mat)
+  
+  lower.mat <- matrix(0,30,30)
+  lower.mat[lower.tri(lower.mat, diag=T)] <- edges$X0.025
+  lower.mat <- t(lower.mat)
+  
+  upper.mat <- matrix(0,30,30)
+  upper.mat[lower.tri(upper.mat, diag=T)] <- edges$X0.975
+  upper.mat <- t(upper.mat)
+  
+  rej.mat <- matrix(0,30,30)
+  rej.mat[lower.tri(rej.mat, diag=T)] <- edges$rej
+  rej.mat <- t(rej.mat)
+  
+  print("main effect coefficients")
+  coefdf <- data.frame(lower=diag(lower.mat),coef=diag(mat),
+                       upper=diag(upper.mat),true_inf=nodes$TrueXi,
+                       node=1:length(diag(lower.mat)),
+                       rej = as.factor(diag(rej.mat))
+                       )
+  
+  lim_low <- floor(min(coefdf$lower)) - 0.25
+  lim_high <- ceiling(max(coefdf$upper)) + 0.25
+  lim <- c(lim_low,lim_high)
+    
+  plt <- coefdf %>% ggplot() + geom_errorbar(aes(x=factor(node),ymin=lower,
+                                                                 ymax=upper,
+                                                                 color=rej)) +
+        xlab("") + ylab("")+ ggtitle(paste0("pi=",pi,", mu=",mu))+
+        scale_color_manual(values=c("#82AFBC","#0E4B87")) + 
+        theme(
+          plot.title = element_text(hjust=0.5, size=rel(2)),
+          axis.title.x = element_text(size=rel(1.2)),
+          axis.title.y = element_text(size=rel(1.9), angle=90, vjust=0.5, hjust=0.5),
+          axis.text.x = element_text(colour="grey", size=rel(1.8), hjust=.5, vjust=.5, face="plain"),
+          axis.ticks.y = element_blank(),
+          panel.background = element_rect(fill = NA, color = "black"),
+          axis.line = element_line(colour = "grey"),
+          strip.text = element_text(size = rel(1.5)),
+          legend.position = "none"
+        ) +
+          scale_y_continuous(limits=lim) +
+          coord_flip() + scale_x_discrete(labels=NULL,expand=expansion(add=4)) +
+          geom_point(aes(x=factor(node),y=coef, color=rej),shape=18, size=2) +
+          geom_hline(aes(yintercept=0),linetype="solid",color="#696969", size=1)
+  if(nonc)
+  {
+    plt <- plt + ggtitle(paste0("pi=",pi,", mu=",mu, " - NOT CONV."))
+  }
+  return(plt)
+}
+```
+
 
 ```{r}
 options(scipen = 100)
 
-nburns <- c(10000,30000)
-nsamps <- c(10000,20000)
-Rs     <- c(    3,    3)
-nus    <- c(    9,    7)
+nburns <- c(5000,5000,5000,5000,5000,5000)
+nsamps <- c(5000,5000,5000,5000,5000,5000)
+Rs     <- c(   5,   5,   5,   6,   6,   6)
+nus    <- c(   9,   8,   7,  10,   8,   9)
 
-nodepp = 0.65
+nodepp = 0.45 #0.65
 
 for(i in 1:length(nburns))
 {
@@ -168,12 +244,12 @@ for(i in 1:length(nburns))
   R     = Rs[i]
   nu    = nus[i]
   
-  title <- !(R == 3 && nburn == 10000 && nsamp == 10000 && nu == 9)
+  title <- T #!(R == 3 && nburn == 10000 && nsamp == 10000 && nu == 9)
   
   flnm <- make.filename(in_path,R,cutoff,nburn,nsamp,nu,"psrf")
   psrf <- read.csv(flnm)
   
-  if(psrf$max_xi[1] > 1.2 || psrf$max_gamma[1] > 1.2)
+  if(round(psrf$max_xi[1],digits=2) > 1.01 || round(psrf$max_gamma[1],digits=2) > 1.01)
   {
     print("-------------------")
     print("bad:")
@@ -181,10 +257,10 @@ for(i in 1:length(nburns))
     next
   }
   
-  print("-------------------")
-  print(sprintf("R: %s, nburn: %s, nsamp: %s, nu: %s - PSRF xi = %s, PSRF gamma = %s",R,nburn,nsamp,nu,psrf$max_xi[1], psrf$max_gamma[1]))
-  plt <- plot.intervals(in_path,R,cutoff,nburn,nsamp,nu,c(-7,7),title)
-  plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-intervals-nburn",
+  #print("-------------------")
+  #print(sprintf("R: %s, nburn: %s, nsamp: %s, nu: %s - PSRF xi = %s, PSRF gamma = %s",R,nburn,nsamp,nu,psrf$max_xi[1], psrf$max_gamma[1]))
+  plt <- plot.ci.nodes(in_path,R,cutoff,nburn,nsamp,nu,c(-4,4),title)
+  plotname = paste0("~/Documents/masters/research/bayesian_network_regression/bayesian_network_regression_imp/wagg_analysis/plots/plot-ci-nodes-nburn",
                     nburn,"-nsamples",nsamp,"-R",R,"-nu",nu,".pdf")
   pdf(plotname,height=10, width=4)
   print(plt)
@@ -201,14 +277,14 @@ for(i in 1:length(nburns))
 
 ```{r}
 library(lubridate)
-nburn = 30000
-nsamp = 20000
-R     = 5
-nu    = 12
-flnm <- make.filename(in_path,R,cutoff,nburn,nsamp,nu,"time")
-tm <- read.csv(flnm)
+#nburn = 5000
+#nsamp = 5000
+#R     = 5
+#nu    = 12
+#flnm <- make.filename(in_path,R,cutoff,nburn,nsamp,nu,"time")
+#tm <- read.csv(flnm)
 
-seconds_to_period(tm$time)
+#seconds_to_period(tm$time)
 
 ```
 

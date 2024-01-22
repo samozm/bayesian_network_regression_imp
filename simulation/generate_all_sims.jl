@@ -37,7 +37,7 @@ end
 
 for πₑ=[0.3,0.8]
     for μₑ=[0.8,1.6]
-        for n=[50]
+        for n=[50,100]
             for k=[8,22]
                 for type=["additive_phylo","additive_random","interaction_phylo","interaction_random","redundant_phylo","redundant_random"]
                     rsd = sample(g_rng,100:9999)
@@ -45,12 +45,33 @@ for πₑ=[0.3,0.8]
                 end
             end
         end
-        for n=[50,500,1000]
-            for k=[8,22,30]
+    end
+end
+
+
+for πₑ=[0.3,0.8]
+    for μₑ=[0.8,1.6]
+        for n=[50,100,500,1000]
+            for k=[8,22]
                 for type=["additive_phylo","additive_random","interaction_phylo","interaction_random","redundant_phylo","redundant_random"]
                     rsd = sample(g_rng,100:9999)
-                    generate_real(60,k,n,734,μₑ,πₑ,type,rsd)
+                    generate_real(30,k,n,734,μₑ,πₑ,type,rsd,true)
                 end
             end
         end
+    end
+end
+
+
+for πₑ=[0.3,0.8]
+    for μₑ=[0.8,1.6]
+        for n=[200]
+            for k=[8,22]
+                for type=["additive_phylo","additive_random","interaction_phylo","interaction_random","redundant_phylo","redundant_random"]
+                    rsd = sample(g_rng,100:9999)
+                    generate_real(30,k,n,734,μₑ,πₑ,type,rsd)
+                end
+            end
+        end
+    end
 end

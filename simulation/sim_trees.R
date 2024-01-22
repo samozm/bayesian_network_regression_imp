@@ -1,6 +1,6 @@
 sim_tree_dists <- function(t) {
   if(!require("ape",character.only = TRUE, quietly = TRUE)) install.packages("ape")
-  tree <- rtree(t,tip.label=1:t)
+  tree <- ape::rtree(t,tip.label=1:t)
   
   inv_dist <- tree_dist(tree)
   return(inv_dist)
@@ -8,12 +8,12 @@ sim_tree_dists <- function(t) {
 
 sim_tree <- function(t) {
   if(!require("ape",character.only = TRUE, quietly = TRUE)) install.packages("ape")
-  return(rtree(t,tip.label=1:t))
+  return(ape::rtree(t,tip.label=1:t))
 }
 
 tree_dist <- function(tree) {
   if(!require("ape",character.only = TRUE, quietly = TRUE)) install.packages("ape")
-  inv_dist <- 1/cophenetic.phylo(tree)
+  inv_dist <- 1/ape::cophenetic.phylo(tree)
   diag(inv_dist) <- 0
   
   
